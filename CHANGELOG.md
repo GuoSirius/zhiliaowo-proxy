@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.0.1
+
+[compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v1.0.0...v1.0.1)
+
+### 🚀 新功能 (Features)
+
+- 实现开放组件 302 分发路由 ([7a86973](https://github.com/GuoSirius/zhiliaowo-proxy/commit/7a86973))
+
+### 🐛 缺陷修复 (Bug Fixes)
+
+- 发布脚本提交确认默认选中 Y ([92c84a2](https://github.com/GuoSirius/zhiliaowo-proxy/commit/92c84a2))
+- 发布脚本改用 changelogen 生成 changelog ([0662c88](https://github.com/GuoSirius/zhiliaowo-proxy/commit/0662c88))
+- 发布脚本用 changelogen --bump 真正落地 changelog 生成 ([3c4a16e](https://github.com/GuoSirius/zhiliaowo-proxy/commit/3c4a16e))
+
+### 📚 文档 (Documentation)
+
+- 重建 CHANGELOG 为干净中文增量格式 ([140172e](https://github.com/GuoSirius/zhiliaowo-proxy/commit/140172e))
+
+### 📦 杂项维护 (Chores)
+
+- Update brand ([8614f4f](https://github.com/GuoSirius/zhiliaowo-proxy/commit/8614f4f))
+
+### ❤️ Contributors
+
+- 郭之存 ([@siriusSupreme](https://github.com/siriusSupreme))
+
 ## v1.0.0 (2026-08-25)
 
 ### 🚀 新功能 (Features)
