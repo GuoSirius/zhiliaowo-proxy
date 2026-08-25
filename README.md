@@ -54,6 +54,42 @@ npm run dev               # tsx watch，默认 :3000
 
 环境变量：`PORT` 改端口；`HOST` 改绑定地址（默认 `0.0.0.0`，同时覆盖 `127.0.0.1` / `localhost` / 本机 LAN IP）；`ZLIW_API_BASE` 改开放 API 版本（默认 `v12`）。
 
+## 接口示例（curl）
+
+下面以 `elab` 站点、`http://localhost:3000` 为例（`site` 换成实际站点 key）。
+
+```bash
+# 健康检查
+curl http://localhost:3000/health
+
+# 2.1 品牌文献统计
+curl http://localhost:3000/api/v1/elab/statistics
+
+# 2.2 品牌 + SPU 引用概况（sku 可选）
+curl "http://localhost:3000/api/v1/elab/cite-stat?sku=E-ABcl-0001"
+
+# 2.3 历年累计数量
+curl http://localhost:3000/api/v1/elab/paper-sum
+
+# 2.4 年度数量
+curl http://localhost:3000/api/v1/elab/paper-year
+
+# 2.5 产品文献引用数量
+curl http://localhost:3000/api/v1/elab/goods-cite-num
+
+# 2.6 品牌文献列表
+curl http://localhost:3000/api/v1/elab/papers
+
+# 2.7 产品文献列表（sku 必填）
+curl "http://localhost:3000/api/v1/elab/product-papers?sku=E-ABcl-0001"
+
+# 开放组件（iframe）302 分发：直接重定向到知了窝 v_widget
+# -I 看 302 Location；前端 iframe 写 /w/elab/brand/statistics 即可，appId 由后端注入
+curl -I "http://localhost:3000/w/elab/brand/statistics"
+```
+
+成功响应统一为 JSON（如 `{ "ok": true }` 或对应数据）；失败返回 `{ "error": "..." }` 与对应状态码（404 未知 site / 500 缺 env / 502 上游异常）。
+
 ## 扩展一个新 brand（零业务改动）
 
 1. `src/config/brands.ts` 的 `BRANDS` 加一项（key / label / brand / appIdEnv）
