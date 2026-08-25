@@ -7,12 +7,13 @@
  *  2. 未提交检测：若有未提交文件，提示输入提交信息并二次确认后先提交
  *  3. 发版选择：↑/↓ 切换 patch / minor / major，每次切换实时显示
  *     本次新版本号 + 该版本将包含的变更(changelog 预览)
- *  4. 确认后自动：bump 版本号 → 更新 CHANGELOG.md → 提交 → 打 tag → 推送
+ *  4. 确认后自动：bump 版本号 → 交 changelogen 更新 CHANGELOG.md →
+ *     提交 → 打 tag → 推送
  *
  * 纯 Node 内置能力实现（无第三方依赖），交互部分用 raw mode 处理方向键。
  */
 import { execSync } from 'node:child_process';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 
@@ -75,34 +76,47 @@ function getCommits() {
   return out ? out.split('\n') : [];
 }
 
-function groupCommits(lines) {
-  const g = { feat: [], fix: [], chore: [], other: [] };
-  const choreTypes = ['chore', 'docs', 'refactor', 'test', 'style', 'perf', 'build', 'ci'];
-  for (const raw of lines) {
+// 与 changelog.config.js 的 type 分组保持一致（用于发布前预览）
+const TYPE_TITLES = {
+  feat: '🚀 新功能 (Features)',
+  fix: '🐛 缺陷修复 (Bug Fixes)',
+  perf: '⚡ 性能优化 (Performance)',
+  refactor: '♻️ 代码重构 (Refactors)',
+  docs: '📚 文档 (Documentation)',
+  test: '🧪 测试 (Tests)',
+  build: '🔧 构建 (Build)',
+  ci: '⚙️ 持续集成 (CI)',
+  chore: '📦 杂项维护 (Chores)',
+  style: '🎨 代码格式 (Style)',
+  revert: '⏪ 回滚 (Reverts)',
+};
+const TYPE_ORDER = ['feat', 'fix', 'perf', 'refactor', 'docs', 'test', 'build', 'ci', 'chore', 'style', 'revert'];
+
+/** 将提交按 type 分类，输出与 changelogen 一致的中文分组预览 */
+function previewChangelog(commits) {
+  const byType = {};
+  for (const raw of commits) {
     const s = raw.trim();
     if (!s) continue;
     const m = s.match(/^(\w+)(\([^)]*\))?(!)?:\s*(.*)$/);
     const t = m ? m[1].toLowerCase() : 'other';
-    if (t === 'feat') g.feat.push(s);
-    else if (t === 'fix') g.fix.push(s);
-    else if (choreTypes.includes(t)) g.chore.push(s);
-    else g.other.push(s);
+    if (!byType[t]) byType[t] = [];
+    byType[t].push(s);
   }
-  return g;
-}
-
-function renderChangelog(g) {
-  const block = (icon, title, items) =>
-    items.length ? `${icon} ${title}\n` + items.map((i) => `    - ${i}`).join('\n') + '\n' : '';
-  const body =
-    block('🚀', 'Enhancements', g.feat) +
-    block('🩹', 'Fixes', g.fix) +
-    block('💡', 'Others', [...g.chore, ...g.other]);
-  return body || '    (无提交记录)';
+  let out = '';
+  for (const t of TYPE_ORDER) {
+    if (byType[t] && byType[t].length) {
+      out += TYPE_TITLES[t] + '\n' + byType[t].map((i) => '    - ' + i).join('\n') + '\n';
+    }
+  }
+  if (byType.other && byType.other.length) {
+    out += '其他变更\n' + byType.other.map((i) => '    - ' + i).join('\n') + '\n';
+  }
+  return out || '    (无提交记录)';
 }
 
 /** 渲染可选发版类型列表（高亮当前项） + 当前/新版本 + changelog 预览 */
-function renderScreen(currentVersion, selectedType, groups) {
+function renderScreen(currentVersion, selectedType, commits) {
   const lines = [];
   lines.push(`当前版本: v${currentVersion}`);
   lines.push('');
@@ -115,16 +129,16 @@ function renderScreen(currentVersion, selectedType, groups) {
   }
   lines.push('');
   lines.push(`—— 选择 v${bump(currentVersion, selectedType)} 将包含的变更 ——`);
-  lines.push(renderChangelog(groups));
+  lines.push(previewChangelog(commits));
   return lines.join('\n');
 }
 
 /** 方向键选择发版类型，每次切换重绘屏幕 */
-function selectRelease(currentVersion, groups) {
+function selectRelease(currentVersion, commits) {
   return new Promise((resolve, reject) => {
     let idx = 0;
     const draw = () => {
-      const screen = renderScreen(currentVersion, RELEASE_TYPES[idx].type, groups);
+      const screen = renderScreen(currentVersion, RELEASE_TYPES[idx].type, commits);
       process.stdout.write('\x1B[2J\x1B[3J\x1B[H' + screen);
     };
     const onData = (buf) => {
@@ -157,23 +171,6 @@ function selectRelease(currentVersion, groups) {
   });
 }
 
-// ---------- CHANGELOG 更新 ----------
-
-function updateChangelog(version, groups) {
-  const date = new Date().toISOString().slice(0, 10);
-  const entry = `\n## v${version} (${date})\n\n${renderChangelog(groups)}\n`;
-  let content = existsSync('CHANGELOG.md') ? readFileSync('CHANGELOG.md', 'utf8') : '';
-  if (!content) {
-    content = '# Changelog\n' + entry;
-  } else {
-    const nl = content.indexOf('\n');
-    const head = content.slice(0, nl);
-    const rest = content.slice(nl);
-    content = head + entry + rest;
-  }
-  writeFileSync('CHANGELOG.md', content);
-}
-
 // ---------- 主流程 ----------
 
 async function main() {
@@ -202,10 +199,10 @@ async function main() {
   // 3. 发版选择
   const pkg = readPkg();
   const currentVersion = pkg.version;
-  const groups = groupCommits(getCommits());
+  const commits = getCommits();
   let selected;
   try {
-    selected = await selectRelease(currentVersion, groups);
+    selected = await selectRelease(currentVersion, commits);
   } catch {
     process.exit(1);
   }
@@ -217,7 +214,8 @@ async function main() {
   const pkgNow = readPkg();
   pkgNow.version = newVersion;
   writeFileSync('package.json', JSON.stringify(pkgNow, null, 2) + '\n');
-  updateChangelog(newVersion, groups);
+  // 交给 changelogen 生成中文分类增量 CHANGELOG（与 changelog.config.js 对齐）
+  run('npm run changelog');
 
   run('git add package.json CHANGELOG.md');
   execSync(`git commit -m ${JSON.stringify(`chore(release): v${newVersion}`)}`, { stdio: 'inherit' });
