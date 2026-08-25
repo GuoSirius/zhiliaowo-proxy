@@ -2,8 +2,16 @@ packages:
   - 'apps/*'
   - 'packages/*'
 
-# pnpm v10+：原生构建脚本白名单必须放在 workspace 配置里（package.json 的 pnpm 字段已失效）
-# 解决安装时的 ERR_PNPM_IGNORED_BUILDS（better-sqlite3 / esbuild / puppeteer / vue-demi）
+# pnpm 11：原生构建脚本白名单用 allowBuilds（map: 包名 → true/false）
+# 替代已废弃的 onlyBuiltDependencies；解决安装的 ERR_PNPM_IGNORED_BUILDS
+# （better-sqlite3 / esbuild / puppeteer / vue-demi 需要跑 install 脚本）
+allowBuilds:
+  better-sqlite3: true
+  esbuild: true
+  puppeteer: true
+  vue-demi: true
+
+# pnpm 10.26 之前的兼容写法（pnpm 11 会忽略并提示 deprecated，无副作用）
 onlyBuiltDependencies:
   - better-sqlite3
   - esbuild
@@ -30,13 +38,3 @@ catalog:
   husky: ^9.1.7
   # 共享层
   zod: ^3.23.8
-
-minimumReleaseAgeExclude:
-  - '@types/node@26.3.0'
-  - hono@4.13.4
-
-allowBuilds:
-  better-sqlite3: set this to true or false
-  esbuild: set this to true or false
-  puppeteer: set this to true or false
-  vue-demi: set this to true or false
