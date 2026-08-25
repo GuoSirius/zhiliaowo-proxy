@@ -1,6 +1,6 @@
 // 管理后台 —— H5 Pinia store
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, toRaw } from 'vue';
 import {
   getH5,
   listH5,
@@ -58,7 +58,7 @@ export const useH5Store = defineStore('h5', () => {
 
   function newDoc(): H5Doc {
     const brand = brands.value[0];
-    const theme: BrandTheme = brand ? structuredClone(brand) : defaultTheme();
+    const theme: BrandTheme = brand ? structuredClone(toRaw(brand)) : defaultTheme();
     const doc: H5Doc = {
       id: '',
       title: '未命名 H5',

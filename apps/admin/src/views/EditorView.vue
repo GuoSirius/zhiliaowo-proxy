@@ -64,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, toRaw } from 'vue';
 import { renderDocToHtml, type BlockType, type BrandTheme } from '@zhiliaowo/core';
 import { useH5Store } from '../stores/h5';
 import { createBlock, BLOCK_TYPES, exportH5Url } from '../api/h5';
@@ -106,7 +106,7 @@ function onBrand(e: Event) {
   const brand = store.brands.find((b) => b.brandKey === key);
   if (brand && doc.value) {
     doc.value.brandId = key;
-    doc.value.theme = structuredClone(brand) as BrandTheme;
+    doc.value.theme = structuredClone(toRaw(brand)) as BrandTheme;
   }
 }
 
