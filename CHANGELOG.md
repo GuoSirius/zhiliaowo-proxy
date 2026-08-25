@@ -1,4 +1,17 @@
 
+## v1.0.0 (2026-08-25)
+
+🚀 Enhancements
+    - feat: add release
+    - feat: 实现 7 个开放 API 路由与 Hono 入口
+    - feat: 实现核心代理层（多 brand 配置 / 缓存抽象 / 知了窝 client）
+💡 Others
+    - build: 对齐 changelogen 分组与 commitlint type
+    - build: 显式声明 commitlint 常规 type 规范
+    - docs: 生成初始 CHANGELOG（changelogen）
+    - chore: 初始化项目脚手架与工程化工具链
+
+
 
 ## ...main
 

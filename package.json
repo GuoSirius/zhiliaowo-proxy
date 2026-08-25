@@ -1,6 +1,6 @@
 {
   "name": "zhiliaowo-proxy",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "知了窝开放平台 BFF 代理服务：配置驱动多 brand，缓存抽象（内存/Redis 无缝切换），独立部署",
   "type": "module",
   "engines": {
