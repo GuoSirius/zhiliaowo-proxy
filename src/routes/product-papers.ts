@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { resolveBrand } from '../config/brands.js';
 import { getClient } from '../lib/client.js';
+import { ok, fail } from '../lib/response.js';
 
 export const productPapersRoute = new Hono();
 
@@ -10,9 +11,9 @@ productPapersRoute.get('/:site/product-papers', async (c) => {
   const query = c.req.query();
   const sku = query.sku;
   if (!sku) {
-    return c.json({ error: 'sku is required' }, 400);
+    return fail(c, 400, 'sku is required');
   }
   delete query.sku;
   const data = await getClient().productPapers(brand, sku, query);
-  return c.json(data);
+  return ok(c, data);
 });

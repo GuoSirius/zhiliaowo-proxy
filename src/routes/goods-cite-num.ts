@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { resolveBrand } from '../config/brands.js';
 import { getClient } from '../lib/client.js';
+import { ok } from '../lib/response.js';
 
 export const goodsCiteNumRoute = new Hono();
 
@@ -8,5 +9,5 @@ export const goodsCiteNumRoute = new Hono();
 goodsCiteNumRoute.get('/:site/goods-cite-num', async (c) => {
   const brand = resolveBrand(c.req.param('site'));
   const data = await getClient().goodsCiteNum(brand, c.req.query());
-  return c.json(data);
+  return ok(c, data);
 });

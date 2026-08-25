@@ -88,7 +88,7 @@ curl "http://localhost:3000/api/v1/elab/product-papers?sku=E-ABcl-0001"
 curl -I "http://localhost:3000/w/elab/brand/statistics"
 ```
 
-成功响应统一为 JSON（如 `{ "ok": true }` 或对应数据）；失败返回 `{ "error": "..." }` 与对应状态码（404 未知 site / 500 缺 env / 502 上游异常）。
+所有接口响应统一为信封结构 `{ "code": number, "message": string, "data": <真实数据 | null> }`：成功 `code=200` 且业务数据在 `data`；失败 `data=null`（或附加上下文），`code` 同时作为 HTTP 状态码（404 未知 site / 500 缺 env / 502 上游异常）。无论成功失败结构一致，真实数据始终在 `data` 中。
 
 ## 扩展一个新 brand（零业务改动）
 
