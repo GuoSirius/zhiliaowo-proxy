@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
+      host: true,
       port: adminPort,
       proxy: {
         // 管理后台 API 代理到 zhiliaowo-proxy（端口由 DEV_PORT_PROXY 统一管理）

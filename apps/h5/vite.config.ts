@@ -19,6 +19,6 @@ export default defineConfig(({ mode }) => {
         '@zhiliaowo/core': fileURLToPath(new URL('../../packages/core/src', import.meta.url)),
       },
     },
-    server: { port: h5Port },
+    server: { host: true, port: h5Port },
   };
 });
