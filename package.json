@@ -1,0 +1,41 @@
+{
+  "name": "zhiliaowo-proxy",
+  "version": "0.1.0",
+  "description": "知了窝开放平台 BFF 代理服务：配置驱动多 brand，缓存抽象（内存/Redis 无缝切换），独立部署",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "changelog": "changelogen",
+    "release": "changelogen --release",
+    "commitlint": "commitlint --edit",
+    "prepare": "husky"
+  },
+  "keywords": [
+    "zhiliaowo",
+    "sci",
+    "proxy",
+    "bff",
+    "hono"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@hono/node-server": "^2.1.1",
+    "hono": "^4.13.4",
+    "ioredis": "^6.0.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
+    "@types/node": "^26.3.0",
+    "changelogen": "^0.6.2",
+    "husky": "^9.1.7",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2"
+  }
+}
