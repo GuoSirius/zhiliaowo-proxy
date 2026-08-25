@@ -9,6 +9,7 @@ import { paperYearRoute } from './routes/paper-year.js';
 import { goodsCiteNumRoute } from './routes/goods-cite-num.js';
 import { brandPapersRoute } from './routes/brand-papers.js';
 import { productPapersRoute } from './routes/product-papers.js';
+import { widgetRoute } from './routes/widget.js';
 
 const app = new Hono();
 
@@ -22,6 +23,9 @@ app.route('/api/v1', paperYearRoute);
 app.route('/api/v1', goodsCiteNumRoute);
 app.route('/api/v1', brandPapersRoute);
 app.route('/api/v1', productPapersRoute);
+
+// 开放组件（iframe）302 分发：/w/:site/* → 知了窝 v_widget，appId 不落前端
+app.route('/w', widgetRoute);
 
 app.onError((err, c) => {
   if (err instanceof ApiError) {
