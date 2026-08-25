@@ -13,7 +13,7 @@
  * 纯 Node 内置能力实现（无第三方依赖），交互部分用 raw mode 处理方向键。
  */
 import { execSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 
@@ -210,12 +210,8 @@ async function main() {
   const newVersion = bump(currentVersion, selected);
   process.stdout.write(`\n\n确认发布 v${newVersion}\n`);
 
-  // 4. 自动发布
-  const pkgNow = readPkg();
-  pkgNow.version = newVersion;
-  writeFileSync('package.json', JSON.stringify(pkgNow, null, 2) + '\n');
-  // 交给 changelogen 生成中文分类增量 CHANGELOG（与 changelog.config.js 对齐）
-  run('npm run changelog');
+  // 4. 自动发布：交给 changelogen 按选定类型 bump 版本号 + 增量写中文 CHANGELOG（与 changelog.config.js 对齐）
+  run(`npx changelogen --${selected} --bump`);
 
   run('git add package.json CHANGELOG.md');
   execSync(`git commit -m ${JSON.stringify(`chore(release): v${newVersion}`)}`, { stdio: 'inherit' });
