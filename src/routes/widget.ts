@@ -1,6 +1,9 @@
 import { Hono } from 'hono';
 import { resolveBrand } from '../config/brands.js';
 
+/** 开放组件（iframe）基址：默认 v11，切换版本/域名改此处 */
+const WIDGET_BASE = (process.env.ZLIW_WIDGET_BASE ?? 'https://open.zhiliaowo.cn/v_widget/v11').replace(/\/$/, '');
+
 export const widgetRoute = new Hono();
 
 /**
@@ -17,7 +20,7 @@ widgetRoute.get('/:site/*', (c) => {
   const site = c.req.param('site');
   const brand = resolveBrand(site); // 未知 site 抛 ApiError(404)
   const rest = c.req.path.replace(/^\/w\/[^/]+/, ''); // /brand/statistics
-  const target = new URL('https://open.zhiliaowo.cn/v_widget/v11' + rest);
+  const target = new URL(WIDGET_BASE + rest);
   target.searchParams.set('appId', brand.appId);
   target.searchParams.set('brand', brand.brand);
   // 透传原始 query（sku / lang 等），不覆盖后端注入的 appId / brand
