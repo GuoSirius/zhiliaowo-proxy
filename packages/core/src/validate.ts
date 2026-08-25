@@ -1,6 +1,6 @@
 // zhiliaowo-core — zod 校验（前后端共用，单一事实源）
 import { z } from 'zod';
-import { BlockType } from './types';
+import { BLOCK_TYPE_VALUES } from './types.js';
 
 export const BrandContactSchema = z.object({
   phone: z.string().optional(),
@@ -24,7 +24,7 @@ export const BrandThemeSchema = z.object({
 
 // 区块 props 内容各异，统一以 any 校验存在性，具体字段由各区块组件自行约束
 export const BlockNodeSchema = z.object({
-  type: z.enum([...BlockType] as [string, ...string[]]),
+  type: z.enum(BLOCK_TYPE_VALUES),
   id: z.string(),
   props: z.any(),
   visible: z.boolean().optional(),

@@ -18,7 +18,7 @@ import type {
   BrandFooterProps,
   PaperItem,
   PaperProduct,
-} from './types';
+} from './types.js';
 
 /** HTML 转义，防 XSS */
 function esc(s: unknown): string {

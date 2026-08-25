@@ -1,5 +1,5 @@
 // zhiliaowo-core — 区块注册表（管理后台据此动态渲染录入表单）
-import type { BlockType } from './types';
+import type { BlockType } from './types.js';
 
 export interface BlockMeta {
   type: BlockType;

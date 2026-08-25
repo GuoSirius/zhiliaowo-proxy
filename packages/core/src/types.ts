@@ -3,18 +3,23 @@
 
 // ---------- 区块协议 ----------
 
-export type BlockType =
-  | 'BrandHeader' // 品牌头（Logo + slogan）
-  | 'TitleBar' // 大标题
-  | 'StatCardGroup' // 核心数据卡（带趋势箭头）
-  | 'BarChart' // 柱状图
-  | 'QuarterGrid' // 季度/分类数据 2x2
-  | 'SummaryList' // 小结列表（图标+文字）
-  | 'PaperListBlock' // 文献列表（多篇）
-  | 'ArticleBlock' // 文献解析（单篇深度）
-  | 'KeywordTags' // 关键词标签
-  | 'ProductCard' // 产品推荐
-  | 'BrandFooter'; // 联系方式 + 二维码
+// 区块类型枚举值（运行时可用，作为「单一事实源」）
+// 同时派生出 BlockType 类型，避免类型与值脱节
+export const BLOCK_TYPE_VALUES = [
+  'BrandHeader', // 品牌头（Logo + slogan）
+  'TitleBar', // 大标题
+  'StatCardGroup', // 核心数据卡（带趋势箭头）
+  'BarChart', // 柱状图
+  'QuarterGrid', // 季度/分类数据 2x2
+  'SummaryList', // 小结列表（图标+文字）
+  'PaperListBlock', // 文献列表（多篇）
+  'ArticleBlock', // 文献解析（单篇深度）
+  'KeywordTags', // 关键词标签
+  'ProductCard', // 产品推荐
+  'BrandFooter', // 联系方式 + 二维码
+] as const;
+
+export type BlockType = (typeof BLOCK_TYPE_VALUES)[number];
 
 export interface BlockNode<T = unknown> {
   type: BlockType;
