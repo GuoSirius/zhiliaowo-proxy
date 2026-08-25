@@ -3,6 +3,30 @@ import type { H5Doc, BrandTheme, BlockType, PaperItem } from '@zhiliaowo/core';
 
 export const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'http://localhost:3000';
 
+/**
+ * 生成 UUID v4。
+ * 注意：crypto.randomUUID() 仅在「安全上下文」可用（https 或 localhost）。
+ * 通过局域网 IP + http 访问时页面非安全上下文，randomUUID 为 undefined 会抛错，
+ * 故此处降级到 getRandomValues / Math.random，保证任意访问方式都能生成 id。
+ */
+export function uuid(): string {
+  const c = globalThis.crypto as Crypto | undefined;
+  if (c && typeof c.randomUUID === 'function') return c.randomUUID();
+  if (c && typeof c.getRandomValues === 'function') {
+    const b = new Uint8Array(16);
+    c.getRandomValues(b);
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    const h = Array.from(b, (x) => x.toString(16).padStart(2, '0'));
+    return `${h.slice(0, 4).join('')}-${h.slice(4, 6).join('')}-${h.slice(6, 8).join('')}-${h.slice(8, 10).join('')}-${h.slice(10, 16).join('')}`;
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (ch) => {
+    const r = (Math.random() * 16) | 0;
+    const v = ch === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 interface Envelope<T> {
   code: number;
   message: string;
@@ -60,7 +84,7 @@ export function proxyOpenApi(action: string, params: Record<string, string> = {}
 
 function emptyPaper(): PaperItem {
   return {
-    id: crypto.randomUUID(),
+    id: uuid(),
     title: '文献标题',
     journal: '期刊名',
     pubTime: new Date().toISOString().slice(0, 10),
@@ -73,7 +97,7 @@ function emptyPaper(): PaperItem {
 
 /** 新建区块的默认 props（编排面板用） */
 export function createBlock(type: BlockType): { type: BlockType; id: string; props: any; visible?: boolean } {
-  const id = crypto.randomUUID();
+  const id = uuid();
   let props: any = {};
   switch (type) {
     case 'BrandHeader':
