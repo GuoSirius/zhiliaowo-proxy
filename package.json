@@ -7,7 +7,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "pnpm -r --parallel run dev",
+    "dev": "node scripts/clean-ports.cjs && pnpm -r --parallel run dev",
     "dev:proxy": "pnpm --filter zhiliaowo-proxy dev",
     "dev:admin": "pnpm --filter @zhiliaowo/admin dev",
     "dev:h5": "pnpm --filter @zhiliaowo/h5 dev",
