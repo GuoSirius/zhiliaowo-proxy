@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.0.2
+
+[compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v1.0.1...v1.0.2)
+
+### 🚀 新功能 (Features)
+
+- 服务绑定 0.0.0.0 并精简 README ([dbcff0c](https://github.com/GuoSirius/zhiliaowo-proxy/commit/dbcff0c))
+- Make widget base url configurable via zliw_widget_base env ([b68aef5](https://github.com/GuoSirius/zhiliaowo-proxy/commit/b68aef5))
+
+### 🐛 缺陷修复 (Bug Fixes)
+
+- Load dotenv to populate process env appid ([30f9443](https://github.com/GuoSirius/zhiliaowo-proxy/commit/30f9443))
+
+### 📚 文档 (Documentation)
+
+- Align readme with widget 302 route, host binding and brand env var ([d6d24b6](https://github.com/GuoSirius/zhiliaowo-proxy/commit/d6d24b6))
+- Add curl usage examples to readme ([25b3df6](https://github.com/GuoSirius/zhiliaowo-proxy/commit/25b3df6))
+
+### ❤️ Contributors
+
+- 郭之存 ([@siriusSupreme](https://github.com/siriusSupreme))
+
 ## v1.0.1
 
 [compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v1.0.0...v1.0.1)
