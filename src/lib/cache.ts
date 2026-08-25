@@ -30,7 +30,10 @@ export class MemoryCache implements Cache {
 
 /** Redis 缓存（可选）：需 ioredis + CACHE_REDIS_URL */
 export class RedisCache implements Cache {
-  constructor(private readonly client: Redis) {}
+  private readonly client: Redis;
+  constructor(client: Redis) {
+    this.client = client;
+  }
 
   async get<T>(key: string): Promise<T | undefined> {
     const raw = await this.client.get(key);
