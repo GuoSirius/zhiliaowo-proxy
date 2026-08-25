@@ -43,8 +43,9 @@ function ask(question) {
   return rl.question(question).finally(() => rl.close());
 }
 
-async function confirm(question) {
+async function confirm(question, defaultYes = false) {
   const a = (await ask(question)).trim().toLowerCase();
+  if (a === '') return defaultYes;
   return a === 'y' || a === 'yes';
 }
 
@@ -190,7 +191,7 @@ async function main() {
       console.error('提交信息为空，已取消。');
       process.exit(1);
     }
-    if (!(await confirm(`确认用 "${msg}" 提交并继续发布？(y/N) `))) {
+    if (!(await confirm(`确认用 "${msg}" 提交并继续发布？(Y/n) `, true))) {
       console.error('已取消。');
       process.exit(1);
     }
