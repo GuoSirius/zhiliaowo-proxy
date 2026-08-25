@@ -1,0 +1,9 @@
+# 依赖与构建产物必须在镜像内重新安装/编译，排除宿主机（Windows）产物
+node_modules
+**/node_modules
+**/dist
+.git
+.gitignore
+**/*.log
+**/.DS_Store
+*.local
