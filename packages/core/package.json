@@ -1,0 +1,20 @@
+{
+  "name": "@zhiliaowo/core",
+  "version": "0.1.0",
+  "description": "H5 生成器共享层：区块协议类型 + zod 校验 + 区块注册表",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}
