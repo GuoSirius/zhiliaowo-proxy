@@ -27,6 +27,7 @@
   "license": "MIT",
   "dependencies": {
     "@hono/node-server": "^2.1.1",
+    "dotenv": "^17.4.2",
     "hono": "^4.13.4",
     "ioredis": "^6.0.0"
   },
