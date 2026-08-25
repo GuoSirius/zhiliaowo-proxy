@@ -93,12 +93,25 @@ initClient()
     // H5 模块：建表 + 内置品牌 seed（幂等）
     migrate();
     seedBrands();
-    serve({ fetch: app.fetch, port, hostname }, (info) => {
+    const server = serve({ fetch: app.fetch, port, hostname }, (info) => {
       const ip = lanIp();
       console.log('zhiliaowo-proxy listening on:');
       console.log(`  - http://localhost:${info.port}`);
       console.log(`  - http://127.0.0.1:${info.port}`);
       if (ip) console.log(`  - http://${ip}:${info.port}  (本机 IP)`);
+    });
+    // 端口被占用（最常见：上一次 proxy 没退干净 / 同时跑了多个 dev）必须显式捕获，
+    // 否则 'error' 事件无监听会带含糊堆栈崩溃，看不出根因。
+    server.on('error', (err: NodeJS.ErrnoException) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(
+          `[zhiliaowo-proxy] 端口 ${port} 已被占用。最常见原因：上一次 proxy 进程没退干净，` +
+            `或同时跑了多个 dev。请先结束占用该端口的进程，或设置 PORT 环境变量换端口后重试。`,
+        );
+      } else {
+        console.error('[zhiliaowo-proxy] server error:', err);
+      }
+      process.exit(1);
     });
   })
   .catch((e) => {
