@@ -19,23 +19,6 @@
                 └─ 缓存层(memory / redis 无缝切换)
 ```
 
-## 目录结构
-
-```
-src/
-├─ config/brands.ts     # ★ 多 brand 配置（扩展点）
-├─ lib/
-│  ├─ cache.ts          # Cache 接口 + MemoryCache + RedisCache 预留
-│  ├─ zhiliaowo.ts      # 知了窝 client：拼 URL+timestamp+fetch+缓存+错误处理
-│  └─ client.ts         # 客户端单例（启动初始化缓存）
-├─ routes/              # 7 个接口，各一个文件
-├─ types.ts             # 响应类型 + ApiError
-└─ index.ts             # Hono 入口、路由挂载、全局错误处理
-deployments/
-├─ Dockerfile
-└─ ecosystem.config.cjs # pm2 配置
-```
-
 ## 接口列表
 
 | 方法 | 路径 | 对应知了窝 API |

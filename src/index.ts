@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
+import { networkInterfaces } from 'node:os';
 import { initClient } from './lib/client.js';
 import { ApiError } from './types.js';
 import { statisticsRoute } from './routes/statistics.js';
@@ -38,11 +39,26 @@ app.onError((err, c) => {
 app.notFound((c) => c.json({ error: 'not found' }, 404));
 
 const port = Number(process.env.PORT ?? 3000);
+// 默认绑定 0.0.0.0：同时覆盖 127.0.0.1 / localhost / 本机 LAN IP；可用 HOST 环境变量覆盖
+const hostname = process.env.HOST ?? '0.0.0.0';
+
+function lanIp(): string | undefined {
+  for (const nets of Object.values(networkInterfaces())) {
+    for (const net of nets ?? []) {
+      if (net.family === 'IPv4' && !net.internal) return net.address;
+    }
+  }
+  return undefined;
+}
 
 initClient()
   .then(() => {
-    serve({ fetch: app.fetch, port }, (info) => {
-      console.log(`zhiliaowo-proxy listening on http://localhost:${info.port}`);
+    serve({ fetch: app.fetch, port, hostname }, (info) => {
+      const ip = lanIp();
+      console.log('zhiliaowo-proxy listening on:');
+      console.log(`  - http://localhost:${info.port}`);
+      console.log(`  - http://127.0.0.1:${info.port}`);
+      if (ip) console.log(`  - http://${ip}:${info.port}  (本机 IP)`);
     });
   })
   .catch((e) => {
