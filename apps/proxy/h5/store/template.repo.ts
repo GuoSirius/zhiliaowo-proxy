@@ -24,7 +24,8 @@ export function listTemplates(): TemplateSummary[] {
 
 export function getTemplate(id: string): H5Doc | null {
   const row = db.prepare('SELECT * FROM h5_templates WHERE id = ?').get(id) as TplRow | undefined;
-  return row ? H5DocSchema.parse(JSON.parse(row.doc)) : null;
+  // zod z.any() 推导 props 为可选，与 core BlockNode.props 必填不一致，这里桥接
+  return row ? (H5DocSchema.parse(JSON.parse(row.doc)) as H5Doc) : null;
 }
 
 export function createTemplate(name: string, doc: H5Doc): H5Doc {

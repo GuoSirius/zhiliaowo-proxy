@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { ZodError } from 'zod';
-import { ok, fail } from '../../lib/response.js';
+import { ok, fail } from '../lib/response.js';
 import type { H5Doc } from '@zhiliaowo/core';
 import { renderDocToHtml } from '@zhiliaowo/core';
 import {
@@ -117,7 +117,7 @@ h5App.get('/:id/export', async (c) => {
       const buf = await renderToPng(doc);
       c.header('Content-Type', 'image/png');
       c.header('Content-Disposition', `attachment; filename="${doc.id}.png"`);
-      return c.body(buf);
+      return c.body(new Uint8Array(buf));
     }
     if (format === 'vue') {
       const html = renderToVuePage(doc);

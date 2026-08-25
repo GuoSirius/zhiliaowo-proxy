@@ -12,7 +12,7 @@
     "dev:admin": "pnpm --filter @zhiliaowo/admin dev",
     "dev:h5": "pnpm --filter @zhiliaowo/h5 dev",
     "build": "pnpm -r build",
-    "typecheck": "pnpm -r typecheck",
+    "typecheck": "pnpm --filter @zhiliaowo/core build && pnpm -r typecheck",
     "test": "pnpm -r test",
     "prepare": "husky",
     "commitlint": "commitlint --edit",

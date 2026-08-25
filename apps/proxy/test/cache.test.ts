@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MemoryCache } from '../src/lib/cache.ts';
+import { MemoryCache } from '../lib/cache.js';
 
 test('MemoryCache: set 后能 get 到原值', async () => {
   const c = new MemoryCache();

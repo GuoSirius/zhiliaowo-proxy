@@ -94,13 +94,15 @@ export function createH5(input: unknown): H5Doc {
   const now = new Date().toISOString();
   const id = randomUUID();
   const status = data.status ?? 'draft';
-  const doc: H5Doc = {
+  // 注意：zod 的 z.any() 在推导时会把 props 标记为可选，而 core 的 BlockNode.props 为必填。
+  // 这里用 as H5Doc 桥接该推断差异；运行时 parse 已保证 props 存在。
+  const doc = {
     ...data,
     id,
     status,
     createdAt: now,
     updatedAt: now,
-  };
+  } as H5Doc;
   db.prepare(
     `INSERT INTO h5_docs (id, title, brand_id, status, template_id, meta, doc, created_at, updated_at)
      VALUES (@id, @title, @brand_id, @status, @template_id, @meta, @doc, @created_at, @updated_at)`,

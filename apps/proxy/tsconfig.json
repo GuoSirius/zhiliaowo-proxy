@@ -6,9 +6,8 @@
     "lib": ["ES2022"],
     "outDir": "dist",
     "rootDir": ".",
-    "baseUrl": ".",
     "paths": {
-      "@zhiliaowo/core": ["../../packages/core/src/index.ts"]
+      "@zhiliaowo/core": ["../../packages/core/dist/index.d.ts"]
     },
     "strict": true,
     "noImplicitOverride": true,
@@ -23,5 +22,5 @@
     "types": ["node"]
   },
   "include": ["./**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist", "test"]
 }

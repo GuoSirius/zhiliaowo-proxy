@@ -29,7 +29,8 @@
     "dotenv": "^17.4.2",
     "hono": "^4.13.4",
     "ioredis": "^6.0.0",
-    "puppeteer": "^23.11.1"
+    "puppeteer": "^23.11.1",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",

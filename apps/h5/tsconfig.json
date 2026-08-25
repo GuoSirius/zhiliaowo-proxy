@@ -12,7 +12,6 @@
     "skipLibCheck": true,
     "noEmit": true,
     "types": ["node"],
-    "baseUrl": ".",
     "paths": {
       "@zhiliaowo/core": ["../../packages/core/src/index.ts"]
     }
