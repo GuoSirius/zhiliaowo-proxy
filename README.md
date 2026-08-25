@@ -1,124 +1,75 @@
-# zhiliaowo-proxy
+# 知了窝 H5 生成器（pnpm monorepo）
 
-知了窝开放平台的 **BFF 代理服务**。把知了窝的开放 API 封装成本项目可控的接口，
-对外提供「配置驱动、多 brand、可独立部署、可无限扩展」的文献数据服务。
+统一的 H5 生成器仓库：**后端代理 + 管理后台 + 展示页 + 共享层** 全部在一个 pnpm workspace 内。
 
-## 为什么需要这一层
-
-- **鉴权隔离**：知了窝的 `appId` 是纯 API key 且无签名，绝不能进前端；由本服务持有。
-- **缓存**：文献数据更新慢，本服务按「brand × 接口」缓存，降低上游压力。
-- **裁剪聚合**：只回传前端所需，统一错误与状态码。
-- **多 brand 扩展**：新增品牌零业务改动，只改配置 + 环境变量。
-
-## 架构
+## 目录结构
 
 ```
-品牌站前端 ──> 本服务 (/api/v1/:site/xxx) ──> 知了窝开放 API
-                ├─ 鉴权隔离(appId 仅后端)
-                ├─ brand 映射(按 site 选)
-                └─ 缓存层(memory / redis 无缝切换)
-
-品牌站前端 ──iframe──> 本服务 (/w/:site/*) ──302──> 知了窝开放组件 v_widget
-                └─ appId / brand 由后端注入，前端源码零泄露
+zhiliaowo-proxy/                 # 单体仓库根（同时是 pnpm workspace 根）
+├── pnpm-workspace.yaml          # packages: ['apps/*','packages/*']
+├── package.json                 # 根：仅编排脚本（dev:proxy / dev:admin / dev:h5 / build）
+├── .npmrc                       # 走 npmmirror 镜像，适配国内网络
+├── apps/
+│   ├── proxy/                   # 后端：Hono BFF（原 zhiliaowo-proxy）+ h5 管理模块
+│   │   ├── index.ts             # 服务入口
+│   │   ├── lib/ routes/ config/ # 原代理能力（多 brand、缓存抽象）
+│   │   └── h5/                  # H5 文档 CRUD / 发布 / 导出 / 对接知了窝开放 API
+│   ├── admin/                   # 管理后台（Vue3 + Vite + UnoCSS + Pinia）
+│   └── h5/                      # 展示页（Vue3 + Vite + UnoCSS）
+└── packages/
+    └── core/                    # 共享层 @zhiliaowo/core
+        ├── src/                 # types.ts / validate.ts(zod) / blocks.ts
+        └── specs/               # 《知了窝 H5 数据契约》《区块库 API 规范》
 ```
 
-## 接口列表
+## 依赖关系
 
-| 方法 | 路径 | 对应知了窝 API |
-|---|---|---|
-| GET | `/api/v1/:site/statistics` | 2.1 品牌文献统计 |
-| GET | `/api/v1/:site/cite-stat?sku=` | 2.2 品牌+SPU 引用概况 |
-| GET | `/api/v1/:site/paper-sum` | 2.3 历年累计数量 |
-| GET | `/api/v1/:site/paper-year` | 2.4 年度数量 |
-| GET | `/api/v1/:site/goods-cite-num` | 2.5 产品文献引用数量 |
-| GET | `/api/v1/:site/papers` | 2.6 品牌文献列表 |
-| GET | `/api/v1/:site/product-papers?sku=` | 2.7 产品文献列表 |
+`apps/proxy`、`apps/admin`、`apps/h5` 均通过 `workspace:*` 依赖 `@zhiliaowo/core`。
+共享层以 **TypeScript 源码** 形式被消费（Vite alias + tsconfig paths + pnpm 软链），改 core 即全端热更，无需预编译。
 
-### 开放组件（iframe）302 分发
-
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `/w/:site/*` | 开放组件（iframe）302 分发：`appId` / `brand` 由后端注入，原始 query（`sku` / `lang` 等）透传 |
-
-前端 iframe 只写自家域名（如 `/w/elab/brand/statistics`），`appId` 不进入前端源码或构建产物，满足「appId 不落前端」的核心诉求。
-
-## 快速开始
+## 常用命令
 
 ```bash
-npm install
-cp .env.example .env      # 填入各 brand 的 appId
-npm run dev               # tsx watch，默认 :3000
+pnpm install                 # 安装全部 workspace 依赖并软链 core（首次必跑，会触发原生构建脚本）
+
+pnpm dev                     # 一条命令并行启动全部开发环境（proxy + admin + h5）
+# 也可单独启动：
+pnpm dev:proxy              # 启动后端（tsx watch，默认 :3000）
+pnpm dev:admin              # 启动管理后台（:5173，/api 代理到 :3000）
+pnpm dev:h5                 # 启动展示页（:5174）
+
+pnpm -r build               # 全部构建
+pnpm -r typecheck           # 全部类型检查
+pnpm upgrade                # 把所有依赖（含 catalog）升级到最新版本
+pnpm release                # 交互式发版（见下方「提交 / 发布 / 版本同步」）
 ```
 
-健康检查：`GET /health`
+## 端口与配置（统一管理）
 
-环境变量：`PORT` 改端口；`HOST` 改绑定地址（默认 `0.0.0.0`，同时覆盖 `127.0.0.1` / `localhost` / 本机 LAN IP）；`ZLIW_API_BASE` 改开放 API 版本（默认 `v12`）；`ZLIW_WIDGET_BASE` 改开放组件（iframe）基址（默认 `v11`）。
+| 服务 | 变量 | 默认 | 说明 |
+| --- | --- | --- | --- |
+| 后端 proxy (Hono) | `PORT` | `3000` | 根 `.env` 中配置，admin 的 `/api` 代理指向它 |
+| 管理后台 admin (Vite) | `DEV_PORT_ADMIN` | `5173` | 根 `.env` 中配置 |
+| 展示页 h5 (Vite) | `DEV_PORT_H5` | `5174` | 根 `.env` 中配置 |
+| admin 反向代理目标 | `DEV_PORT_PROXY` | `3000` | 与 `PORT` 保持一致 |
 
-## 接口示例（curl）
+> 三个服务端口**互不冲突**（proxy 3000 / admin 5173 / h5 5174），无需修改代码即可换端口——改根 `.env` 对应变量后重启即可。
 
-下面以 `elab` 站点、`http://localhost:3000` 为例（`site` 换成实际站点 key）。
+## 依赖管理（pnpm catalog）
 
-```bash
-# 健康检查
-curl http://localhost:3000/health
+共享依赖（vue / pinia / vite / typescript / unocss / zod / commitlint / changelogen / husky 等）的版本在 **`pnpm-workspace.yaml` 的 `catalog:`** 中集中声明，各包以 `"catalog:"` 引用。升级只需改 `catalog:` 一处再 `pnpm install`；或跑 `pnpm upgrade` 全量升最新。仅 proxy 专属的运行时依赖（hono / better-sqlite3 / ioredis / puppeteer / dotenv / tsx）保留在 `apps/proxy/package.json`。
 
-# 2.1 品牌文献统计
-curl http://localhost:3000/api/v1/elab/statistics
+## 环境变量（单一来源）
 
-# 2.2 品牌 + SPU 引用概况（sku 可选）
-curl "http://localhost:3000/api/v1/elab/cite-stat?sku=E-ABcl-0001"
+所有 app 共用仓库根目录的 **`.env`**（示例见 `.env.example`，已被 `.gitignore` 忽略）。proxy 通过 `dotenv` 显式加载根 `.env`；admin / h5 的 Vite 经 `envDir` 指向根 `.env`，因此 `VITE_API_BASE` 等前端变量也统一在此配置。
 
-# 2.3 历年累计数量
-curl http://localhost:3000/api/v1/elab/paper-sum
+## 提交 / 发布 / 版本同步
 
-# 2.4 年度数量
-curl http://localhost:3000/api/v1/elab/paper-year
+- **提交**：约定式提交（commitlint 门禁），husky 在 `prepare` 时安装。
+- **发布**：`pnpm release` 交互式选择 patch / minor / major → 门禁跑 `typecheck` + `test` → changelogen 写中文 CHANGELOG 并 bump **根包**版本 → **自动把 `apps/proxy`、`apps/admin`、`apps/h5`、`packages/core` 的 version 同步为同一新版本**（保证发布一致）→ 提交 + 打 `vX.Y.Z` tag + 推送。
+- **版本一致性**：五个包的版本号在每次发布时强制对齐，避免各包版本漂移。
 
-# 2.5 产品文献引用数量
-curl http://localhost:3000/api/v1/elab/goods-cite-num
+## 说明 / 后续
 
-# 2.6 品牌文献列表
-curl http://localhost:3000/api/v1/elab/papers
-
-# 2.7 产品文献列表（sku 必填）
-curl "http://localhost:3000/api/v1/elab/product-papers?sku=E-ABcl-0001"
-
-# 开放组件（iframe）302 分发：直接重定向到知了窝 v_widget
-# -I 看 302 Location；前端 iframe 写 /w/elab/brand/statistics 即可，appId 由后端注入
-curl -I "http://localhost:3000/w/elab/brand/statistics"
-```
-
-所有接口响应统一为信封结构 `{ "code": number, "message": string, "data": <真实数据 | null> }`：成功 `code=200` 且业务数据在 `data`；失败 `data=null`（或附加上下文），`code` 同时作为 HTTP 状态码（404 未知 site / 500 缺 env / 502 上游异常）。无论成功失败结构一致，真实数据始终在 `data` 中。
-
-## 扩展一个新 brand（零业务改动）
-
-1. `src/config/brands.ts` 的 `BRANDS` 加一项（key / label / brand / appIdEnv）
-2. `.env` 增加对应的 appId 环境变量（名称即该项配置的 `appIdEnv`，如 `ZLIW_ELAB_APPID=<...>`）
-3. 完成。路由、缓存、错误处理自动复用。
-
-> `brand` 值需与知了窝「官方校验通过的品牌名称」完全一致，找对接人确认。
-
-## 缓存无缝切换
-
-- 默认 `CACHE_DRIVER=memory`（进程内，零依赖）
-- 设 `CACHE_DRIVER=redis` + `CACHE_REDIS_URL=...` 即切到 Redis
-- 业务代码只依赖 `Cache` 接口，切换零改动；未装/未配置时自动回退 memory。
-
-## 部署
-
-**pm2**（配合宝塔 Windows 面板）：
-```bash
-npm run build
-pm2 start deployments/ecosystem.config.cjs
-```
-
-**Docker**：
-```bash
-docker build -t zhiliaowo-proxy .
-docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
-```
-
-## 提交规范
-
-约定式提交（commitlint 校验）：`feat:` / `fix:` / `chore:` 等。
-`npm run release` 生成 CHANGELOG.md 并打 tag。
+- 后端 `proxy` 当前以 `tsx` 直接跑 TS（含 core 源码）。生产 `node dist/index.js` 需先把 `packages/core` 编译为 JS，或改用 `tsx` 启动——待接入真实导出（PNG / 静态 HTML）时一并定。
+- 目录演进：proxy / template / core 三仓 → 合并为单 pnpm 仓库（姿势 B），保留 `zhiliaowo-proxy` 仓名与远程。
