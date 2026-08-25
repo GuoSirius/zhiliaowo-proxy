@@ -22,8 +22,8 @@ export default defineConfig(({ mode }) => {
     server: {
       host: true,
       port: adminPort,
-      // 通过局域网 IP 访问时 HMR 客户端需连回同一 IP（默认会指向 localhost 导致 WS 握手失败）
-      hmr: { host: true },
+      // 允许任意 Host（含局域网 IP），避免 Vite 主机校验拦截 HMR WebSocket 升级
+      allowedHosts: true,
       proxy: {
         // 管理后台 API 代理到 zhiliaowo-proxy（端口由 DEV_PORT_PROXY 统一管理）
         '/api': `http://localhost:${proxyPort}`,
