@@ -13,7 +13,7 @@
  * 纯 Node 内置能力实现（无第三方依赖），交互部分用 raw mode 处理方向键。
  */
 import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 
@@ -61,6 +61,23 @@ function bump(version, type) {
   if (type === 'major') return `${maj + 1}.0.0`;
   if (type === 'minor') return `${maj}.${min + 1}.0`;
   return `${maj}.${min}.${pat + 1}`;
+}
+
+/** 发版时把所有 workspace 包的 version 与根包对齐，避免各包版本漂移 */
+const WORKSPACE_PKGS = [
+  'apps/proxy/package.json',
+  'apps/admin/package.json',
+  'apps/h5/package.json',
+  'packages/core/package.json',
+];
+
+function syncVersions(version) {
+  for (const rel of WORKSPACE_PKGS) {
+    const p = JSON.parse(readFileSync(rel, 'utf8'));
+    p.version = version;
+    writeFileSync(rel, JSON.stringify(p, null, 2) + '\n');
+    console.log(`  • ${rel} → ${version}`);
+  }
 }
 
 /** 取上次 tag 到 HEAD 的提交，无 tag 则取全部 */
@@ -174,9 +191,9 @@ function selectRelease(currentVersion, commits) {
 // ---------- 主流程 ----------
 
 async function main() {
-  // 1. 门禁
-  run('npm run typecheck');
-  run('npm test');
+  // 1. 门禁（monorepo：所有 workspace 跑类型检查与测试）
+  run('pnpm -r typecheck');
+  run('pnpm -r test');
 
   // 2. 未提交检测
   const status = sh('git status --porcelain');
@@ -210,10 +227,12 @@ async function main() {
   const newVersion = bump(currentVersion, selected);
   process.stdout.write(`\n\n确认发布 v${newVersion}\n`);
 
-  // 4. 自动发布：交给 changelogen 按选定类型 bump 版本号 + 增量写中文 CHANGELOG（与 changelog.config.js 对齐）
-  run(`npx changelogen --${selected} --bump`);
+  // 4. 自动发布：changelogen 按选定类型 bump 根包版本号 + 增量写中文 CHANGELOG（与 changelog.config.js 对齐）
+  run(`pnpm exec changelogen --${selected} --bump`);
+  //    再把所有 workspace 包（proxy/admin/h5/core）的 version 同步为同一新版本，保证发布一致
+  syncVersions(newVersion);
 
-  run('git add package.json CHANGELOG.md');
+  run(`git add package.json CHANGELOG.md ${WORKSPACE_PKGS.join(' ')}`);
   execSync(`git commit -m ${JSON.stringify(`chore(release): v${newVersion}`)}`, { stdio: 'inherit' });
   run(`git tag v${newVersion}`);
 
