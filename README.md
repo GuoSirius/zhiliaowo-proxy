@@ -17,6 +17,9 @@
                 ├─ 鉴权隔离(appId 仅后端)
                 ├─ brand 映射(按 site 选)
                 └─ 缓存层(memory / redis 无缝切换)
+
+品牌站前端 ──iframe──> 本服务 (/w/:site/*) ──302──> 知了窝开放组件 v_widget
+                └─ appId / brand 由后端注入，前端源码零泄露
 ```
 
 ## 接口列表
@@ -31,6 +34,14 @@
 | GET | `/api/v1/:site/papers` | 2.6 品牌文献列表 |
 | GET | `/api/v1/:site/product-papers?sku=` | 2.7 产品文献列表 |
 
+### 开放组件（iframe）302 分发
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/w/:site/*` | 开放组件（iframe）302 分发：`appId` / `brand` 由后端注入，原始 query（`sku` / `lang` 等）透传 |
+
+前端 iframe 只写自家域名（如 `/w/elab/brand/statistics`），`appId` 不进入前端源码或构建产物，满足「appId 不落前端」的核心诉求。
+
 ## 快速开始
 
 ```bash
@@ -41,10 +52,12 @@ npm run dev               # tsx watch，默认 :3000
 
 健康检查：`GET /health`
 
+环境变量：`PORT` 改端口；`HOST` 改绑定地址（默认 `0.0.0.0`，同时覆盖 `127.0.0.1` / `localhost` / 本机 LAN IP）；`ZLIW_API_BASE` 改开放 API 版本（默认 `v12`）。
+
 ## 扩展一个新 brand（零业务改动）
 
 1. `src/config/brands.ts` 的 `BRANDS` 加一项（key / label / brand / appIdEnv）
-2. `.env` 增加对应的 `APPID` 环境变量
+2. `.env` 增加对应的 appId 环境变量（名称即该项配置的 `appIdEnv`，如 `ZLIW_ELAB_APPID=<...>`）
 3. 完成。路由、缓存、错误处理自动复用。
 
 > `brand` 值需与知了窝「官方校验通过的品牌名称」完全一致，找对接人确认。
