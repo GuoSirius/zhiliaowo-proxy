@@ -1,0 +1,42 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# pnpm v10+：原生构建脚本白名单必须放在 workspace 配置里（package.json 的 pnpm 字段已失效）
+# 解决安装时的 ERR_PNPM_IGNORED_BUILDS（better-sqlite3 / esbuild / puppeteer / vue-demi）
+onlyBuiltDependencies:
+  - better-sqlite3
+  - esbuild
+  - puppeteer
+  - vue-demi
+
+# 共享依赖版本目录（单一事实源）：各包用 "catalog:" 引用，
+# 升级只需在此统一改一处，再跑 `pnpm up -r --latest` 即可全量更新。
+catalog:
+  # 类型 / 构建（全包共用）
+  typescript: ^7.0.2
+  "@types/node": ^26.3.0
+  # 前端共用
+  vue: ^3.5.13
+  pinia: ^2.3.0
+  vite: ^6.0.0
+  "@vitejs/plugin-vue": ^5.2.0
+  vue-tsc: ^2.1.10
+  unocss: ^0.65.0
+  # 提交 / 发布（根层工具）
+  "@commitlint/cli": ^21.2.2
+  "@commitlint/config-conventional": ^21.2.2
+  changelogen: ^0.6.2
+  husky: ^9.1.7
+  # 共享层
+  zod: ^3.23.8
+
+minimumReleaseAgeExclude:
+  - '@types/node@26.3.0'
+  - hono@4.13.4
+
+allowBuilds:
+  better-sqlite3: set this to true or false
+  esbuild: set this to true or false
+  puppeteer: set this to true or false
+  vue-demi: set this to true or false

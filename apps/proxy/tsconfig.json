@@ -5,7 +5,11 @@
     "moduleResolution": "NodeNext",
     "lib": ["ES2022"],
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@zhiliaowo/core": ["../../packages/core/src/index.ts"]
+    },
     "strict": true,
     "noImplicitOverride": true,
     "noUnusedLocals": true,
@@ -18,6 +22,6 @@
     "sourceMap": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts"],
+  "include": ["./**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

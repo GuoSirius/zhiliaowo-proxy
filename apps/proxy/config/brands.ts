@@ -52,3 +52,14 @@ export function resolveBrand(site: string): ResolvedBrand {
   }
   return { ...cfg, appId };
 }
+
+/** 按知了窝标准品牌名（brand 参数值）反查并解析（h5 模块使用 theme.brandKey） */
+export function resolveBrandByName(brand: string): ResolvedBrand {
+  const cfg = Object.values(BRANDS).find(
+    (b) => b.brand.toLowerCase() === brand.toLowerCase(),
+  );
+  if (!cfg) {
+    throw new ApiError(404, `unknown brand: ${brand}`);
+  }
+  return resolveBrand(cfg.key);
+}
