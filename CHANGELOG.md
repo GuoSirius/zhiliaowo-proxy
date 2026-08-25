@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.1.0
+
+[compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v1.0.2...v1.1.0)
+
+### 🚀 新功能 (Features)
+
+- Add unified response envelope helper ([e1c1d80](https://github.com/GuoSirius/zhiliaowo-proxy/commit/e1c1d80))
+- Apply code message data envelope to routes and handlers ([a2fb487](https://github.com/GuoSirius/zhiliaowo-proxy/commit/a2fb487))
+
+### ❤️ Contributors
+
+- 郭之存 ([@siriusSupreme](https://github.com/siriusSupreme))
+
 ## v1.0.2
 
 [compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v1.0.1...v1.0.2)
