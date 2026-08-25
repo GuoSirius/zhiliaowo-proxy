@@ -64,6 +64,57 @@ h5App.post('/', async (c) => {
   }
 });
 
+// ---------- 品牌主题（集合路由必须在 /:id 之前注册，否则会被 RegExpRouter 的 /([^/]+) 抢匹配） ----------
+h5App.get('/brands', (c) => ok(c, listBrands()));
+h5App.get('/brands/:key', (c) => {
+  const b = getBrand(c.req.param('key'));
+  if (!b) return fail(c, 404, 'brand not found');
+  return ok(c, b);
+});
+h5App.post('/brands', async (c) => {
+  try {
+    return ok(c, createBrand(await c.req.json()), 'created');
+  } catch (e) {
+    if (e instanceof ZodError) return fail(c, 400, '校验失败：' + e.message);
+    throw e;
+  }
+});
+h5App.put('/brands/:key', async (c) => {
+  try {
+    return ok(c, updateBrand(c.req.param('key'), await c.req.json()), 'updated');
+  } catch (e) {
+    if ((e as Error).message.startsWith('brand not found')) return fail(c, 404, (e as Error).message);
+    throw e;
+  }
+});
+h5App.delete('/brands/:key', (c) => {
+  deleteBrand(c.req.param('key'));
+  return ok(c, null, 'deleted');
+});
+
+// ---------- 模板 ----------
+h5App.get('/templates', (c) => ok(c, listTemplates()));
+h5App.get('/templates/:id', (c) => {
+  const t = getTemplate(c.req.param('id'));
+  if (!t) return fail(c, 404, 'template not found');
+  return ok(c, t);
+});
+h5App.post('/templates', async (c) => {
+  try {
+    const body = await c.req.json();
+    if (!body.name || !body.doc) return fail(c, 400, '需要 name 与 doc');
+    return ok(c, createTemplate(body.name, body.doc), 'created');
+  } catch (e) {
+    if (e instanceof ZodError) return fail(c, 400, '校验失败：' + e.message);
+    throw e;
+  }
+});
+h5App.delete('/templates/:id', (c) => {
+  deleteTemplate(c.req.param('id'));
+  return ok(c, null, 'deleted');
+});
+
+// ---------- H5 文档 CRUD / 列表（item 路由放集合路由之后） ----------
 h5App.get('/:id', (c) => {
   const doc = getH5(c.req.param('id'));
   if (!doc) return fail(c, 404, 'h5 not found');
@@ -131,56 +182,6 @@ h5App.get('/:id/export', async (c) => {
   } catch (e) {
     return fail(c, 500, '导出失败：' + (e as Error).message);
   }
-});
-
-// ---------- 品牌主题 ----------
-h5App.get('/brands', (c) => ok(c, listBrands()));
-h5App.get('/brands/:key', (c) => {
-  const b = getBrand(c.req.param('key'));
-  if (!b) return fail(c, 404, 'brand not found');
-  return ok(c, b);
-});
-h5App.post('/brands', async (c) => {
-  try {
-    return ok(c, createBrand(await c.req.json()), 'created');
-  } catch (e) {
-    if (e instanceof ZodError) return fail(c, 400, '校验失败：' + e.message);
-    throw e;
-  }
-});
-h5App.put('/brands/:key', async (c) => {
-  try {
-    return ok(c, updateBrand(c.req.param('key'), await c.req.json()), 'updated');
-  } catch (e) {
-    if ((e as Error).message.startsWith('brand not found')) return fail(c, 404, (e as Error).message);
-    throw e;
-  }
-});
-h5App.delete('/brands/:key', (c) => {
-  deleteBrand(c.req.param('key'));
-  return ok(c, null, 'deleted');
-});
-
-// ---------- 模板 ----------
-h5App.get('/templates', (c) => ok(c, listTemplates()));
-h5App.get('/templates/:id', (c) => {
-  const t = getTemplate(c.req.param('id'));
-  if (!t) return fail(c, 404, 'template not found');
-  return ok(c, t);
-});
-h5App.post('/templates', async (c) => {
-  try {
-    const body = await c.req.json();
-    if (!body.name || !body.doc) return fail(c, 400, '需要 name 与 doc');
-    return ok(c, createTemplate(body.name, body.doc), 'created');
-  } catch (e) {
-    if (e instanceof ZodError) return fail(c, 400, '校验失败：' + e.message);
-    throw e;
-  }
-});
-h5App.delete('/templates/:id', (c) => {
-  deleteTemplate(c.req.param('id'));
-  return ok(c, null, 'deleted');
 });
 
 // ---------- 知了窝开放平台代理 ----------
