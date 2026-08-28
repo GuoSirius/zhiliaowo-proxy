@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test",
     "sync": "tsx scripts/sync.ts",
-    "sync:current": "tsx scripts/sync-current.ts"
+    "sync:current": "tsx scripts/sync-current.ts",
+    "recompute": "tsx scripts/recompute-agg.ts"
   },
   "keywords": [
     "zhiliaowo",
