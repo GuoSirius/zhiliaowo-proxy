@@ -28,12 +28,15 @@ export function getRangeAgg(
   startMonth: number,
   endMonth: number,
 ): RangeAgg {
-  const rows = reportDb
-    .prepare(
-      `SELECT paper_count, total_factor, factor_ge10, max_factor, journal_counts, hotspot_counts
-       FROM zlw_papers_agg WHERE brand=? AND year=? AND month BETWEEN ? AND ?`,
-    )
-    .all(brand, year, startMonth, endMonth) as Array<{
+  // 全年区间（默认）自动含入 month=0 哨兵桶：pubTime 异常文献也计入年总量，避免静默丢数；
+  // 季度/自定义区间（非全年）不含，避免未知月份被重复计入各月视图。
+  const includeUnknown = startMonth <= 1 && endMonth >= 12;
+  const sql = includeUnknown
+    ? `SELECT paper_count, total_factor, factor_ge10, max_factor, journal_counts, hotspot_counts
+       FROM zlw_papers_agg WHERE brand=? AND year=? AND (month BETWEEN ? AND ? OR month = 0)`
+    : `SELECT paper_count, total_factor, factor_ge10, max_factor, journal_counts, hotspot_counts
+       FROM zlw_papers_agg WHERE brand=? AND year=? AND month BETWEEN ? AND ?`;
+  const rows = reportDb.prepare(sql).all(brand, year, startMonth, endMonth) as Array<{
     paper_count: number;
     total_factor: number;
     factor_ge10: number;

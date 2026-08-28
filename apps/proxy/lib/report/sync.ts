@@ -445,7 +445,8 @@ export async function syncYear(
 
   const hotspots = loadHotspots(brand.key);
   const aggTx = reportDb.transaction(() => {
-    for (let m = 1; m <= 12; m++) {
+    // 含 month=0 哨兵桶：pubTime 异常无法解析月份的文献（仍计入年总量，避免静默丢数）
+    for (let m = 0; m <= 12; m++) {
       const agg = computeMonthAgg(brand.brand, year, m, hotspots);
       upsertAggStmt.run({
         brand: brand.brand,
@@ -508,7 +509,8 @@ export function recomputeYearAgg(
   const syncedAt = new Date().toISOString();
   const state = getSyncState(brand.brand, year);
   const aggTx = reportDb.transaction(() => {
-    for (let m = 1; m <= 12; m++) {
+    // 含 month=0 哨兵桶：pubTime 异常无法解析月份的文献（仍计入年总量，避免静默丢数）
+    for (let m = 0; m <= 12; m++) {
       const agg = computeMonthAgg(brand.brand, year, m, hotspots);
       upsertAggStmt.run({
         brand: brand.brand,
