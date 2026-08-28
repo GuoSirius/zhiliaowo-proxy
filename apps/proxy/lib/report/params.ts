@@ -28,10 +28,16 @@ export function parseReportCtx(c: Context): ReportCtx {
     yearParam != null ? Number(yearParam) : (latestSyncedYear(brand.brand) ?? new Date().getFullYear());
   if (!Number.isInteger(year)) throw new ApiError(400, 'year 参数无效');
 
-  const startMonth = Math.min(12, Math.max(1, Number(c.req.query('startMonth') ?? 1)));
-  const endMonth = Math.min(12, Math.max(1, Number(c.req.query('endMonth') ?? 12)));
-  if (!Number.isInteger(startMonth) || !Number.isInteger(endMonth)) {
-    throw new ApiError(400, 'startMonth/endMonth 参数无效');
+  // 缺失时用默认值；显式传值则必须落在 1-12，越界直接报错（不再静默 clamp，避免口径悄悄偏移）
+  const startMonthRaw = c.req.query('startMonth');
+  const endMonthRaw = c.req.query('endMonth');
+  const startMonth = startMonthRaw != null ? Number(startMonthRaw) : 1;
+  const endMonth = endMonthRaw != null ? Number(endMonthRaw) : 12;
+  if (!Number.isInteger(startMonth) || startMonth < 1 || startMonth > 12) {
+    throw new ApiError(400, 'startMonth 必须是 1-12 之间的整数');
+  }
+  if (!Number.isInteger(endMonth) || endMonth < 1 || endMonth > 12) {
+    throw new ApiError(400, 'endMonth 必须是 1-12 之间的整数');
   }
   if (endMonth < startMonth) throw new ApiError(400, 'endMonth 不能小于 startMonth');
   return { brand, year, startMonth, endMonth };
