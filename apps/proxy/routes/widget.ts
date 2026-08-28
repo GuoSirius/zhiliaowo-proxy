@@ -9,7 +9,7 @@ export const widgetRoute = new Hono();
 /**
  * 开放组件（iframe）302 分发：/w/:site/*
  *
- * 前端 iframe 只写自家域名（如 /w/elab/brand/statistics），appId 不落前端源码；
+ * 前端 iframe 只写自家域名（如 /w/elabscience/brand/statistics），appId 不落前端源码；
  * 后端按 site 从 BRANDS 取 brand + appId，拼好知了窝组件 URL 后 302 跳转。
  * 原始 query（sku / lang 等）透传，appId / brand 由后端注入，不会被覆盖。
  *

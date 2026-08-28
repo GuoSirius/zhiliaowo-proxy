@@ -40,7 +40,7 @@
 |---|---|---|
 | GET | `/w/:site/*` | 开放组件（iframe）302 分发：`appId` / `brand` 由后端注入，原始 query（`sku` / `lang` 等）透传 |
 
-前端 iframe 只写自家域名（如 `/w/elab/brand/statistics`），`appId` 不进入前端源码或构建产物，满足「appId 不落前端」的核心诉求。
+前端 iframe 只写自家域名（如 `/w/elabscience/brand/statistics`），`appId` 不进入前端源码或构建产物，满足「appId 不落前端」的核心诉求。
 
 ## 快速开始
 
@@ -56,36 +56,36 @@ npm run dev               # tsx watch，默认 :3000
 
 ## 接口示例（curl）
 
-下面以 `elab` 站点、`http://localhost:3000` 为例（`site` 换成实际站点 key）。
+下面以 `elabscience` 站点、`http://localhost:3000` 为例（`site` 换成实际站点 key）。
 
 ```bash
 # 健康检查
 curl http://localhost:3000/health
 
 # 2.1 品牌文献统计
-curl http://localhost:3000/api/v1/elab/statistics
+curl http://localhost:3000/api/v1/elabscience/statistics
 
 # 2.2 品牌 + SPU 引用概况（sku 可选）
-curl "http://localhost:3000/api/v1/elab/cite-stat?sku=E-ABcl-0001"
+curl "http://localhost:3000/api/v1/elabscience/cite-stat?sku=E-ABcl-0001"
 
 # 2.3 历年累计数量
-curl http://localhost:3000/api/v1/elab/paper-sum
+curl http://localhost:3000/api/v1/elabscience/paper-sum
 
 # 2.4 年度数量
-curl http://localhost:3000/api/v1/elab/paper-year
+curl http://localhost:3000/api/v1/elabscience/paper-year
 
 # 2.5 产品文献引用数量
-curl http://localhost:3000/api/v1/elab/goods-cite-num
+curl http://localhost:3000/api/v1/elabscience/goods-cite-num
 
 # 2.6 品牌文献列表
-curl http://localhost:3000/api/v1/elab/papers
+curl http://localhost:3000/api/v1/elabscience/papers
 
 # 2.7 产品文献列表（sku 必填）
-curl "http://localhost:3000/api/v1/elab/product-papers?sku=E-ABcl-0001"
+curl "http://localhost:3000/api/v1/elabscience/product-papers?sku=E-ABcl-0001"
 
 # 开放组件（iframe）302 分发：直接重定向到知了窝 v_widget
-# -I 看 302 Location；前端 iframe 写 /w/elab/brand/statistics 即可，appId 由后端注入
-curl -I "http://localhost:3000/w/elab/brand/statistics"
+# -I 看 302 Location；前端 iframe 写 /w/elabscience/brand/statistics 即可，appId 由后端注入
+curl -I "http://localhost:3000/w/elabscience/brand/statistics"
 ```
 
 所有接口响应统一为信封结构 `{ "code": number, "message": string, "data": <真实数据 | null> }`：成功 `code=200` 且业务数据在 `data`；失败 `data=null`（或附加上下文），`code` 同时作为 HTTP 状态码（404 未知 site / 500 缺 env / 502 上游异常）。无论成功失败结构一致，真实数据始终在 `data` 中。

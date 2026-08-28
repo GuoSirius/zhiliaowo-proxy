@@ -6,7 +6,7 @@ import { ApiError } from '../types.js';
  * - appIdEnv：该 brand 的 appId 所在环境变量名（appId 绝不落前端/代码）
  */
 export interface BrandConfig {
-  /** 路由 site key，如 elab */
+  /** 路由 site key，如 elabscience */
   key: string;
   /** 展示名 */
   label: string;
@@ -22,8 +22,8 @@ export interface BrandConfig {
  * brand 值需与知了窝后台完全一致（区分大小写），待对接人确认 Elabscience/Procell 的标准名。
  */
 export const BRANDS: Record<string, BrandConfig> = {
-  elab: {
-    key: 'elab',
+  elabscience: {
+    key: 'elabscience',
     label: 'Elabscience',
     brand: 'Elabscience',
     appIdEnv: 'ZLIW_ELAB_APPID',
