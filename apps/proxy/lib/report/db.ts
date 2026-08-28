@@ -45,11 +45,11 @@ export function migrateReportDb(): void {
       total_factor   REAL,
       factor_ge10    INTEGER,
       max_factor     REAL,
-      avg_factor     REAL,
       journal_counts TEXT,
       hotspot_counts TEXT,
+      hotspot_max_if TEXT,
       computed_at    TEXT,
-      source_version TEXT,
+      synced_total   TEXT,
       PRIMARY KEY (brand, year, month)
     );
 
@@ -63,6 +63,35 @@ export function migrateReportDb(): void {
       PRIMARY KEY (brand, year)
     );
   `);
+
+  // 对已有库做向后兼容迁移（新库由上面 CREATE 直接建好，这里不执行）
+  applyAggColumnMigrations();
+}
+
+/**
+ * 聚合表列迁移：
+ * - F7：source_version（实际存的是同步总数，语义误导）→ 改名 synced_total
+ * - F13：删除从不被读取的死列 avg_factor
+ * - F1：新增热点最高 IF 列 hotspot_max_if
+ * 全部带存在性守卫，可重复执行（幂等）。
+ */
+function applyAggColumnMigrations(): void {
+  const info = reportDb.pragma('table_info(zlw_papers_agg)') as Array<{ name: string }>;
+  const cols = new Set(info.map((c) => c.name));
+
+  if (cols.has('source_version') && !cols.has('synced_total')) {
+    reportDb.exec('ALTER TABLE zlw_papers_agg RENAME COLUMN source_version TO synced_total');
+    cols.delete('source_version');
+    cols.add('synced_total');
+  }
+  if (cols.has('avg_factor')) {
+    reportDb.exec('ALTER TABLE zlw_papers_agg DROP COLUMN avg_factor');
+    cols.delete('avg_factor');
+  }
+  if (!cols.has('hotspot_max_if')) {
+    reportDb.exec('ALTER TABLE zlw_papers_agg ADD COLUMN hotspot_max_if TEXT');
+    cols.add('hotspot_max_if');
+  }
 }
 
 export interface SyncStateRow {

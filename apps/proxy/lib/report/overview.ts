@@ -94,7 +94,7 @@ export async function buildOverview(
   const trend = { year, range: { startMonth, endMonth }, decade, quarters };
 
   // 板块 4 研究热点
-  const allHotspots = getHotspotRangeStats(brandKey, year, startMonth, endMonth);
+  const allHotspots = getHotspotRangeStats(brand, year, startMonth, endMonth);
   const prevHotspotCounts = prev.hotspot_counts;
   const topHotspots = allHotspots.slice(0, 10).map((h) => {
     const pc = prevHotspotCounts[h.cn] ?? 0;

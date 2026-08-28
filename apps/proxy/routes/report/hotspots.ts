@@ -24,7 +24,7 @@ function pct(cur: number, prev: number, d = 1): number | null {
 reportHotspotsRoute.get('/:site/report/hotspots', async (c) => {
   const { brand, year, startMonth, endMonth } = parseReportCtx(c);
 
-  const cur = getHotspotRangeStats(brand.key, year, startMonth, endMonth);
+  const cur = getHotspotRangeStats(brand, year, startMonth, endMonth);
   const prev = getRangeAgg(brand.brand, year - 1, startMonth, endMonth);
   const curAgg = getRangeAgg(brand.brand, year, startMonth, endMonth);
 

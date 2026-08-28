@@ -65,9 +65,9 @@ interface AggData {
   total_factor: number;
   factor_ge10: number;
   max_factor: number;
-  avg_factor: number;
   journal_counts: Record<string, number>;
   hotspot_counts: Record<string, number>;
+  hotspot_max_if: Record<string, number>;
 }
 
 const upsertPaperStmt = reportDb.prepare(`
@@ -84,13 +84,14 @@ const upsertPaperStmt = reportDb.prepare(`
 
 const upsertAggStmt = reportDb.prepare(`
   INSERT INTO zlw_papers_agg
-    (brand, year, month, paper_count, total_factor, factor_ge10, max_factor, avg_factor, journal_counts, hotspot_counts, computed_at, source_version)
+    (brand, year, month, paper_count, total_factor, factor_ge10, max_factor, journal_counts, hotspot_counts, hotspot_max_if, computed_at, synced_total)
   VALUES
-    (@brand, @year, @month, @paper_count, @total_factor, @factor_ge10, @max_factor, @avg_factor, @journal_counts, @hotspot_counts, @computed_at, @source_version)
+    (@brand, @year, @month, @paper_count, @total_factor, @factor_ge10, @max_factor, @journal_counts, @hotspot_counts, @hotspot_max_if, @computed_at, @synced_total)
   ON CONFLICT(brand, year, month) DO UPDATE SET
     paper_count=excluded.paper_count, total_factor=excluded.total_factor, factor_ge10=excluded.factor_ge10,
-    max_factor=excluded.max_factor, avg_factor=excluded.avg_factor, journal_counts=excluded.journal_counts,
-    hotspot_counts=excluded.hotspot_counts, computed_at=excluded.computed_at, source_version=excluded.source_version
+    max_factor=excluded.max_factor, journal_counts=excluded.journal_counts,
+    hotspot_counts=excluded.hotspot_counts, hotspot_max_if=excluded.hotspot_max_if,
+    computed_at=excluded.computed_at, synced_total=excluded.synced_total
 `);
 
 const upsertStateStmt = reportDb.prepare(`
@@ -207,6 +208,7 @@ function computeMonthAgg(
   let max = 0;
   const journals: Record<string, number> = {};
   const hs: Record<string, number> = {};
+  const hsMaxIf: Record<string, number> = {};
   for (const r of rows) {
     count++;
     const f = r.factor == null ? 0 : Number(r.factor);
@@ -215,17 +217,19 @@ function computeMonthAgg(
     if (f > max) max = f;
     if (r.journal) journals[r.journal] = (journals[r.journal] ?? 0) + 1;
     const cn = classifyHotspot(r.title, hotspots);
-    if (cn) hs[cn] = (hs[cn] ?? 0) + 1;
+    if (cn) {
+      hs[cn] = (hs[cn] ?? 0) + 1;
+      if (f > (hsMaxIf[cn] ?? 0)) hsMaxIf[cn] = f;
+    }
   }
-  const avg = count ? total / count : 0;
   return {
     paper_count: count,
     total_factor: round(total),
     factor_ge10: ge10,
     max_factor: round(max),
-    avg_factor: round(avg),
     journal_counts: journals,
     hotspot_counts: hs,
+    hotspot_max_if: hsMaxIf,
   };
 }
 
@@ -386,12 +390,14 @@ export async function syncYear(
     duration_ms: null,
   });
 
-  const pageNums = Array.from({ length: totalPages }, (_, i) => i + 1);
   const fetchedRows: (PaperItem[] | undefined)[] = new Array(totalPages);
-  let pagesFetched = 0;
+  // F10：第 1 页已在上面抓取（first），直接复用，避免重复请求上游
+  fetchedRows[0] = first.data ?? [];
+  let pagesFetched = 1;
   let failedPages = 0;
   const elapsedAt = () => Date.now() - start;
 
+  const pageNums = Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) => i + 2); // 2..totalPages
   await mapWithConcurrency(pageNums, concurrency, async (pn) => {
     const t0 = Date.now();
     try {
@@ -456,11 +462,11 @@ export async function syncYear(
         total_factor: agg.total_factor,
         factor_ge10: agg.factor_ge10,
         max_factor: agg.max_factor,
-        avg_factor: agg.avg_factor,
         journal_counts: JSON.stringify(agg.journal_counts),
         hotspot_counts: JSON.stringify(agg.hotspot_counts),
+        hotspot_max_if: JSON.stringify(agg.hotspot_max_if),
         computed_at: syncedAt,
-        source_version: String(totalCount),
+        synced_total: String(totalCount),
       });
     }
   });
@@ -520,11 +526,11 @@ export function recomputeYearAgg(
         total_factor: agg.total_factor,
         factor_ge10: agg.factor_ge10,
         max_factor: agg.max_factor,
-        avg_factor: agg.avg_factor,
         journal_counts: JSON.stringify(agg.journal_counts),
         hotspot_counts: JSON.stringify(agg.hotspot_counts),
+        hotspot_max_if: JSON.stringify(agg.hotspot_max_if),
         computed_at: syncedAt,
-        source_version: String(state?.total_count ?? 0),
+        synced_total: String(state?.total_count ?? 0),
       });
     }
   });

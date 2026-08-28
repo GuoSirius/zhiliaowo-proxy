@@ -72,7 +72,7 @@ reportConclusionRoute.get('/:site/report/conclusion', async (c) => {
   const agg = getRangeAgg(brand.brand, year, startMonth, endMonth);
   const avgIf = agg.paper_count ? agg.total_factor / agg.paper_count : 0;
   const topJournals = getTopJournalsByFactor(brand.brand, year, startMonth, endMonth, 3);
-  const topHotspots = getHotspotRangeStats(brand.key, year, startMonth, endMonth)
+  const topHotspots = getHotspotRangeStats(brand, year, startMonth, endMonth)
     .slice(0, 10)
     .map((h) => ({ cn: h.cn, count: h.count, maxIf: h.maxIf }));
 
