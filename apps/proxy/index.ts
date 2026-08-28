@@ -23,6 +23,7 @@ import { reportTrendRoute } from './routes/report/trend.js';
 import { reportSummaryRoute } from './routes/report/summary.js';
 import { reportProductsRoute } from './routes/report/products.js';
 import { reportHotspotsRoute } from './routes/report/hotspots.js';
+import { reportConclusionRoute } from './routes/report/conclusion.js';
 import { widgetRoute } from './routes/widget.js';
 import { migrate } from './h5/store/db.js';
 import { migrateReportDb } from './lib/report/db.js';
@@ -62,6 +63,7 @@ app.route('/api/v1', reportTrendRoute);
 app.route('/api/v1', reportSummaryRoute);
 app.route('/api/v1', reportProductsRoute);
 app.route('/api/v1', reportHotspotsRoute);
+app.route('/api/v1', reportConclusionRoute);
 
 // 开放组件（iframe）302 分发：/w/:site/* → 知了窝 v_widget，appId 不落前端
 app.route('/w', widgetRoute);
