@@ -1,11 +1,11 @@
 import type { ResolvedBrand } from '../../config/brands.js';
-import { getClient } from '../../lib/client.js';
 import { getRangeAgg } from './agg.js';
 import { getHotspotRangeStats } from './hotspots.js';
 import { getRangeProductCounts } from './products.js';
 import { getTopJournalsByFactor, loadFeaturedJournals } from './journals.js';
 import { round, pct } from './calc.js';
 import { aiEnabled } from '../ai.js';
+import { buildTrend } from './trend.js';
 
 /**
  * 编排 6 个板块的数据（一次性返回，供前端整页渲染）。
@@ -39,48 +39,35 @@ export async function buildOverview(
   const avgCur = cur.paper_count ? cur.total_factor / cur.paper_count : 0;
   const avgPrev = prev.paper_count ? prev.total_factor / prev.paper_count : 0;
   const core = {
-    totalPapers: cur.paper_count,
-    totalIf: round(cur.total_factor),
-    ifGe10: cur.factor_ge10,
-    avgIf: round(avgCur),
-    maxIf: round(cur.max_factor),
-    yoy: {
-      totalPapers: { prev: prev.paper_count, rate: pct(cur.paper_count, prev.paper_count) },
-      totalIf: { prev: round(prev.total_factor), rate: pct(cur.total_factor, prev.total_factor) },
-      ifGe10: { prev: prev.factor_ge10, rate: pct(cur.factor_ge10, prev.factor_ge10) },
-      avgIf: { prev: round(avgPrev), rate: pct(avgCur, avgPrev) },
-      maxIf: { prev: round(prev.max_factor), rate: pct(cur.max_factor, prev.max_factor) },
+    totalPapers: {
+      value: cur.paper_count,
+      prevValue: prev.paper_count,
+      rate: pct(cur.paper_count, prev.paper_count),
+    },
+    totalIf: {
+      value: round(cur.total_factor),
+      prevValue: round(prev.total_factor),
+      rate: pct(cur.total_factor, prev.total_factor),
+    },
+    ifGe10: {
+      value: cur.factor_ge10,
+      prevValue: prev.factor_ge10,
+      rate: pct(cur.factor_ge10, prev.factor_ge10),
+    },
+    avgIf: {
+      value: round(avgCur),
+      prevValue: round(avgPrev),
+      rate: pct(avgCur, avgPrev),
+    },
+    maxIf: {
+      value: round(cur.max_factor),
+      prevValue: round(prev.max_factor),
+      rate: pct(cur.max_factor, prev.max_factor),
     },
   };
 
   // 板块 3 趋势（2.4 年度新增；上游偶发限流时降级为空，不影响其余板块）
-  let decade: Array<{ year: number; count: number }> = [];
-  try {
-    const series = await getClient().paperYear(brand);
-    decade = series
-      .map((p) => {
-        const o = p as Record<string, unknown>;
-        const yr = Number(o.year ?? o.name);
-        const cnt = Number(o.count ?? o.value);
-        return { year: yr, count: cnt };
-      })
-      .filter((p) => Number.isFinite(p.year) && Number.isFinite(p.count) && p.year <= year)
-      .sort((a, b) => a.year - b.year)
-      .slice(-10);
-  } catch (e) {
-    console.warn(`[overview] 2.4 年度趋势获取失败，降级为空: ${(e as Error).message}`);
-  }
-  const QUARTERS = [
-    { quarter: 1, label: 'Q1', start: 1, end: 3 },
-    { quarter: 2, label: 'Q2', start: 4, end: 6 },
-    { quarter: 3, label: 'Q3', start: 7, end: 9 },
-    { quarter: 4, label: 'Q4', start: 10, end: 12 },
-  ];
-  const quarters = QUARTERS.filter((q) => q.start <= endMonth && q.end >= startMonth).map((q) => {
-    const agg = getRangeAgg(brandName, year, q.start, q.end);
-    return { quarter: q.quarter, label: q.label, count: agg.paper_count };
-  });
-  const trend = { year, range: { startMonth, endMonth }, decade, quarters };
+  const trend = await buildTrend(brand, year, startMonth, endMonth);
 
   // 板块 4 研究热点
   const allHotspots = getHotspotRangeStats(brand, year, startMonth, endMonth);

@@ -159,8 +159,8 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 ### 板块要点（与讨论稿口径一致）
 
 - **板块 1 研究概述**：按 `config/journals/<brandKey>.json` 配置的「重点期刊」名单，对 `journal` 字段忽略大小写精确匹配统计篇数（如 Cell / Nature / STTT）。
-- **板块 2 核心数据**：总篇数、总 IF、IF≥10、平均 IF、最高 IF；同比为「去年同区间」对比（去年无数据则 `rate: null`）。
-- **板块 3 十年趋势**：2.4 年度新增取最近 10 年（按报告年截断，过滤报告年之后的不完整次年）；季度分布来自本地聚合。
+- **板块 2 核心数据**：总篇数、总 IF、IF≥10、平均 IF、最高 IF；每个指标返回 `{ value, prevValue, rate }`（同比为去年同区间，`prevValue<=0` 时 `rate: null`）。
+- **板块 3 十年趋势**：2.4 年度新增取最近 10 年（按报告年截断），每个年份追加 `percent`（该年 count / 10 年中最大 count，保留 1 位小数）；季度以 `endMonth` 为锚点取最近 4 个完整季度（若 `endMonth` 为当季末月则计入当季，否则从上一季度倒推），每条含 `year`。
 - **板块 4 研究热点**：`title` 本地词边界正则匹配 `config/hotspots/<brandKey>.json` 关键词表 → Top10（计数 + 最高 IF + 同比）。
   AI 兜底开关 `AI_HOTSPOT_FALLBACK=1` 且已配 `AI_API_KEY` 时，对本地零命中文献限量（默认 200 篇）送 AI 打标，结果合并进聚合；失败仅告警、不影响主流程。
 - **板块 5 产品引用**：解析 `products[].goodsSpu` 聚合按引用篇数 Top30 → 取上一年同区间同批货号算同比增长率 → 过滤负增长及无基线新品 → Top15。

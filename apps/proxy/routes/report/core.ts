@@ -22,17 +22,30 @@ reportCoreRoute.get('/:site/report/core', async (c) => {
 
   const data = {
     range: { year, startMonth, endMonth },
-    totalPapers: cur.paper_count,
-    totalIf: round(cur.total_factor),
-    ifGe10: cur.factor_ge10,
-    avgIf: round(avgCur),
-    maxIf: round(cur.max_factor),
-    yoy: {
-      totalPapers: { prev: prev.paper_count, rate: pct(cur.paper_count, prev.paper_count) },
-      totalIf: { prev: round(prev.total_factor), rate: pct(cur.total_factor, prev.total_factor) },
-      ifGe10: { prev: prev.factor_ge10, rate: pct(cur.factor_ge10, prev.factor_ge10) },
-      avgIf: { prev: round(avgPrev), rate: pct(avgCur, avgPrev) },
-      maxIf: { prev: round(prev.max_factor), rate: pct(cur.max_factor, prev.max_factor) },
+    totalPapers: {
+      value: cur.paper_count,
+      prevValue: prev.paper_count,
+      rate: pct(cur.paper_count, prev.paper_count),
+    },
+    totalIf: {
+      value: round(cur.total_factor),
+      prevValue: round(prev.total_factor),
+      rate: pct(cur.total_factor, prev.total_factor),
+    },
+    ifGe10: {
+      value: cur.factor_ge10,
+      prevValue: prev.factor_ge10,
+      rate: pct(cur.factor_ge10, prev.factor_ge10),
+    },
+    avgIf: {
+      value: round(avgCur),
+      prevValue: round(avgPrev),
+      rate: pct(avgCur, avgPrev),
+    },
+    maxIf: {
+      value: round(cur.max_factor),
+      prevValue: round(prev.max_factor),
+      rate: pct(cur.max_factor, prev.max_factor),
     },
   };
   return ok(c, data);
