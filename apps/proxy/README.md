@@ -160,11 +160,11 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 - **板块 5 产品引用**：解析 `products[].goodsSpu` 聚合按引用篇数 Top30 → 取上一年同区间同批货号算同比增长率 → 过滤负增长及无基线新品 → Top15。
   **仅返回货号（goodsSpu）+ 英文商品名（goodsLabel）**，中文名/分类由前端调网站接口获取。无去年同期基线时（单年部署）退化为按引用量降序取 Top15，`hasYoY=false`。
 - **板块 6 小结**：结构化部分（统计 + Top3 期刊 by IF + Top10 热点）本地确定；`conclusion` 文案需 AI（`AI_API_KEY` 已配时生成，否则 `null`）。
-  ⚠️ 原规划的「Top6 通讯作者单位 + AI 译中文校名」因 `corOrg` 等字段 100% 为空暂无法实现，待向知了窝确认字段权限。
+  ⚠️ 原规划的「Top6 通讯作者单位 + AI 译中文校名」因 `corOrg` 等字段 100% 为空暂无法实现。
 
 ### 同步工作流
 
-数据落库在 `apps/proxy/data/report.db`（SQLite，已纳入 git）。三张表：`zlw_papers`（原始文献）、`zlw_papers_agg`（按月预聚合）、`zlw_sync_state`（同步状态）。
+数据落库在 `apps/proxy/data/report.db`（SQLite，运行时由同步脚本生成，不纳入 git）。三张表：`zlw_papers`（原始文献）、`zlw_papers_agg`（按月预聚合）、`zlw_sync_state`（同步状态）。
 
 ```bash
 # 1) 全量同步某品牌某年（首次/每周补跑）
@@ -180,35 +180,6 @@ pnpm --filter zhiliaowo-proxy sync:current
 
 也可用 `POST /api/v1/:site/report/refresh`（`body: {"year":2025,"force":false}`）手动触发；
 前端轮询 `GET /api/v1/:site/report/meta` 看同步进度。
-
-### 相关环境变量
-
-```bash
-# 同步参数
-REPORT_PAGE_SIZE=1000          # 2.6 分页大小
-REPORT_SYNC_CONCURRENCY=3      # 并发页数
-REPORT_AUTO_SYNC=0             # 服务内置定时器（可选）
-
-# AI（板块 4 兜底 / 板块 6 结论）
-AI_API_KEY=                    # 未配则相关 AI 功能自动关闭
-AI_BASE_URL=https://apihub.agnes-ai.com/v1
-AI_MODEL=agnes-2.5-flash
-AI_TIMEOUT_MS=60000
-AI_HOTSPOT_FALLBACK=0          # 板块 4 AI 兜底开关（1=开，限量 200 篇）
-AI_HOTSPOT_FALLBACK_CAP=200
-AI_PROMPT_DIR=config/prompts    # 提示词目录（<brandKey>-<name>.md）
-
-# 关键词 / 期刊配置目录
-HOTSPOT_DIR=config/hotspots     # <brandKey>.json
-JOURNALS_DIR=config/journals    # <brandKey>.json
-```
-
-### 已知数据口径与待确认项
-
-- **口径差异**：2.4 报 2025=8965 篇，2.6 列表聚合=8947 篇（差 18 篇）。约定：板块 3 用 2.4，其余用 2.6 聚合，接受小差异。
-- **`corOrg` / `org` / `country` / `authorName` 全空** → 板块 6 机构部分暂不可做。
-- **`level`（中科院分区）/ `jcr` 全空** → 页面若展示分区则无源。
-- 以上待用户向知了窝对接人确认字段权限后补；详见 `docs/接口实施方案-讨论稿.md` §六、§九。
 
 ### curl 示例
 
