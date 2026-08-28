@@ -18,6 +18,7 @@
     "@vitejs/plugin-vue": "catalog:",
     "vue-tsc": "catalog:",
     "typescript": "catalog:",
-    "unocss": "catalog:"
+    "unocss": "catalog:",
+    "@types/node": "catalog:"
   }
 }

@@ -101,7 +101,7 @@ watch(
 function applyTags() {
   block.value.props.tags = tagsText.value
     .split(',')
-    .map((s) => s.trim())
+    .map((s: string) => s.trim())
     .filter(Boolean);
 }
 </script>

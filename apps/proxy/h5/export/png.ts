@@ -31,7 +31,7 @@ export async function renderToPng(doc: H5Doc, opts: PngOptions = {}): Promise<Bu
   try {
     const page = await browser.newPage();
     await page.setViewport({ width, height: 800, deviceScaleFactor: scale });
-    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
+    await page.setContent(html, { waitUntil: 'load', timeout: 30000 });
     const root = await page.$('.h5-root');
     if (!root) throw new Error('PNG 导出失败：未找到 .h5-root 节点');
     const buf = await root.screenshot({ type: 'png' });

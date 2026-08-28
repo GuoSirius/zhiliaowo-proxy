@@ -22,7 +22,7 @@ onlyBuiltDependencies:
 # 升级只需在此统一改一处，再跑 `pnpm up -r --latest` 即可全量更新。
 catalog:
   # 类型 / 构建（全包共用）
-  typescript: ^7.0.2
+  typescript: ^5.7.2
   # 钉到 ^24 匹配 Node 24 运行时（26.x 太新触发 minimumReleaseAge 策略拦截）
   "@types/node": ^24.0.0
   # 前端共用
@@ -39,3 +39,7 @@ catalog:
   husky: ^9.1.7
   # 共享层
   zod: ^3.23.8
+
+minimumReleaseAgeExclude:
+  - puppeteer-core@25.9.0
+  - puppeteer@25.9.0
