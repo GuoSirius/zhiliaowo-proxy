@@ -1,5 +1,17 @@
 # Changelog
 
+## v2.0.0
+
+[compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v1.1.1...v2.0.0)
+
+### 🐛 缺陷修复 (Bug Fixes)
+
+- **release:** 发版选择界面不再打印 changelog，避免干扰版本类型选择 ([44caddb](https://github.com/GuoSirius/zhiliaowo-proxy/commit/44caddb))
+
+### ❤️ Contributors
+
+- 郭之存 ([@siriusSupreme](https://github.com/siriusSupreme))
+
 ## v1.1.1
 
 [compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v1.1.0...v1.1.1)

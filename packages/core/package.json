@@ -1,6 +1,6 @@
 {
   "name": "@zhiliaowo/core",
-  "version": "1.1.1",
+  "version": "2.0.0",
   "description": "H5 生成器共享层：区块协议类型 + zod 校验 + 区块注册表",
   "type": "module",
   "main": "dist/index.js",

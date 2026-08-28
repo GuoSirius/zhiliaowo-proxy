@@ -1,6 +1,6 @@
 {
   "name": "zhiliaowo-proxy",
-  "version": "1.1.1",
+  "version": "2.0.0",
   "description": "知了窝开放平台 BFF 代理服务 + H5 生成器服务端模块（Hono + SQLite + 缓存抽象 + Puppeteer 导出）",
   "type": "module",
   "engines": {
