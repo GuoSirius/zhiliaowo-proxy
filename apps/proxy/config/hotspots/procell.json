@@ -1,0 +1,469 @@
+{
+  "brandKey": "procell",
+  "generatedAt": "2026-08-28T15:54:20.595Z",
+  "items": [
+    {
+      "cn": "巨噬细胞",
+      "keywords": [
+        "macrophage",
+        "macrophages",
+        "macrophagic",
+        "macrophage-mediated",
+        "tumor-associated macrophage",
+        "TAM"
+      ]
+    },
+    {
+      "cn": "铁死亡",
+      "keywords": [
+        "ferroptosis",
+        "ferroptotic",
+        "iron-dependent death",
+        "iron metabolism"
+      ]
+    },
+    {
+      "cn": "细胞焦亡",
+      "keywords": [
+        "pyroptosis",
+        "pyroptotic",
+        "pyroptotic cell death"
+      ]
+    },
+    {
+      "cn": "线粒体",
+      "keywords": [
+        "mitochondria",
+        "mitochondrial",
+        "mitochondrion",
+        "mitochondrial function",
+        "mitochondrial dynamics"
+      ]
+    },
+    {
+      "cn": "炎症",
+      "keywords": [
+        "inflammation",
+        "inflammatory",
+        "inflammation-related",
+        "inflammatory response",
+        "pro-inflammatory",
+        "anti-inflammatory"
+      ]
+    },
+    {
+      "cn": "免疫",
+      "keywords": [
+        "immune",
+        "immunity",
+        "immunological",
+        "immune response",
+        "immune regulation",
+        "immunotherapy"
+      ]
+    },
+    {
+      "cn": "自噬",
+      "keywords": [
+        "autophagy",
+        "autophagic",
+        "autophagy-related",
+        "macroautophagy"
+      ]
+    },
+    {
+      "cn": "外泌体",
+      "keywords": [
+        "exosome",
+        "exosomes",
+        "extracellular vesicle",
+        "extracellular vesicles",
+        "EV",
+        "EVs"
+      ]
+    },
+    {
+      "cn": "代谢重编程",
+      "keywords": [
+        "metabolic",
+        "metabolism",
+        "metabolic reprogramming",
+        "metabolic remodeling",
+        "metabolic adaptation",
+        "metabolic rewiring"
+      ]
+    },
+    {
+      "cn": "T细胞",
+      "keywords": [
+        "T cell",
+        "T cells",
+        "T-cell",
+        "T lymphocyte",
+        "T lymphocytes"
+      ]
+    },
+    {
+      "cn": "干细胞",
+      "keywords": [
+        "stem cell",
+        "stem cells",
+        "stemness",
+        "stem-cell",
+        "pluripotent stem cell",
+        "mesenchymal stem cell",
+        "MSC"
+      ]
+    },
+    {
+      "cn": "泛素化",
+      "keywords": [
+        "ubiquitination",
+        "ubiquitinated",
+        "ubiquitin",
+        "ubiquitin-mediated",
+        "ubiquitin-dependent"
+      ]
+    },
+    {
+      "cn": "非转录RNA",
+      "keywords": [
+        "non-transcriptional RNA",
+        "noncoding RNA",
+        "regulatory RNA",
+        "RNA regulation"
+      ]
+    },
+    {
+      "cn": "肠道菌群",
+      "keywords": [
+        "gut microbiota",
+        "intestinal microbiota",
+        "gut microbiome",
+        "microbiome",
+        "microbiota"
+      ]
+    },
+    {
+      "cn": "转录调控",
+      "keywords": [
+        "transcription",
+        "transcriptional regulation",
+        "transcription factor",
+        "transcriptional control"
+      ]
+    },
+    {
+      "cn": "中性粒细胞",
+      "keywords": [
+        "neutrophil",
+        "neutrophils",
+        "neutrophilic"
+      ]
+    },
+    {
+      "cn": "囊泡",
+      "keywords": [
+        "vesicle",
+        "vesicles",
+        "extracellular vesicle",
+        "membrane vesicle"
+      ]
+    },
+    {
+      "cn": "内质网",
+      "keywords": [
+        "endoplasmic reticulum",
+        "ER stress",
+        "ER-associated",
+        "unfolded protein response",
+        "UPR"
+      ]
+    },
+    {
+      "cn": "糖酵解",
+      "keywords": [
+        "glycolysis",
+        "glycolytic",
+        "glycolytic metabolism"
+      ]
+    },
+    {
+      "cn": "线粒体自噬",
+      "keywords": [
+        "mitophagy",
+        "mitochondrial autophagy",
+        "mitochondria autophagy"
+      ]
+    },
+    {
+      "cn": "乳酸化",
+      "keywords": [
+        "lactylation",
+        "lactylated",
+        "histone lactylation",
+        "protein lactylation"
+      ]
+    },
+    {
+      "cn": "细胞衰老",
+      "keywords": [
+        "senescence",
+        "senescent",
+        "cellular senescence",
+        "cell aging"
+      ]
+    },
+    {
+      "cn": "乙酰化",
+      "keywords": [
+        "acetylation",
+        "acetylated",
+        "acetylation modification",
+        "histone acetylation"
+      ]
+    },
+    {
+      "cn": "缺氧/低氧",
+      "keywords": [
+        "hypoxia",
+        "hypoxic",
+        "low oxygen",
+        "oxygen deprivation"
+      ]
+    },
+    {
+      "cn": "炎性小体",
+      "keywords": [
+        "inflammasome",
+        "inflammasomes",
+        "NLRP3",
+        "inflammasome activation"
+      ]
+    },
+    {
+      "cn": "反馈回路",
+      "keywords": [
+        "feedback",
+        "feedback loop",
+        "feedback regulation",
+        "regulatory feedback"
+      ]
+    },
+    {
+      "cn": "血管生成",
+      "keywords": [
+        "angiogenesis",
+        "angiogenic",
+        "vascularization",
+        "neovascularization"
+      ]
+    },
+    {
+      "cn": "单细胞测序",
+      "keywords": [
+        "single-cell sequencing",
+        "single cell sequencing",
+        "single-cell RNA sequencing",
+        "scRNA-seq",
+        "single-cell transcriptomics"
+      ]
+    },
+    {
+      "cn": "类器官",
+      "keywords": [
+        "organoid",
+        "organoids",
+        "3D organoid",
+        "organoid model"
+      ]
+    },
+    {
+      "cn": "糖基化",
+      "keywords": [
+        "glycosylation",
+        "glycosylated",
+        "glycosylation modification",
+        "N-glycosylation",
+        "O-glycosylation"
+      ]
+    },
+    {
+      "cn": "相分离",
+      "keywords": [
+        "phase separation",
+        "liquid-liquid phase separation",
+        "LLPS",
+        "condensate"
+      ]
+    },
+    {
+      "cn": "氧化应激",
+      "keywords": [
+        "oxidative stress",
+        "oxidative",
+        "ROS",
+        "reactive oxygen species"
+      ]
+    },
+    {
+      "cn": "CRISPR",
+      "keywords": [
+        "CRISPR",
+        "CRISPR-Cas9",
+        "CRISPR screening",
+        "genome editing"
+      ]
+    },
+    {
+      "cn": "胞葬",
+      "keywords": [
+        "efferocytosis",
+        "apoptotic cell clearance",
+        "apoptotic cell engulfment"
+      ]
+    },
+    {
+      "cn": "SUMO化修饰",
+      "keywords": [
+        "SUMOylation",
+        "SUMO modification",
+        "SUMO",
+        "small ubiquitin-like modifier"
+      ]
+    },
+    {
+      "cn": "核糖体",
+      "keywords": [
+        "ribosome",
+        "ribosomes",
+        "ribosomal",
+        "ribosome biogenesis"
+      ]
+    },
+    {
+      "cn": "超级增强子",
+      "keywords": [
+        "super enhancer",
+        "super-enhancer",
+        "enhancer",
+        "enhancer cluster"
+      ]
+    },
+    {
+      "cn": "泛凋亡",
+      "keywords": [
+        "PANoptosis",
+        "panoptosis",
+        "inflammatory cell death"
+      ]
+    },
+    {
+      "cn": "AI机器学习",
+      "keywords": [
+        "artificial intelligence",
+        "AI",
+        "machine learning",
+        "deep learning"
+      ]
+    },
+    {
+      "cn": "染色质重塑",
+      "keywords": [
+        "chromatin remodeling",
+        "chromatin remodelling",
+        "chromatin modification",
+        "chromatin"
+      ]
+    },
+    {
+      "cn": "可变剪切",
+      "keywords": [
+        "alternative splicing",
+        "splicing",
+        "RNA splicing",
+        "splice variant"
+      ]
+    },
+    {
+      "cn": "入核/出核机制",
+      "keywords": [
+        "nuclear import",
+        "nuclear export",
+        "nucleocytoplasmic transport",
+        "nuclear localization"
+      ]
+    },
+    {
+      "cn": "合成致死",
+      "keywords": [
+        "synthetic lethality",
+        "synthetic lethal"
+      ]
+    },
+    {
+      "cn": "精氨酸甲基化",
+      "keywords": [
+        "arginine methylation",
+        "protein arginine methylation",
+        "PRMT",
+        "methyltransferase"
+      ]
+    },
+    {
+      "cn": "迁移体",
+      "keywords": [
+        "migrasome",
+        "migrasomes"
+      ]
+    },
+    {
+      "cn": "铜死亡",
+      "keywords": [
+        "cuproptosis",
+        "copper-dependent cell death",
+        "copper death"
+      ]
+    },
+    {
+      "cn": "肿瘤微环境",
+      "keywords": [
+        "tumor microenvironment",
+        "tumour microenvironment",
+        "TME",
+        "cancer microenvironment"
+      ]
+    },
+    {
+      "cn": "空间多组学",
+      "keywords": [
+        "spatial omics",
+        "spatial transcriptomics",
+        "spatial multiomics",
+        "spatial multi-omics"
+      ]
+    },
+    {
+      "cn": "非编码RNA",
+      "keywords": [
+        "noncoding RNA",
+        "non-coding RNA",
+        "ncRNA",
+        "lncRNA",
+        "long noncoding RNA",
+        "microRNA",
+        "miRNA"
+      ]
+    },
+    {
+      "cn": "表观转录组",
+      "keywords": [
+        "epitranscriptomics",
+        "RNA modification",
+        "m6A",
+        "N6-methyladenosine",
+        "RNA methylation"
+      ]
+    }
+  ]
+}

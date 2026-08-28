@@ -24,6 +24,7 @@
     "@commitlint/cli": "catalog:",
     "@commitlint/config-conventional": "catalog:",
     "changelogen": "catalog:",
-    "husky": "catalog:"
+    "husky": "catalog:",
+    "node-xlsx": "^0.21.0"
   }
 }

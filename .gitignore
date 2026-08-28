@@ -7,3 +7,8 @@ coverage/
 .env.local
 *.log
 .DS_Store
+
+# 报告数据库（由同步脚本/服务自动生成，重建即可，不入库）
+data/report.db
+data/report.db-wal
+data/report.db-shm

@@ -39,6 +39,7 @@ export type GoodsCiteNum = GoodsCiteNumItem[];
 
 /** 2.6 / 2.7 文献列表项（字段待联调确认，先宽松） */
 export interface PaperItem {
+  id?: string;
   title?: string;
   authors?: string;
   journal?: string;
@@ -46,12 +47,20 @@ export interface PaperItem {
   factor?: number;
   doi?: string;
   url?: string;
+  pubTime?: string;
+  cnFields?: string | Record<string, unknown>;
+  products?: Array<Record<string, unknown>>;
   [key: string]: unknown;
 }
+/**
+ * 2.6 / 2.7 文献列表响应（严格对齐知了窝上游实际返回）
+ * 上游返回：{ totalCount, totalPage, pageNo, pageSize, data: [...] }
+ */
 export interface PaperList {
-  list: PaperItem[];
-  total: number;
-  pageNum: number;
+  data: PaperItem[];
+  totalCount: number;
+  totalPage: number;
+  pageNo: number;
   pageSize: number;
   [key: string]: unknown;
 }
