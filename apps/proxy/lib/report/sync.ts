@@ -187,13 +187,17 @@ function computeMonthAgg(
   month: number,
   hotspots: HotspotEntry[],
 ): AggData {
-  const rows = reportDb
-    .prepare('SELECT title, factor, journal FROM zlw_papers WHERE brand=? AND year=? AND month=?')
-    .all(brand, year, month) as Array<{
-      title: string | null;
-      factor: number | null;
-      journal: string | null;
-    }>;
+  // month=0 是全年汇总桶（同时兜底 pubTime 无法解析月份的文献），不带 month 条件
+  const sql =
+    month === 0
+      ? 'SELECT title, factor, journal FROM zlw_papers WHERE brand=? AND year=?'
+      : 'SELECT title, factor, journal FROM zlw_papers WHERE brand=? AND year=? AND month=?';
+  const params = month === 0 ? [brand, year] : [brand, year, month];
+  const rows = reportDb.prepare(sql).all(...params) as Array<{
+    title: string | null;
+    factor: number | null;
+    journal: string | null;
+  }>;
   let count = 0;
   let total = 0;
   let ge10 = 0;
@@ -519,5 +523,5 @@ export function recomputeYearAgg(
     }
   });
   aggTx();
-  return { months: 12, localPapers: localPaperCount(brand.brand, year) };
+  return { months: 13, localPapers: localPaperCount(brand.brand, year) };
 }
