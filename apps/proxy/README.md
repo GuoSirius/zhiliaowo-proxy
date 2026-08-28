@@ -122,3 +122,110 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 
 约定式提交（commitlint 校验）：`feat:` / `fix:` / `chore:` 等。
 `npm run release` 生成 CHANGELOG.md 并打 tag。
+
+---
+
+## 海报数据接口（6 板块 / `report`）
+
+为静态海报页（前端不在本仓库，跑在 18899 端口）提供 6 个板块的数据接口。
+数据来自「知了窝 2.6 列表聚合 → 落库 `report.db` → 按月预聚合」的本地聚合层，
+仅「板块 3 十年趋势」实时走 2.4（带 1h 内存缓存）。
+
+### 统一入参
+
+所有 `report` 接口挂在 `/api/v1/:site/report/*`，`path` 上 `:site` = `procell` / `elabscience`，
+通用 query：`year`（默认当前年）、`startMonth`（默认 1）、`endMonth`（默认 12）。
+
+| 方法 | 路径 | 板块 | 数据源 | 是否需要 AI |
+|---|---|---|---|---|
+| GET | `/api/v1/:site/report/overview` | 总编排（一次返回 6 块） | 本地聚合 | 结论文案依赖 AI（可空） |
+| GET | `/api/v1/:site/report/summary` | 1 研究概述 | 2.6 聚合 | 否 |
+| GET | `/api/v1/:site/report/core` | 2 核心数据 | 2.6 聚合 | 否 |
+| GET | `/api/v1/:site/report/trend` | 3 十年趋势 + 季度 | 2.4 + 2.6 聚合 | 否 |
+| GET | `/api/v1/:site/report/hotspots` | 4 研究热点 | 2.6 + 本地关键词 | 兜底可开（默认关） |
+| GET | `/api/v1/:site/report/products` | 5 产品引用 | 2.6 `products` 聚合 | 否 |
+| GET | `/api/v1/:site/report/conclusion` | 6 小结 | 2.6 聚合 | 是（结论文案） |
+| POST | `/api/v1/:site/report/refresh` | 手动触发同步 | 知了窝 2.6 | 否 |
+| GET | `/api/v1/:site/report/meta` | 同步状态总览 | `zlw_sync_state` | 否 |
+
+响应统一信封：`{ "code": 200, "message": "success", "data": {...} }`。
+
+### 板块要点（与讨论稿口径一致）
+
+- **板块 1 研究概述**：按 `config/journals/<brandKey>.json` 配置的「重点期刊」名单，对 `journal` 字段忽略大小写精确匹配统计篇数（如 Cell / Nature / STTT）。
+- **板块 2 核心数据**：总篇数、总 IF、IF≥10、平均 IF、最高 IF；同比为「去年同区间」对比（去年无数据则 `rate: null`）。
+- **板块 3 十年趋势**：2.4 年度新增取最近 10 年（按报告年截断，过滤报告年之后的不完整次年）；季度分布来自本地聚合。
+- **板块 4 研究热点**：`title` 本地词边界正则匹配 `config/hotspots/<brandKey>.json` 关键词表 → Top10（计数 + 最高 IF + 同比）。
+  AI 兜底开关 `AI_HOTSPOT_FALLBACK=1` 且已配 `AI_API_KEY` 时，对本地零命中文献限量（默认 200 篇）送 AI 打标，结果合并进聚合；失败仅告警、不影响主流程。
+- **板块 5 产品引用**：解析 `products[].goodsSpu` 聚合按引用篇数 Top30 → 取上一年同区间同批货号算同比增长率 → 过滤负增长及无基线新品 → Top15。
+  **仅返回货号（goodsSpu）+ 英文商品名（goodsLabel）**，中文名/分类由前端调网站接口获取。无去年同期基线时（单年部署）退化为按引用量降序取 Top15，`hasYoY=false`。
+- **板块 6 小结**：结构化部分（统计 + Top3 期刊 by IF + Top10 热点）本地确定；`conclusion` 文案需 AI（`AI_API_KEY` 已配时生成，否则 `null`）。
+  ⚠️ 原规划的「Top6 通讯作者单位 + AI 译中文校名」因 `corOrg` 等字段 100% 为空暂无法实现，待向知了窝确认字段权限。
+
+### 同步工作流
+
+数据落库在 `apps/proxy/data/report.db`（SQLite，已纳入 git）。三张表：`zlw_papers`（原始文献）、`zlw_papers_agg`（按月预聚合）、`zlw_sync_state`（同步状态）。
+
+```bash
+# 1) 全量同步某品牌某年（首次/每周补跑）
+pnpm --filter zhiliaowo-proxy sync -- --brand=procell --year=2025 [--force]
+
+# 2) 仅从本地 zlw_papers 重算月度聚合（不请求 API，修复口径/补算用）
+pnpm --filter zhiliaowo-proxy tsx scripts/recompute-agg.ts Procell 2025
+
+# 3) 定时任务：同步全部品牌「当前年 + 上一年」（上一年用于同比）
+pnpm --filter zhiliaowo-proxy sync:current
+#   → 由 crontab / 宝塔计划任务 / WorkBuddy 定时任务每天 03:10 调用
+```
+
+也可用 `POST /api/v1/:site/report/refresh`（`body: {"year":2025,"force":false}`）手动触发；
+前端轮询 `GET /api/v1/:site/report/meta` 看同步进度。
+
+### 相关环境变量
+
+```bash
+# 同步参数
+REPORT_PAGE_SIZE=1000          # 2.6 分页大小
+REPORT_SYNC_CONCURRENCY=3      # 并发页数
+REPORT_AUTO_SYNC=0             # 服务内置定时器（可选）
+
+# AI（板块 4 兜底 / 板块 6 结论）
+AI_API_KEY=                    # 未配则相关 AI 功能自动关闭
+AI_BASE_URL=https://apihub.agnes-ai.com/v1
+AI_MODEL=agnes-2.5-flash
+AI_TIMEOUT_MS=60000
+AI_HOTSPOT_FALLBACK=0          # 板块 4 AI 兜底开关（1=开，限量 200 篇）
+AI_HOTSPOT_FALLBACK_CAP=200
+AI_PROMPT_DIR=config/prompts    # 提示词目录（<brandKey>-<name>.md）
+
+# 关键词 / 期刊配置目录
+HOTSPOT_DIR=config/hotspots     # <brandKey>.json
+JOURNALS_DIR=config/journals    # <brandKey>.json
+```
+
+### 已知数据口径与待确认项
+
+- **口径差异**：2.4 报 2025=8965 篇，2.6 列表聚合=8947 篇（差 18 篇）。约定：板块 3 用 2.4，其余用 2.6 聚合，接受小差异。
+- **`corOrg` / `org` / `country` / `authorName` 全空** → 板块 6 机构部分暂不可做。
+- **`level`（中科院分区）/ `jcr` 全空** → 页面若展示分区则无源。
+- 以上待用户向知了窝对接人确认字段权限后补；详见 `docs/接口实施方案-讨论稿.md` §六、§九。
+
+### curl 示例
+
+```bash
+# 总编排（一次性拿 6 板块）
+curl "http://localhost:3000/api/v1/procell/report/overview?year=2025"
+
+# 单板块
+curl "http://localhost:3000/api/v1/procell/report/summary?year=2025"
+curl "http://localhost:3000/api/v1/procell/report/core?year=2025"
+curl "http://localhost:3000/api/v1/procell/report/trend?year=2025"
+curl "http://localhost:3000/api/v1/procell/report/hotspots?year=2025"
+curl "http://localhost:3000/api/v1/procell/report/products?year=2025"
+curl "http://localhost:3000/api/v1/procell/report/conclusion?year=2025"
+
+# 同步状态 / 手动刷新
+curl "http://localhost:3000/api/v1/procell/report/meta"
+curl -X POST "http://localhost:3000/api/v1/procell/report/refresh" -H 'Content-Type: application/json' -d '{"year":2025,"force":false}'
+```
+
