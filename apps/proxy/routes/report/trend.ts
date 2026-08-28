@@ -30,17 +30,22 @@ reportTrendRoute.get('/:site/report/trend', async (c) => {
   const { brand, year, startMonth, endMonth } = parseReportCtx(c);
 
   // 2.4 年度新增：近十年（上游返回 {name, value}，且含报告年之后的不完整年份，按所选年截断）
-  const series = await getClient().paperYear(brand);
-  const decade = series
-    .map((p) => {
-      const o = p as Record<string, unknown>;
-      const yr = Number(o.year ?? o.name);
-      const cnt = Number(o.count ?? o.value);
-      return { year: yr, count: cnt };
-    })
-    .filter((p) => Number.isFinite(p.year) && Number.isFinite(p.count) && p.year <= year)
-    .sort((a, b) => a.year - b.year)
-    .slice(-10);
+  let decade: Array<{ year: number; count: number }> = [];
+  try {
+    const series = await getClient().paperYear(brand);
+    decade = series
+      .map((p) => {
+        const o = p as Record<string, unknown>;
+        const yr = Number(o.year ?? o.name);
+        const cnt = Number(o.count ?? o.value);
+        return { year: yr, count: cnt };
+      })
+      .filter((p) => Number.isFinite(p.year) && Number.isFinite(p.count) && p.year <= year)
+      .sort((a, b) => a.year - b.year)
+      .slice(-10);
+  } catch (e) {
+    console.warn(`[trend] 2.4 年度趋势获取失败，降级为空: ${(e as Error).message}`);
+  }
 
   // 季度分布（仅展示与所选月区间相交的季度）
   const quarters = QUARTERS.filter((q) => q.start <= endMonth && q.end >= startMonth).map((q) => {
