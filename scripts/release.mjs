@@ -6,7 +6,7 @@
  *  1. 门禁：依次跑类型检查(typecheck) 与 测试(test)，任一失败即中止
  *  2. 未提交检测：若有未提交文件，提示输入提交信息并二次确认后先提交
  *  3. 发版选择：↑/↓ 切换 patch / minor / major，每次切换实时显示
- *     本次新版本号 + 该版本将包含的变更(changelog 预览)
+ *     本次新版本号（紧凑界面，不打印 changelog 以免干扰类型选择）
  *  4. 确认后自动：bump 版本号 → 交 changelogen 更新 CHANGELOG.md →
  *     提交 → 打 tag → 推送
  *
@@ -80,60 +80,8 @@ function syncVersions(version) {
   }
 }
 
-/** 取上次 tag 到 HEAD 的提交，无 tag 则取全部 */
-function getCommits() {
-  let range = '';
-  try {
-    const lastTag = sh('git describe --tags --abbrev=0');
-    if (lastTag) range = `${lastTag}..HEAD`;
-  } catch {
-    /* 无 tag */
-  }
-  const out = sh(`git log ${range} --pretty=format:%s`);
-  return out ? out.split('\n') : [];
-}
-
-// 与 changelog.config.js 的 type 分组保持一致（用于发布前预览）
-const TYPE_TITLES = {
-  feat: '🚀 新功能 (Features)',
-  fix: '🐛 缺陷修复 (Bug Fixes)',
-  perf: '⚡ 性能优化 (Performance)',
-  refactor: '♻️ 代码重构 (Refactors)',
-  docs: '📚 文档 (Documentation)',
-  test: '🧪 测试 (Tests)',
-  build: '🔧 构建 (Build)',
-  ci: '⚙️ 持续集成 (CI)',
-  chore: '📦 杂项维护 (Chores)',
-  style: '🎨 代码格式 (Style)',
-  revert: '⏪ 回滚 (Reverts)',
-};
-const TYPE_ORDER = ['feat', 'fix', 'perf', 'refactor', 'docs', 'test', 'build', 'ci', 'chore', 'style', 'revert'];
-
-/** 将提交按 type 分类，输出与 changelogen 一致的中文分组预览 */
-function previewChangelog(commits) {
-  const byType = {};
-  for (const raw of commits) {
-    const s = raw.trim();
-    if (!s) continue;
-    const m = s.match(/^(\w+)(\([^)]*\))?(!)?:\s*(.*)$/);
-    const t = m ? m[1].toLowerCase() : 'other';
-    if (!byType[t]) byType[t] = [];
-    byType[t].push(s);
-  }
-  let out = '';
-  for (const t of TYPE_ORDER) {
-    if (byType[t] && byType[t].length) {
-      out += TYPE_TITLES[t] + '\n' + byType[t].map((i) => '    - ' + i).join('\n') + '\n';
-    }
-  }
-  if (byType.other && byType.other.length) {
-    out += '其他变更\n' + byType.other.map((i) => '    - ' + i).join('\n') + '\n';
-  }
-  return out || '    (无提交记录)';
-}
-
-/** 渲染可选发版类型列表（高亮当前项） + 当前/新版本 + changelog 预览 */
-function renderScreen(currentVersion, selectedType, commits) {
+/** 渲染可选发版类型列表（高亮当前项） + 当前/新版本 */
+function renderScreen(currentVersion, selectedType) {
   const lines = [];
   lines.push(`当前版本: v${currentVersion}`);
   lines.push('');
@@ -144,18 +92,15 @@ function renderScreen(currentVersion, selectedType, commits) {
     const mark = opt.type === selectedType ? '●' : ' ';
     lines.push(`${mark} ${opt.label.padEnd(28)} →  v${nv}`);
   }
-  lines.push('');
-  lines.push(`—— 选择 v${bump(currentVersion, selectedType)} 将包含的变更 ——`);
-  lines.push(previewChangelog(commits));
   return lines.join('\n');
 }
 
 /** 方向键选择发版类型，每次切换重绘屏幕 */
-function selectRelease(currentVersion, commits) {
+function selectRelease(currentVersion) {
   return new Promise((resolve, reject) => {
     let idx = 0;
     const draw = () => {
-      const screen = renderScreen(currentVersion, RELEASE_TYPES[idx].type, commits);
+      const screen = renderScreen(currentVersion, RELEASE_TYPES[idx].type);
       process.stdout.write('\x1B[2J\x1B[3J\x1B[H' + screen);
     };
     const onData = (buf) => {
@@ -216,10 +161,9 @@ async function main() {
   // 3. 发版选择
   const pkg = readPkg();
   const currentVersion = pkg.version;
-  const commits = getCommits();
   let selected;
   try {
-    selected = await selectRelease(currentVersion, commits);
+    selected = await selectRelease(currentVersion);
   } catch {
     process.exit(1);
   }
