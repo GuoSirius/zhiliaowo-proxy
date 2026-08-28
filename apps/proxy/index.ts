@@ -36,10 +36,18 @@ import { getH5 } from './h5/store/h5.repo.js';
 
 const app = new Hono();
 
-// CORS：回显前端 Origin，支持多前端（admin/h5 独立 dev 端口）跨域调用
+// CORS：仅对白名单内的 Origin 回显，避免任意站点跨域读取报告数据。
+// 通过 ALLOWED_ORIGINS（逗号分隔）配置允许的前端域名；未配置时回退为回显请求
+// Origin，保持本地多 dev 端口（admin/h5 独立端口）联调兼容。
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 app.use('*', async (c, next) => {
   const origin = c.req.header('Origin');
-  if (origin) {
+  const allow = ALLOWED_ORIGINS.length === 0 || (origin && ALLOWED_ORIGINS.includes(origin));
+  if (origin && allow) {
     c.header('Access-Control-Allow-Origin', origin);
     c.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
     c.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
