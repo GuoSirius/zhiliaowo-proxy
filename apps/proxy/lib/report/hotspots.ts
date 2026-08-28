@@ -1,6 +1,8 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { resolveBrandByName } from '../../config/brands.js';
+import { reportDb } from './db.js';
 
 /**
  * 研究热点本地匹配。策略：词边界正则（\b...\b，忽略大小写）逐关键词匹配 title，
@@ -56,4 +58,50 @@ export function classifyHotspot(title: string | null | undefined, hotspots: Hots
     }
   }
   return best ? best.cn : null;
+}
+
+export interface HotspotStat {
+  cn: string;
+  count: number;
+  maxIf: number;
+}
+
+/**
+ * 区间研究热点统计（本地匹配，确定性可复现）。
+ * 扫描区间内文献，逐篇判定主热点并聚合计数 + 该热点下的最高 IF。
+ * 返回按 count 降序排列的全部热点（路由再取 Top10）。
+ */
+export function getHotspotRangeStats(
+  brandKey: string,
+  year: number,
+  startMonth: number,
+  endMonth: number,
+): HotspotStat[] {
+  const hotspots = loadHotspots(brandKey);
+  const brandName = resolveBrandByName(brandKey).brand;
+  const rows = reportDb
+    .prepare('SELECT title, factor FROM zlw_papers WHERE brand=? AND year=? AND month BETWEEN ? AND ?')
+    .all(brandName, year, startMonth, endMonth) as Array<{
+    title: string | null;
+    factor: number | null;
+  }>;
+
+  const countMap = new Map<string, number>();
+  const maxIfMap = new Map<string, number>();
+  for (const r of rows) {
+    const cn = classifyHotspot(r.title, hotspots);
+    if (!cn) continue;
+    countMap.set(cn, (countMap.get(cn) ?? 0) + 1);
+    const f = r.factor == null ? 0 : Number(r.factor);
+    if (f > (maxIfMap.get(cn) ?? 0)) maxIfMap.set(cn, f);
+  }
+
+  return [...countMap.entries()]
+    .map(([cn, count]) => ({ cn, count, maxIf: round(maxIfMap.get(cn) ?? 0) }))
+    .sort((a, b) => b.count - a.count);
+}
+
+function round(n: number, d = 2): number {
+  const f = Math.pow(10, d);
+  return Math.round(n * f) / f;
 }
