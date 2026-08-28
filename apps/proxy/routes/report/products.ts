@@ -1,15 +1,10 @@
 import { Hono } from 'hono';
 import { parseReportCtx } from '../../lib/report/params.js';
 import { getRangeProductCounts } from '../../lib/report/products.js';
+import { round } from '../../lib/report/calc.js';
 import { ok } from '../../lib/response.js';
 
 export const reportProductsRoute = new Hono();
-
-/** 四舍五入到 d 位小数 */
-function round(n: number, d = 1): number {
-  const f = Math.pow(10, d);
-  return Math.round(n * f) / f;
-}
 
 /**
  * 板块 5 —— 产品引用

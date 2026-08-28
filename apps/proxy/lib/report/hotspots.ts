@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import type { ResolvedBrand } from '../../config/brands.js';
 import { getRangeAgg } from './agg.js';
+import { round } from './calc.js';
 
 /**
  * 研究热点本地匹配。策略：词边界正则（\b...\b，忽略大小写）逐关键词匹配 title，
@@ -80,9 +81,4 @@ export function getHotspotRangeStats(
   return Object.entries(agg.hotspot_counts)
     .map(([cn, count]) => ({ cn, count, maxIf: round(agg.hotspot_max_if[cn] ?? 0) }))
     .sort((a, b) => b.count - a.count);
-}
-
-function round(n: number, d = 2): number {
-  const f = Math.pow(10, d);
-  return Math.round(n * f) / f;
 }

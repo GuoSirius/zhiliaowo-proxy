@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { reportDb } from './db.js';
+import { round } from './calc.js';
 
 /**
  * 重点期刊配置（板块 1「研究概述」用）。按 brandKey 分文件，
@@ -23,11 +24,6 @@ export interface TopJournal {
   journal: string;
   maxIf: number;
   count: number;
-}
-
-function round(n: number, d = 2): number {
-  const f = Math.pow(10, d);
-  return Math.round(n * f) / f;
 }
 
 /**

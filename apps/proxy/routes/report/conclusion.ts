@@ -1,31 +1,14 @@
 import { Hono } from 'hono';
-import { readFileSync, existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
 import { parseReportCtx } from '../../lib/report/params.js';
 import { getRangeAgg } from '../../lib/report/agg.js';
 import { getHotspotRangeStats } from '../../lib/report/hotspots.js';
 import { getTopJournalsByFactor } from '../../lib/report/journals.js';
+import { round } from '../../lib/report/calc.js';
+import { loadPromptFile, renderTemplate } from '../../lib/prompts.js';
 import { aiEnabled, callAi } from '../../lib/ai.js';
 import { ok } from '../../lib/response.js';
 
 export const reportConclusionRoute = new Hono();
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-function round(n: number, d = 2): number {
-  const f = Math.pow(10, d);
-  return Math.round(n * f) / f;
-}
-
-/** 读取品牌专属提示词文件（config/prompts/<brandKey>-<name>.md），缺失返回 null */
-function loadPromptFile(brandKey: string, name: string): string | null {
-  const dir = process.env.AI_PROMPT_DIR
-    ? resolve(process.cwd(), process.env.AI_PROMPT_DIR)
-    : resolve(__dirname, '..', '..', 'config', 'prompts');
-  const file = resolve(dir, `${brandKey}-${name}.md`);
-  return existsSync(file) ? readFileSync(file, 'utf8') : null;
-}
 
 /** 将结构化数据渲染进结论提示词模板的占位符 */
 function renderConclusionPrompt(
@@ -39,21 +22,16 @@ function renderConclusionPrompt(
   const tpl =
     loadPromptFile(brandKey, 'conclusion') ??
     '你是一位生物医学科研文献分析助手。请基于以下结构化数据撰写一段小结文案。';
-  return tpl
-    .replace(/\{\{brand\}\}/g, brandLabel)
-    .replace(/\{\{year\}\}/g, String(year))
-    .replace(/\{\{total\}\}/g, String(stats.totalPapers))
-    .replace(/\{\{avgFactor\}\}/g, String(stats.avgIf))
-    .replace(/\{\{maxFactor\}\}/g, String(stats.maxIf))
-    .replace(/\{\{factorGe10\}\}/g, String(stats.ifGe10))
-    .replace(
-      /\{\{topJournals\}\}/g,
-      topJournals.map((j) => `${j.journal}(IF ${j.maxIf}, ${j.count}篇)`).join('、') || '无',
-    )
-    .replace(
-      /\{\{topHotspots\}\}/g,
-      topHotspots.map((h) => `${h.cn}(${h.count}篇)`).join('、') || '无',
-    );
+  return renderTemplate(tpl, {
+    brand: brandLabel,
+    year,
+    total: stats.totalPapers,
+    avgFactor: stats.avgIf,
+    maxFactor: stats.maxIf,
+    factorGe10: stats.ifGe10,
+    topJournals: topJournals.map((j) => `${j.journal}(IF ${j.maxIf}, ${j.count}篇)`).join('、') || '无',
+    topHotspots: topHotspots.map((h) => `${h.cn}(${h.count}篇)`).join('、') || '无',
+  });
 }
 
 /**

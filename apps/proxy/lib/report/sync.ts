@@ -1,9 +1,6 @@
 import { ZhiliaowoClient } from '../zhiliaowo.js';
 import type { ResolvedBrand } from '../../config/brands.js';
 import type { PaperItem, PaperList } from '../../types.js';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
-import { existsSync, readFileSync } from 'node:fs';
 import { aiEnabled, callAi } from '../ai.js';
 import {
   reportDb,
@@ -11,8 +8,8 @@ import {
   localPaperCount,
 } from './db.js';
 import { loadHotspots, classifyHotspot, type HotspotEntry } from './hotspots.js';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { round } from './calc.js';
+import { loadPromptFile } from '../prompts.js';
 
 const DEFAULT_PAGE_SIZE = Number(process.env.REPORT_PAGE_SIZE ?? 1000);
 const DEFAULT_CONCURRENCY = Number(process.env.REPORT_SYNC_CONCURRENCY ?? 3);
@@ -104,11 +101,6 @@ const upsertStateStmt = reportDb.prepare(`
 
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
-}
-
-function round(n: number, d = 3): number {
-  const f = Math.pow(10, d);
-  return Math.round(n * f) / f;
 }
 
 function toRecord(p: PaperItem, brand: string, year: number, syncedAt: string): PaperRecord | null {
@@ -242,14 +234,6 @@ const AI_HOTSPOT_FALLBACK_CAP = Number(process.env.AI_HOTSPOT_FALLBACK_CAP ?? 20
 
 function aiHotspotFallbackEnabled(): boolean {
   return process.env.AI_HOTSPOT_FALLBACK === '1' && aiEnabled();
-}
-
-function loadPromptFile(brandKey: string, name: string): string | null {
-  const dir = process.env.AI_PROMPT_DIR
-    ? resolve(process.cwd(), process.env.AI_PROMPT_DIR)
-    : resolve(__dirname, '..', '..', 'config', 'prompts');
-  const file = resolve(dir, `${brandKey}-${name}.md`);
-  return existsSync(file) ? readFileSync(file, 'utf8') : null;
 }
 
 function defaultHotspotFallbackPrompt(cnList: string[]): string {

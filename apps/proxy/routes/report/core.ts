@@ -1,24 +1,10 @@
 import { Hono } from 'hono';
 import { parseReportCtx } from '../../lib/report/params.js';
 import { getRangeAgg } from '../../lib/report/agg.js';
+import { round, pct } from '../../lib/report/calc.js';
 import { ok } from '../../lib/response.js';
 
 export const reportCoreRoute = new Hono();
-
-/** 四舍五入到 d 位小数 */
-function round(n: number, d = 2): number {
-  const f = Math.pow(10, d);
-  return Math.round(n * f) / f;
-}
-
-/**
- * 同比率：cur 相对 prev 的变化百分比。prev<=0 时无法计算，返回 null（前端展示「N/A」）。
- */
-function pct(cur: number, prev: number, d = 1): number | null {
-  if (prev <= 0) return null;
-  const f = Math.pow(10, d);
-  return Math.round(((cur - prev) / prev) * 100 * f) / f;
-}
 
 /**
  * 板块 2 —— 引用文献核心数据

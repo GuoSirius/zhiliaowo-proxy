@@ -4,19 +4,8 @@ import { getRangeAgg } from './agg.js';
 import { getHotspotRangeStats } from './hotspots.js';
 import { getRangeProductCounts } from './products.js';
 import { getTopJournalsByFactor, loadFeaturedJournals } from './journals.js';
+import { round, pct } from './calc.js';
 import { aiEnabled } from '../ai.js';
-
-function round(n: number, d = 2): number {
-  const f = Math.pow(10, d);
-  return Math.round(n * f) / f;
-}
-
-/** 同比率：prev<=0 返回 null */
-function pct(cur: number, prev: number, d = 1): number | null {
-  if (prev <= 0) return null;
-  const f = Math.pow(10, d);
-  return Math.round(((cur - prev) / prev) * 100 * f) / f;
-}
 
 /**
  * 编排 6 个板块的数据（一次性返回，供前端整页渲染）。
