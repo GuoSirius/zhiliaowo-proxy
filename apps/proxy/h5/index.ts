@@ -37,6 +37,19 @@ import {
 import { renderToHtml } from './export/html.js';
 import { renderToVuePage } from './export/vue.js';
 import { renderToPng } from './export/png.js';
+import { migrate } from './store/db.js';
+import { seedBrands } from './store/brand.repo.js';
+
+// H5 子系统自注册初始化：模块加载时建表 + 内置品牌 seed（幂等）。
+// 从 proxy 启动链解耦，由 h5 模块自行负责自身存储，避免 H5 库异常连带 proxy 起不来。
+let h5Initialized = false;
+export function initH5Store(): void {
+  if (h5Initialized) return;
+  h5Initialized = true;
+  migrate();
+  seedBrands();
+}
+initH5Store();
 
 export const h5App = new Hono();
 

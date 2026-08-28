@@ -28,9 +28,7 @@ import { reportOverviewRoute } from './routes/report/overview.js';
 import { reportRefreshRoute } from './routes/report/refresh.js';
 import { reportMetaRoute } from './routes/report/meta.js';
 import { widgetRoute } from './routes/widget.js';
-import { migrate } from './h5/store/db.js';
 import { migrateReportDb } from './lib/report/db.js';
-import { seedBrands } from './h5/store/brand.repo.js';
 import { h5App, renderDocToHtml } from './h5/index.js';
 import { getH5 } from './h5/store/h5.repo.js';
 
@@ -119,9 +117,6 @@ function lanIp(): string | undefined {
 
 initClient()
   .then(() => {
-    // H5 模块：建表 + 内置品牌 seed（幂等）
-    migrate();
-    seedBrands();
     // 报告数据层：建表（6 板块海报原始文献 / 聚合 / 同步状态）
     migrateReportDb();
     const server = serve({ fetch: app.fetch, port, hostname }, (info) => {
