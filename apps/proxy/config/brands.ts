@@ -63,3 +63,10 @@ export function resolveBrandByName(brand: string): ResolvedBrand {
   }
   return resolveBrand(cfg.key);
 }
+
+/** 品牌标识解析（CLI 通用）：先按 site key，再按标准品牌名，均对大小写不敏感 */
+export function resolveBrandFlexible(input: string): ResolvedBrand {
+  const key = input.trim().toLowerCase();
+  if (BRANDS[key]) return resolveBrand(key);
+  return resolveBrandByName(input);
+}

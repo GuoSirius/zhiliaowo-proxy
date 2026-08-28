@@ -177,7 +177,8 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 pnpm --filter zhiliaowo-proxy sync -- --brand=procell --year=2025 [--force]
 
 # 2) 仅从本地 zlw_papers 重算月度聚合（不请求 API，修复口径/补算用）
-pnpm --filter zhiliaowo-proxy recompute Procell 2025
+pnpm --filter zhiliaowo-proxy recompute --brand=procell --year=2025
+#   兼容旧位置写法：recompute procell 2025
 
 # 3) 定时任务：同步全部品牌「当前年 + 上一年」（上一年用于同比）
 pnpm --filter zhiliaowo-proxy sync:current

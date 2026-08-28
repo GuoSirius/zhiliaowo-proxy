@@ -1,33 +1,16 @@
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import dotenv from 'dotenv';
-import { resolveBrand } from '../config/brands.js';
+import { resolveBrandFlexible } from '../config/brands.js';
 import { ZhiliaowoClient } from '../lib/zhiliaowo.js';
 import { MemoryCache } from '../lib/cache.js';
 import { migrateReportDb } from '../lib/report/db.js';
 import { syncYear } from '../lib/report/sync.js';
+import { parseArgs } from './parse-args.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // 统一从仓库根 .env 读取（与 index.ts 一致）
 dotenv.config({ path: resolve(__dirname, '..', '..', '..', '.env') });
-
-function parseArgs(argv: string[]): Record<string, string | boolean> {
-  const args: Record<string, string | boolean> = {};
-  for (let i = 0; i < argv.length; i++) {
-    const a = argv[i];
-    if (!a.startsWith('--')) continue;
-    const body = a.slice(2);
-    const eq = body.indexOf('=');
-    if (eq >= 0) {
-      args[body.slice(0, eq)] = body.slice(eq + 1);
-    } else if (argv[i + 1] && !argv[i + 1].startsWith('--')) {
-      args[body] = argv[++i];
-    } else {
-      args[body] = true;
-    }
-  }
-  return args;
-}
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
@@ -45,7 +28,7 @@ async function main() {
     process.exit(1);
   }
 
-  const brand = resolveBrand(brandKey);
+  const brand = resolveBrandFlexible(brandKey);
   migrateReportDb();
   const client = new ZhiliaowoClient(new MemoryCache());
 
