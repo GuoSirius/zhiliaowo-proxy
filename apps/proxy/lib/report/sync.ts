@@ -189,7 +189,7 @@ function computeMonthAgg(
   hotspots: HotspotEntry[],
 ): AggData {
   const rows = reportDb
-    .prepare('SELECT title, factor FROM zlw_papers WHERE brand=? AND year=? AND month=?')
+    .prepare('SELECT title, factor, journal FROM zlw_papers WHERE brand=? AND year=? AND month=?')
     .all(brand, year, month) as Array<{
       title: string | null;
       factor: number | null;
@@ -387,4 +387,39 @@ export async function syncYear(
     durationMs,
     failedPages,
   };
+}
+
+/**
+ * 仅从本地 zlw_papers 重算某品牌某年的月度聚合（不请求 API）。
+ * 用于口径修正后补算（如 computeMonthAgg 的 SELECT 字段调整），或导入数据后回填聚合。
+ * 返回重算覆盖的月份数与本地文献总数（用于校验）。
+ */
+export function recomputeYearAgg(
+  brand: ResolvedBrand,
+  year: number,
+): { months: number; localPapers: number } {
+  const hotspots = loadHotspots(brand.key);
+  const syncedAt = new Date().toISOString();
+  const state = getSyncState(brand.brand, year);
+  const aggTx = reportDb.transaction(() => {
+    for (let m = 1; m <= 12; m++) {
+      const agg = computeMonthAgg(brand.brand, year, m, hotspots);
+      upsertAggStmt.run({
+        brand: brand.brand,
+        year,
+        month: m,
+        paper_count: agg.paper_count,
+        total_factor: agg.total_factor,
+        factor_ge10: agg.factor_ge10,
+        max_factor: agg.max_factor,
+        avg_factor: agg.avg_factor,
+        journal_counts: JSON.stringify(agg.journal_counts),
+        hotspot_counts: JSON.stringify(agg.hotspot_counts),
+        computed_at: syncedAt,
+        source_version: String(state?.total_count ?? 0),
+      });
+    }
+  });
+  aggTx();
+  return { months: 12, localPapers: localPaperCount(brand.brand, year) };
 }
