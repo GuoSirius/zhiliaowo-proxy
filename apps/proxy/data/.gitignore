@@ -1,2 +1,4 @@
 *
+!.gitignore
 !h5.db
+!report.db
