@@ -8,7 +8,7 @@ import { mkdirSync } from 'node:fs';
  * 路径按模块文件定位（而非 process.cwd），避免 CLI / 服务启动时 cwd 不一致导致读写不同库。
  */
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const DB_PATH = process.env.REPORT_DB_PATH ?? resolve(__dirname, '..', '..', 'data', 'report.db');
+const DB_PATH = resolve(__dirname, '..', '..', 'data', 'report.db');
 mkdirSync(dirname(DB_PATH), { recursive: true });
 
 export const reportDb = new Database(DB_PATH);
