@@ -1,5 +1,17 @@
 # Changelog
 
+## v2.0.1
+
+[compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v2.0.0...v2.0.1)
+
+### ♻️ 代码重构 (Refactors)
+
+- **proxy:** Core 指标改为 value prevvalue rate 结构，trend 增加 percent 与近四季度 year ([aae6e54](https://github.com/GuoSirius/zhiliaowo-proxy/commit/aae6e54))
+
+### ❤️ Contributors
+
+- 郭之存 ([@siriusSupreme](https://github.com/siriusSupreme))
+
 ## v2.0.0
 
 [compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v1.1.1...v2.0.0)
