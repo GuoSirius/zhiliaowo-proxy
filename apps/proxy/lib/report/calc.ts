@@ -14,7 +14,7 @@ export function round(n: number, d = 2): number {
  * prev<=0 或不是有限数时无法计算，返回 null（前端展示「N/A」）。
  */
 export function pct(cur: number, prev: number, d = 1): number | null {
-  if (!Number.isFinite(prev) || prev <= 0) return null;
+  if (!Number.isFinite(cur) || !Number.isFinite(prev) || prev <= 0) return null;
   const f = Math.pow(10, d);
   return Math.round(((cur - prev) / prev) * 100 * f) / f;
 }

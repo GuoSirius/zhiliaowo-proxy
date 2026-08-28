@@ -11,7 +11,7 @@ export interface RangeAgg {
   hotspot_max_if: Record<string, number>;
 }
 
-function mergeCounts(target: Record<string, number>, src?: string | null): void {
+export function mergeCounts(target: Record<string, number>, src?: string | null): void {
   if (!src) return;
   let obj: Record<string, number>;
   try {
@@ -23,7 +23,7 @@ function mergeCounts(target: Record<string, number>, src?: string | null): void 
 }
 
 /** 热点最高 IF 跨月合并：取最大值（同一热点各月最高 IF 的交集） */
-function mergeMax(target: Record<string, number>, src?: string | null): void {
+export function mergeMax(target: Record<string, number>, src?: string | null): void {
   if (!src) return;
   let obj: Record<string, number>;
   try {
