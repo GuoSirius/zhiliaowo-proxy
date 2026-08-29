@@ -73,8 +73,8 @@ export async function buildOverview(
     },
   };
 
-  // 板块 3 趋势（2.4 年度新增；上游偶发限流时降级为空，不影响其余板块）
-  const trend = await buildTrend(brand, year, startMonth, endMonth);
+  // 板块 3 趋势（本地聚合，窗口锚定请求的 year；decade 口径固定 full，各年取全年）
+  const trend = buildTrend(brand, year, startMonth, endMonth, 'full');
 
   // 板块 4 研究热点
   const allHotspots = getHotspotRangeStats(brand, year, startMonth, endMonth);
