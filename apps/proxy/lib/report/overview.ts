@@ -35,34 +35,41 @@ export async function buildOverview(
   }));
   const summary = { totalPapers: cur.paper_count, featuredJournals };
 
-  // 板块 2 核心数据
+  // 板块 6 小结沿用传入区间（与独立 /report/conclusion 接口一致）
   const avgCur = cur.paper_count ? cur.total_factor / cur.paper_count : 0;
-  const avgPrev = prev.paper_count ? prev.total_factor / prev.paper_count : 0;
+
+  // 板块 2 核心数据 —— 例外口径：海报「截止至 {year} 年 {endMonth} 月」，
+  // startMonth 恒为 1，与独立 /report/core 接口保持一致（其余板块仍按传入区间统计）。
+  const coreCur = getRangeAgg(brandName, year, 1, endMonth);
+  const corePrev = getRangeAgg(brandName, year - 1, 1, endMonth);
+  const avgCore = coreCur.paper_count ? coreCur.total_factor / coreCur.paper_count : 0;
+  const avgCorePrev = corePrev.paper_count ? corePrev.total_factor / corePrev.paper_count : 0;
   const core = {
+    range: { year, startMonth: 1, endMonth },
     totalPapers: {
-      value: cur.paper_count,
-      prevValue: prev.paper_count,
-      rate: pct(cur.paper_count, prev.paper_count),
+      value: coreCur.paper_count,
+      prevValue: corePrev.paper_count,
+      rate: pct(coreCur.paper_count, corePrev.paper_count),
     },
     totalIf: {
-      value: round(cur.total_factor),
-      prevValue: round(prev.total_factor),
-      rate: pct(cur.total_factor, prev.total_factor),
+      value: round(coreCur.total_factor),
+      prevValue: round(corePrev.total_factor),
+      rate: pct(coreCur.total_factor, corePrev.total_factor),
     },
     ifGe10: {
-      value: cur.factor_ge10,
-      prevValue: prev.factor_ge10,
-      rate: pct(cur.factor_ge10, prev.factor_ge10),
+      value: coreCur.factor_ge10,
+      prevValue: corePrev.factor_ge10,
+      rate: pct(coreCur.factor_ge10, corePrev.factor_ge10),
     },
     avgIf: {
-      value: round(avgCur),
-      prevValue: round(avgPrev),
-      rate: pct(avgCur, avgPrev),
+      value: round(avgCore),
+      prevValue: round(avgCorePrev),
+      rate: pct(avgCore, avgCorePrev),
     },
     maxIf: {
-      value: round(cur.max_factor),
-      prevValue: round(prev.max_factor),
-      rate: pct(cur.max_factor, prev.max_factor),
+      value: round(coreCur.max_factor),
+      prevValue: round(corePrev.max_factor),
+      rate: pct(coreCur.max_factor, corePrev.max_factor),
     },
   };
 

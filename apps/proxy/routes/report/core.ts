@@ -8,11 +8,15 @@ export const reportCoreRoute = new Hono();
 
 /**
  * 板块 2 —— 引用文献核心数据
- * GET /api/v1/:site/report/core?year=2025&startMonth=1&endMonth=12
- * 数据来自本地 report 聚合（2.6 列表聚合口径）。同比为「去年同区间」对比。
+ * GET /api/v1/:site/report/core?year=2025&endMonth=6
+ *
+ * 口径固定为「截止至 {year} 年 {endMonth} 月」= 1 月累计到 endMonth 月，
+ * 对应海报文案「截止至 2025 年（全年 / 6 月）」。startMonth 恒为 1，传入也忽略。
+ * 同比为「去年同区间」（year-1 的 1~endMonth）。
+ * 数据来自本地 report 聚合（2.6 列表聚合口径）。
  */
 reportCoreRoute.get('/:site/report/core', async (c) => {
-  const { brand, year, startMonth, endMonth } = parseReportCtx(c);
+  const { brand, year, startMonth, endMonth } = parseReportCtx(c, { forceStartFrom1: true });
 
   const cur = getRangeAgg(brand.brand, year, startMonth, endMonth);
   const prev = getRangeAgg(brand.brand, year - 1, startMonth, endMonth);
