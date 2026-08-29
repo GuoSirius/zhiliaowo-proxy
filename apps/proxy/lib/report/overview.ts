@@ -1,7 +1,7 @@
 import type { ResolvedBrand } from '../../config/brands.js';
 import { getRangeAgg } from './agg.js';
 import { getHotspotRangeStats } from './hotspots.js';
-import { getRangeProductCounts } from './products.js';
+import { getRangeProductCounts, buildTopProducts } from './products.js';
 import { getTopJournalsByFactor, loadFeaturedJournals } from './journals.js';
 import { round, pct } from './calc.js';
 import { aiEnabled } from '../ai.js';
@@ -101,25 +101,13 @@ export async function buildOverview(
     topHotspots,
   };
 
-  // 板块 5 产品引用
+  // 板块 5 产品引用（与独立 /products 路由共用同一口径：过滤负增长后按引用篇数降序取 Top15）
   const curP = getRangeProductCounts(brandName, year, startMonth, endMonth);
   const prevP = getRangeProductCounts(brandName, year - 1, startMonth, endMonth);
-  const topCur = [...curP.values()].sort((a, b) => b.count - a.count).slice(0, 30);
-  const enriched = topCur.map((it) => {
-    const pc = prevP.get(it.spu)?.count ?? 0;
-    const growthRate = pc > 0 ? round(((it.count - pc) / pc) * 100) : null;
-    return { spu: it.spu, label: it.label, count: it.count, prevCount: pc, growthRate };
-  });
-  const hasYoY = enriched.some((it) => it.growthRate !== null);
-  const items = hasYoY
-    ? enriched
-        .filter((it) => it.growthRate !== null && it.growthRate >= 0)
-        .sort((a, b) => (b.growthRate ?? 0) - (a.growthRate ?? 0))
-        .slice(0, 15)
-    : enriched.sort((a, b) => b.count - a.count).slice(0, 15);
+  const { totalProducts, hasYoY, items } = buildTopProducts(curP, prevP);
   const products = {
     range: { year, startMonth, endMonth },
-    totalProducts: curP.size,
+    totalProducts,
     hasYoY,
     items,
   };
