@@ -1,4 +1,5 @@
 import type { ResolvedBrand } from '../../config/brands.js';
+import { getClient } from '../client.js';
 import { getRangeAgg } from './agg.js';
 import { round } from './calc.js';
 import { reportDb } from './db.js';
@@ -15,7 +16,7 @@ export interface DecadePoint {
   count: number;
   /** count 占 decade 数组中最大 count 的百分比（保留 1 位小数）；无数据年份为 0 */
   percent: number;
-  /** 本地是否有该年数据；false 表示未同步，count 的 0 是「无数据」而非「真实 0 篇」 */
+  /** 是否有数据源（2.4 有值或本地已同步）；false 表示缺失，count 的 0 是「无数据」而非「真实 0 篇」 */
   hasData: boolean;
 }
 
@@ -55,7 +56,7 @@ function buildQuarterDefs(year: number, endMonth: number): QuarterDef[] {
 }
 
 /**
- * 某年是否有本地数据。
+ * 某年是否有本地聚合数据。
  * 优先看同步状态（同步过的年份即便真实 0 篇也算有数据），
  * 兜底看聚合表是否有行（recompute 重算过的年份）。
  */
@@ -71,26 +72,63 @@ function hasYearData(brand: string, year: number): boolean {
 }
 
 /**
- * 近十年年度分布。
- * 窗口以请求的 year 为终点往前推 10 年 —— 真正锚定 year，
- * 不依赖上游 2.4（后者是锚定「当前真实年份」的滚动窗口，回看历史年份会逐年缩水直至为空）。
+ * 读取上游 2.4 年度新增数据，返回 { year -> count }。
+ * 失败时降级为空数组，不抛错。
  */
-function buildDecade(
-  brand: string,
+async function loadUpstreamDecade(
+  brand: ResolvedBrand,
+  maxYear: number,
+): Promise<Map<number, number>> {
+  try {
+    const series = await getClient().paperYear(brand);
+    const map = new Map<number, number>();
+    for (const p of series) {
+      const o = p as Record<string, unknown>;
+      const y = Number(o.year ?? o.name);
+      const v = Number(o.count ?? o.value);
+      if (Number.isFinite(y) && Number.isFinite(v) && y <= maxYear) {
+        map.set(y, v);
+      }
+    }
+    return map;
+  } catch (e) {
+    console.warn(`[trend] 2.4 年度趋势获取失败，完全降级为本地聚合: ${(e as Error).message}`);
+    return new Map();
+  }
+}
+
+/**
+ * 近十年年度分布：
+ * 1. 优先用上游 2.4 年度新增数据；
+ * 2. 2.4 缺失的年份用本地 zlw_papers_agg 聚合补全；
+ * 3. 仍缺失的年份生成骨架并以 count=0、hasData=false 兜底。
+ * 窗口终点为请求的 year，往回推 10 年。
+ */
+async function buildDecade(
+  brand: ResolvedBrand,
   year: number,
   startMonth: number,
   endMonth: number,
   mode: DecadeMode,
-): DecadePoint[] {
+): Promise<DecadePoint[]> {
+  const upstream = await loadUpstreamDecade(brand, year);
+
   const raw: Array<{ year: number; count: number; hasData: boolean }> = [];
   for (let y = year - 9; y <= year; y++) {
-    const hasData = hasYearData(brand, y);
+    if (upstream.has(y)) {
+      // 优先 2.4
+      raw.push({ year: y, count: upstream.get(y)!, hasData: true });
+      continue;
+    }
+    // 本地聚合补全
+    const hasData = hasYearData(brand.brand, y);
     const agg =
       mode === 'sameRange'
-        ? getRangeAgg(brand, y, startMonth, endMonth)
-        : getRangeAgg(brand, y, 1, 12);
+        ? getRangeAgg(brand.brand, y, startMonth, endMonth)
+        : getRangeAgg(brand.brand, y, 1, 12);
     raw.push({ year: y, count: hasData ? agg.paper_count : 0, hasData });
   }
+
   // percent 只以有数据的年份为分母基准，避免未同步年份拉低整体尺度
   const maxCount = Math.max(0, ...raw.filter((p) => p.hasData).map((p) => p.count));
   return raw.map((p) => ({
@@ -110,14 +148,14 @@ export interface TrendResult {
 }
 
 /** 构建板块 3「趋势」数据：近十年年度分布 + 最近 4 个季度分布 */
-export function buildTrend(
+export async function buildTrend(
   brand: ResolvedBrand,
   year: number,
   startMonth: number,
   endMonth: number,
   decadeMode: DecadeMode = 'full',
-): TrendResult {
-  const decade = buildDecade(brand.brand, year, startMonth, endMonth, decadeMode);
+): Promise<TrendResult> {
+  const decade = await buildDecade(brand, year, startMonth, endMonth, decadeMode);
 
   const quarters = buildQuarterDefs(year, endMonth).map((q) => {
     const agg = getRangeAgg(brand.brand, q.year, q.start, q.end);
