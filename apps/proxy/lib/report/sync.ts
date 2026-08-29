@@ -187,13 +187,12 @@ function computeMonthAgg(
   month: number,
   hotspots: HotspotEntry[],
 ): AggData {
-  // month=0 是全年汇总桶（同时兜底 pubTime 无法解析月份的文献），不带 month 条件
-  const sql =
-    month === 0
-      ? 'SELECT title, factor, journal FROM zlw_papers WHERE brand=? AND year=?'
-      : 'SELECT title, factor, journal FROM zlw_papers WHERE brand=? AND year=? AND month=?';
-  const params = month === 0 ? [brand, year] : [brand, year, month];
-  const rows = reportDb.prepare(sql).all(...params) as Array<{
+  // month=0 是 pubTime 无法解析月份的兜底桶，与常规月桶一样带 month 条件。
+  // 注意：绝不能用「不带 month 条件的全年全量」填充 month=0 —— 全年级联查询会
+  // `month BETWEEN 1 AND 12 OR month = 0`（见 agg.ts），那样会把全年数据重复累加一遍。
+  const rows = reportDb
+    .prepare('SELECT title, factor, journal FROM zlw_papers WHERE brand=? AND year=? AND month=?')
+    .all(brand, year, month) as Array<{
     title: string | null;
     factor: number | null;
     journal: string | null;
