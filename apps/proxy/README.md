@@ -134,20 +134,26 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 ## 海报数据接口（6 板块 / `report`）
 
 为静态海报页（前端不在本仓库，跑在 18899 端口）提供 6 个板块的数据接口。
-数据来自「知了窝 2.6 列表聚合 → 落库 `report.db` → 按月预聚合」的本地聚合层，
-仅「板块 3 十年趋势」实时走 2.4（带 1h 内存缓存）。
+数据全部来自「知了窝 2.6 列表聚合 → 落库 `report.db` → 按月预聚合」的本地聚合层，
+不再依赖 2.3/2.4 图表接口（详见下方「板块 3 口径说明」）。
 
 ### 统一入参
 
 所有 `report` 接口挂在 `/api/v1/:site/report/*`，`path` 上 `:site` = `procell` / `elabscience`，
 通用 query：`year`（默认当前年）、`startMonth`（默认 1）、`endMonth`（默认 12）。
 
+> **板块 2 `core` 例外**：口径固定为「截止至 {year} 年 {endMonth} 月」即 `1 ~ endMonth`，
+> `startMonth` 恒为 1（传入也忽略），对应海报文案「截止至 2025 年（全年 / 6 月）」。
+> 其余接口按传入的 `startMonth ~ endMonth` 统计。
+>
+> **`trend` 额外参数**：`decadeMode=full|sameRange`（默认 `full`），见板块 3 说明。
+
 | 方法 | 路径 | 板块 | 数据源 | 是否需要 AI |
 |---|---|---|---|---|
 | GET | `/api/v1/:site/report/overview` | 总编排（一次返回 6 块） | 本地聚合 | 结论文案依赖 AI（可空） |
 | GET | `/api/v1/:site/report/summary` | 1 研究概述 | 2.6 聚合 | 否 |
-| GET | `/api/v1/:site/report/core` | 2 核心数据 | 2.6 聚合 | 否 |
-| GET | `/api/v1/:site/report/trend` | 3 十年趋势 + 季度 | 2.4 + 2.6 聚合 | 否 |
+| GET | `/api/v1/:site/report/core` | 2 核心数据（`1~endMonth`） | 2.6 聚合 | 否 |
+| GET | `/api/v1/:site/report/trend` | 3 十年趋势 + 季度 | 2.6 聚合 | 否 |
 | GET | `/api/v1/:site/report/hotspots` | 4 研究热点 | 2.6 + 本地关键词 | 兜底可开（默认关） |
 | GET | `/api/v1/:site/report/products` | 5 产品引用 | 2.6 `products` 聚合 | 否 |
 | GET | `/api/v1/:site/report/conclusion` | 6 小结 | 2.6 聚合 | 是（结论文案） |
@@ -159,8 +165,23 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 ### 板块要点（与讨论稿口径一致）
 
 - **板块 1 研究概述**：按 `config/journals/<brandKey>.json` 配置的「重点期刊」名单，对 `journal` 字段忽略大小写精确匹配统计篇数（如 Cell / Nature / STTT）。
-- **板块 2 核心数据**：总篇数、总 IF、IF≥10、平均 IF、最高 IF；每个指标返回 `{ value, prevValue, rate }`（同比为去年同区间，`prevValue<=0` 时 `rate: null`）。
-- **板块 3 十年趋势**：2.4 年度新增取最近 10 年（按报告年截断），每个年份追加 `percent`（该年 count / 10 年中最大 count，保留 1 位小数）；季度以 `endMonth` 为锚点取最近 4 个完整季度（若 `endMonth` 为当季末月则计入当季，否则从上一季度倒推），每条含 `year`。
+- **板块 2 核心数据**：总篇数、总 IF、IF≥10、平均 IF、最高 IF；每个指标返回 `{ value, prevValue, rate }`（同比为去年同区间 `1~endMonth`，`prevValue<=0` 时 `rate: null`）。
+  口径固定 `1 ~ endMonth`（`startMonth` 恒为 1，传入忽略），对应海报文案「截止至 {year} 年（全年 / N 月）」。
+- **板块 3 十年趋势**：本地聚合，窗口 = `[year-9, year]`，**以请求的 `year` 为锚点**（不依赖上游 2.4 —— 后者是锚定「当前真实年份」的滚动窗口，回看历史年份会逐年缩水直至为空）。每个年份返回 `{ year, count, percent, hasData }`：
+  - `percent` = 该年 `count` / 十年中最大 `count`（保留 1 位小数），仅以 `hasData: true` 的年份为基准
+  - `hasData: false` 表示该年本地未同步，`count: 0` 是「无数据」而非「真实 0 篇」，前端应据此渲染而非当作 0 篇
+
+  `decadeMode` 控制各年统计口径：
+
+  | 值 | 各年统计范围 | 适用 |
+  |---|---|---|
+  | `full`（默认） | 全年 1-12 月 | 常规海报 |
+  | `sameRange` | `[startMonth, endMonth]` 同区间 | 年初/年中生成，消除未完年的假下滑 |
+
+  > 例：2026 年 8 月生成海报，`full` 下 2026（5538）比 2025 全年（7855）看似下滑 29.5%，
+  > 实为年未过完；`sameRange`（1-8 月）下 2026=5538 vs 2025=5193，实为增长 6.6%。
+
+  季度以 `endMonth` 为锚点取最近 4 个完整季度（若 `endMonth` 为当季末月则计入当季，否则从上一季度倒推），每条含 `year`。
 - **板块 4 研究热点**：`title` 本地词边界正则匹配 `config/hotspots/<brandKey>.json` 关键词表 → Top10（计数 + 最高 IF + 同比）。
   AI 兜底开关 `AI_HOTSPOT_FALLBACK=1` 且已配 `AI_API_KEY` 时，对本地零命中文献限量（默认 200 篇）送 AI 打标，结果合并进聚合；失败仅告警、不影响主流程。
 - **板块 5 产品引用**：解析 `products[].goodsSpu` 聚合按引用篇数 Top30 → 取上一年同区间同批货号算同比增长率 → 过滤负增长及无基线新品 → Top15。
@@ -179,6 +200,8 @@ pnpm --filter zhiliaowo-proxy sync -- --brand=procell --year=2025 [--force]
 # 2) 仅从本地 zlw_papers 重算月度聚合（不请求 API，修复口径/补算用）
 pnpm --filter zhiliaowo-proxy recompute --brand=procell --year=2025
 #   兼容旧位置写法：recompute procell 2025
+#   全品牌 × 全部已同步年份（改口径后批量重算用）：
+pnpm --filter zhiliaowo-proxy recompute --all
 
 # 3) 定时任务：同步全部品牌「当前年 + 上一年」（上一年用于同比）
 pnpm --filter zhiliaowo-proxy sync:current
@@ -196,8 +219,12 @@ curl "http://localhost:3000/api/v1/procell/report/overview?year=2025"
 
 # 单板块
 curl "http://localhost:3000/api/v1/procell/report/summary?year=2025"
-curl "http://localhost:3000/api/v1/procell/report/core?year=2025"
+# 板块 2：截止至 2025 年 6 月（startMonth 恒为 1，传了也忽略）
+curl "http://localhost:3000/api/v1/procell/report/core?year=2025&endMonth=6"
+# 板块 3：十年趋势，默认 full
 curl "http://localhost:3000/api/v1/procell/report/trend?year=2025"
+# 板块 3：各年只统计 1-8 月（消除未完年假下滑）
+curl "http://localhost:3000/api/v1/procell/report/trend?year=2026&startMonth=1&endMonth=8&decadeMode=sameRange"
 curl "http://localhost:3000/api/v1/procell/report/hotspots?year=2025"
 curl "http://localhost:3000/api/v1/procell/report/products?year=2025"
 curl "http://localhost:3000/api/v1/procell/report/conclusion?year=2025"
