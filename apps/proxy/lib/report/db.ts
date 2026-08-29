@@ -18,7 +18,7 @@ reportDb.pragma('journal_mode = WAL');
 export function migrateReportDb(): void {
   reportDb.exec(`
     CREATE TABLE IF NOT EXISTS zlw_papers (
-      id         TEXT PRIMARY KEY,
+      id         TEXT NOT NULL,
       brand      TEXT NOT NULL,
       year       INTEGER NOT NULL,
       month      INTEGER NOT NULL,
@@ -32,7 +32,8 @@ export function migrateReportDb(): void {
       cn_fields  TEXT,
       products   TEXT,
       raw        TEXT NOT NULL,
-      synced_at  TEXT NOT NULL
+      synced_at  TEXT NOT NULL,
+      PRIMARY KEY (id, brand)
     );
     CREATE INDEX IF NOT EXISTS idx_papers_brand_year ON zlw_papers(brand, year);
     CREATE INDEX IF NOT EXISTS idx_papers_pubtime    ON zlw_papers(brand, pub_time);
@@ -65,7 +66,51 @@ export function migrateReportDb(): void {
   `);
 
   // 对已有库做向后兼容迁移（新库由上面 CREATE 直接建好，这里不执行）
+  migratePapersPrimaryKey();
   applyAggColumnMigrations();
+}
+
+/**
+ * 原始文献表主键迁移：
+ * 旧版本主键为单列 id，不同品牌共享知了窝 id 空间会导致互相覆盖。
+ * 改为复合主键 (id, brand)，让同一 id 在不同品牌下独立存储。
+ * 幂等：仅当检测到旧主键时才重建表。
+ */
+function migratePapersPrimaryKey(): void {
+  const info = reportDb.pragma('table_info(zlw_papers)') as Array<{ name: string; pk: number }>;
+  const pkCols = info
+    .filter((c) => c.pk > 0)
+    .sort((a, b) => a.pk - b.pk)
+    .map((c) => c.name);
+  if (pkCols.length === 1 && pkCols[0] === 'id') {
+    console.log('[db] 检测到旧版 zlw_papers 主键为单列 id，重建为复合主键 (id, brand)...');
+    reportDb.exec(`
+      CREATE TABLE zlw_papers_new (
+        id         TEXT NOT NULL,
+        brand      TEXT NOT NULL,
+        year       INTEGER NOT NULL,
+        month      INTEGER NOT NULL,
+        pub_time   TEXT NOT NULL,
+        doi        TEXT,
+        title      TEXT,
+        journal    TEXT,
+        factor     REAL,
+        authors    TEXT,
+        url        TEXT,
+        cn_fields  TEXT,
+        products   TEXT,
+        raw        TEXT NOT NULL,
+        synced_at  TEXT NOT NULL,
+        PRIMARY KEY (id, brand)
+      );
+      INSERT INTO zlw_papers_new SELECT * FROM zlw_papers;
+      DROP TABLE zlw_papers;
+      ALTER TABLE zlw_papers_new RENAME TO zlw_papers;
+      CREATE INDEX IF NOT EXISTS idx_papers_brand_year ON zlw_papers(brand, year);
+      CREATE INDEX IF NOT EXISTS idx_papers_pubtime    ON zlw_papers(brand, pub_time);
+    `);
+    console.log('[db] 主键迁移完成');
+  }
 }
 
 /**

@@ -72,8 +72,8 @@ const upsertPaperStmt = reportDb.prepare(`
     (id, brand, year, month, pub_time, doi, title, journal, factor, authors, url, cn_fields, products, raw, synced_at)
   VALUES
     (@id, @brand, @year, @month, @pub_time, @doi, @title, @journal, @factor, @authors, @url, @cn_fields, @products, @raw, @synced_at)
-  ON CONFLICT(id) DO UPDATE SET
-    brand=excluded.brand, year=excluded.year, month=excluded.month, pub_time=excluded.pub_time,
+  ON CONFLICT(id, brand) DO UPDATE SET
+    year=excluded.year, month=excluded.month, pub_time=excluded.pub_time,
     doi=excluded.doi, title=excluded.title, journal=excluded.journal, factor=excluded.factor,
     authors=excluded.authors, url=excluded.url, cn_fields=excluded.cn_fields,
     products=excluded.products, raw=excluded.raw, synced_at=excluded.synced_at
@@ -427,7 +427,24 @@ export async function syncYear(
 
   const allItems: PaperItem[] = [];
   for (const r of fetchedRows) if (r) allItems.push(...r);
-  const records = allItems
+
+  // 上游分页在并发请求下可能返回重复 id（如排序不稳定导致页间重叠），
+  // 先按 id 去重再转 record，避免 records.length 虚高、实际落库数偏少。
+  const seenIds = new Set<string>();
+  const uniqueItems = allItems.filter((p) => {
+    const id = p.id != null ? String(p.id) : '';
+    if (!id || seenIds.has(id)) return false;
+    seenIds.add(id);
+    return true;
+  });
+  const duplicateCount = allItems.length - uniqueItems.length;
+  if (duplicateCount > 0) {
+    console.warn(
+      `[sync] ${brand.brand} ${year} 分页数据去重：原始 ${allItems.length} 条，去重后 ${uniqueItems.length} 条（重复 ${duplicateCount} 条）`,
+    );
+  }
+
+  const records = uniqueItems
     .map((p) => toRecord(p, brand.brand, year, syncedAt))
     .filter((r): r is PaperRecord => r !== null);
 
