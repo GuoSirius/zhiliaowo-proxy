@@ -60,3 +60,22 @@ export function parseReportCtx(c: Context, opts: ParseReportOpts = {}): ReportCt
   if (endMonth < startMonth) throw new ApiError(400, 'endMonth 不能小于 startMonth');
   return { brand, year, startMonth, endMonth };
 }
+
+/** 排序键：count=按数量；growthRate=按同比增长率。默认 count，非法值 400。 */
+export function parseSortBy(c: Context, fallback: 'count' | 'growthRate' = 'count'): 'count' | 'growthRate' {
+  const raw = c.req.query('sortBy');
+  if (raw == null) return fallback;
+  if (raw === 'count' || raw === 'growthRate') return raw;
+  throw new ApiError(400, 'sortBy 仅支持 count 或 growthRate');
+}
+
+/** 解析 1..max 正整数查询参数；缺失用 fallback。 */
+export function parsePositiveInt(c: Context, name: string, fallback: number, max = 1000): number {
+  const raw = c.req.query(name);
+  if (raw == null) return fallback;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 1 || n > max) {
+    throw new ApiError(400, `${name} 必须是 1-${max} 之间的正整数`);
+  }
+  return n;
+}

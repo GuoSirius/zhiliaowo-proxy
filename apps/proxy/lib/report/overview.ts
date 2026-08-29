@@ -104,7 +104,7 @@ export async function buildOverview(
   // 板块 5 产品引用（与独立 /products 路由共用同一口径：过滤负增长后按引用篇数降序取 Top15）
   const curP = getRangeProductCounts(brandName, year, startMonth, endMonth);
   const prevP = getRangeProductCounts(brandName, year - 1, startMonth, endMonth);
-  const { totalProducts, hasYoY, items } = buildTopProducts(curP, prevP);
+  const { totalProducts, hasYoY, items } = buildTopProducts({ cur: curP, prev: prevP });
   const products = {
     range: { year, startMonth, endMonth },
     totalProducts,
