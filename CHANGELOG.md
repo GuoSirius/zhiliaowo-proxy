@@ -1,5 +1,35 @@
 # Changelog
 
+## v2.1.0
+
+[compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v2.0.1...v2.1.0)
+
+### 🚀 新功能 (Features)
+
+- 板块2 core 锁定「1~endMonth」口径 ([67c357a](https://github.com/GuoSirius/zhiliaowo-proxy/commit/67c357a))
+- Trend 十年趋势改走本地聚合，支持同区间口径 ([7ea5c22](https://github.com/GuoSirius/zhiliaowo-proxy/commit/7ea5c22))
+- Sync 脚本支持多年份范围同步，readme 同步口径更新 ([25aafdb](https://github.com/GuoSirius/zhiliaowo-proxy/commit/25aafdb))
+- 产品/热点支持 sortBy 排序且产品候选池自动扩展凑够 15 条 ([3dc6675](https://github.com/GuoSirius/zhiliaowo-proxy/commit/3dc6675))
+
+### 🐛 缺陷修复 (Bug Fixes)
+
+- Month=0 桶误装全年全量导致全年级联查询虚高一倍 ([eaa8e2e](https://github.com/GuoSirius/zhiliaowo-proxy/commit/eaa8e2e))
+- Core 卡片恢复传入区间，新增 1~endmonth 累计块；decade 恢复 2.4 优先补全 ([395b86e](https://github.com/GuoSirius/zhiliaowo-proxy/commit/395b86e))
+- Zlw_papers 主键改为 (id, brand)，修复多品牌同步互相覆盖 ([2e1e514](https://github.com/GuoSirius/zhiliaowo-proxy/commit/2e1e514))
+
+### ♻️ 代码重构 (Refactors)
+
+- Conclusion 响应移除冗余 stats 与 hotspots 字段 ([bff9e82](https://github.com/GuoSirius/zhiliaowo-proxy/commit/bff9e82))
+- 板块5 产品 top15 改按引用篇数排序并抽共享函数 ([85525e7](https://github.com/GuoSirius/zhiliaowo-proxy/commit/85525e7))
+
+### 📚 文档 (Documentation)
+
+- 更新 6 板块海报接口文档 ([3e512de](https://github.com/GuoSirius/zhiliaowo-proxy/commit/3e512de))
+
+### ❤️ Contributors
+
+- 郭之存 ([@siriusSupreme](https://github.com/siriusSupreme))
+
 ## v2.0.1
 
 [compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v2.0.0...v2.0.1)
