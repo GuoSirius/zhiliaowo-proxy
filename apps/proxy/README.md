@@ -142,9 +142,8 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 所有 `report` 接口挂在 `/api/v1/:site/report/*`，`path` 上 `:site` = `procell` / `elabscience`，
 通用 query：`year`（默认当前年）、`startMonth`（默认 1）、`endMonth`（默认 12）。
 
-> **板块 2 `core` 例外**：口径固定为「截止至 {year} 年 {endMonth} 月」即 `1 ~ endMonth`，
-> `startMonth` 恒为 1（传入也忽略），对应海报文案「截止至 2025 年（全年 / 6 月）」。
-> 其余接口按传入的 `startMonth ~ endMonth` 统计。
+> **板块 2 `core` 的累计文案**：5 个同比指标卡片按传入的 `[startMonth, endMonth]` 统计；
+> 底部文案「截止至 {year} 年 {endMonth} 月」额外通过 `summary` 字段返回，统计范围为 `1 ~ endMonth`。
 >
 > **`trend` 额外参数**：`decadeMode=full|sameRange`（默认 `full`），见板块 3 说明。
 
@@ -152,8 +151,8 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 |---|---|---|---|---|
 | GET | `/api/v1/:site/report/overview` | 总编排（一次返回 6 块） | 本地聚合 | 结论文案依赖 AI（可空） |
 | GET | `/api/v1/:site/report/summary` | 1 研究概述 | 2.6 聚合 | 否 |
-| GET | `/api/v1/:site/report/core` | 2 核心数据（`1~endMonth`） | 2.6 聚合 | 否 |
-| GET | `/api/v1/:site/report/trend` | 3 十年趋势 + 季度 | 2.6 聚合 | 否 |
+| GET | `/api/v1/:site/report/core` | 2 核心数据（含 1~endMonth 累计） | 2.6 聚合 | 否 |
+| GET | `/api/v1/:site/report/trend` | 3 十年趋势 + 季度 | 2.4 优先 + 2.6 聚合补全 | 否 |
 | GET | `/api/v1/:site/report/hotspots` | 4 研究热点 | 2.6 + 本地关键词 | 兜底可开（默认关） |
 | GET | `/api/v1/:site/report/products` | 5 产品引用 | 2.6 `products` 聚合 | 否 |
 | GET | `/api/v1/:site/report/conclusion` | 6 小结 | 2.6 聚合 | 是（结论文案） |
@@ -165,9 +164,10 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 ### 板块要点（与讨论稿口径一致）
 
 - **板块 1 研究概述**：按 `config/journals/<brandKey>.json` 配置的「重点期刊」名单，对 `journal` 字段忽略大小写精确匹配统计篇数（如 Cell / Nature / STTT）。
-- **板块 2 核心数据**：总篇数、总 IF、IF≥10、平均 IF、最高 IF；每个指标返回 `{ value, prevValue, rate }`（同比为去年同区间 `1~endMonth`，`prevValue<=0` 时 `rate: null`）。
-  口径固定 `1 ~ endMonth`（`startMonth` 恒为 1，传入忽略），对应海报文案「截止至 {year} 年（全年 / N 月）」。
-- **板块 3 十年趋势**：本地聚合，窗口 = `[year-9, year]`，**以请求的 `year` 为锚点**（不依赖上游 2.4 —— 后者是锚定「当前真实年份」的滚动窗口，回看历史年份会逐年缩水直至为空）。每个年份返回 `{ year, count, percent, hasData }`：
+- **板块 2 核心数据**：
+  - 上方 5 个同比指标卡片：总篇数、总 IF、IF≥10、平均 IF、最高 IF；每个指标返回 `{ value, prevValue, rate }`（同比为去年同区间 `[startMonth, endMonth]`，`prevValue<=0` 时 `rate: null`）。
+  - 底部文案累计块 `summary`：统计 `year` 年的 `1 ~ endMonth`，返回 `totalPapers`、`totalIf` 及去年同期 `prevTotalPapers`、`prevTotalIf`，对应海报文案「截止至 {year} 年 {endMonth} 月，全网共计收录引用...的 SCI 文献达 X 篇，总 IF 值达 Y」。
+- **板块 3 十年趋势**：数据源优先级为 **2.4 年度新增 → 本地聚合补全 → 缺年补 0**；窗口 = `[year-9, year]`，**以请求的 `year` 为锚点**。每个年份返回 `{ year, count, percent, hasData }`：
   - `percent` = 该年 `count` / 十年中最大 `count`（保留 1 位小数），仅以 `hasData: true` 的年份为基准
   - `hasData: false` 表示该年本地未同步，`count: 0` 是「无数据」而非「真实 0 篇」，前端应据此渲染而非当作 0 篇
 
@@ -197,6 +197,9 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 # 1) 全量同步某品牌某年（首次/每周补跑）
 pnpm --filter zhiliaowo-proxy sync -- --brand=procell --year=2025 [--force]
 
+# 1a) 同步某品牌一段年份（如补齐历史 2008-2026）
+pnpm --filter zhiliaowo-proxy sync -- --brand=procell --fromYear=2008 --toYear=2026 [--force]
+
 # 2) 仅从本地 zlw_papers 重算月度聚合（不请求 API，修复口径/补算用）
 pnpm --filter zhiliaowo-proxy recompute --brand=procell --year=2025
 #   兼容旧位置写法：recompute procell 2025
@@ -219,8 +222,8 @@ curl "http://localhost:3000/api/v1/procell/report/overview?year=2025"
 
 # 单板块
 curl "http://localhost:3000/api/v1/procell/report/summary?year=2025"
-# 板块 2：截止至 2025 年 6 月（startMonth 恒为 1，传了也忽略）
-curl "http://localhost:3000/api/v1/procell/report/core?year=2025&endMonth=6"
+# 板块 2：5 个卡片按 startMonth~endMonth，summary 按 1~endMonth
+curl "http://localhost:3000/api/v1/procell/report/core?year=2025&startMonth=3&endMonth=6"
 # 板块 3：十年趋势，默认 full
 curl "http://localhost:3000/api/v1/procell/report/trend?year=2025"
 # 板块 3：各年只统计 1-8 月（消除未完年假下滑）
