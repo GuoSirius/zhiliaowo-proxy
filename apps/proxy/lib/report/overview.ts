@@ -9,8 +9,8 @@ import { aiEnabled } from '../ai.js';
 import { buildTrend } from './trend.js';
 
 /**
- * 编排 6 个板块的数据（一次性返回，供前端整页渲染）。
- * 所有计算复用各 lib/report 原语（与分板块接口口径一致），仅在此组合。
+ * 编排全部 6 个板块（一次性返回，供前端整页渲染）。
+ * 所有计算复用 lib/report 各原语，口径与分板块接口完全一致，此处不再重复定义。
  */
 export async function buildOverview(
   brand: ResolvedBrand,
@@ -24,7 +24,7 @@ export async function buildOverview(
   const cur = getRangeAgg(brandName, year, startMonth, endMonth);
   const prev = getRangeAgg(brandName, year - 1, startMonth, endMonth);
 
-  // 板块 1 研究概述
+  // —— 板块 1 研究概述（区间总篇数 + 重点期刊命中）
   const lowerCounts = new Map<string, number>();
   for (const [j, c] of Object.entries(cur.journal_counts)) {
     const k = j.toLowerCase();
@@ -36,9 +36,7 @@ export async function buildOverview(
   }));
   const summary = { totalPapers: cur.paper_count, featuredJournals };
 
-  // 板块 2 核心数据：
-  // 上方 5 个卡片按传入区间 [startMonth, endMonth]（同比为去年同区间）；
-  // 底部文案累计：2.1 全历史累计扣减 year 年 endMonth 之后的本地聚合。
+  // —— 板块 2 核心数据（5 卡片按区间同比 + 2.1 累计扣减，口径见 routes/report/core.ts）
   const avgCur = cur.paper_count ? cur.total_factor / cur.paper_count : 0;
   const avgPrev = prev.paper_count ? prev.total_factor / prev.paper_count : 0;
   const cum = await getCumulativeStats(brand, year, endMonth);
@@ -81,11 +79,10 @@ export async function buildOverview(
     },
   };
 
-  // 板块 3 趋势（2.4 优先 + 本地聚合补全 + 缺年补 0；decade 口径固定 full）
+  // —— 板块 3 趋势（近十年 + 季度，口径见 lib/report/trend.ts；overview 固定 full）
   const trend = await buildTrend(brand, year, startMonth, endMonth, 'full');
 
-  // 板块 4 研究热点（与独立 /hotspots 路由口径一致）
-  // 先按当年出现次数算同比，再过滤负增长（保留 null 新品与 >=0），最后按出现次数降序取前 10（尽可能满足 10 条）。
+  // —— 板块 4 研究热点 Top10（口径见 lib/report/hotspots.ts & routes/report/hotspots.ts）
   const allHotspots = getHotspotRangeStats(brand, year, startMonth, endMonth); // 已按 count 降序
   const prevHotspots = getHotspotRangeStats(brand, year - 1, startMonth, endMonth); // 去年同样方式
   const prevHotspotCounts: Record<string, number> = {};
@@ -101,10 +98,8 @@ export async function buildOverview(
         maxIf: h.maxIf,
       };
     })
-    // 1) 先过滤负增长（保留 null 新品与 >=0，用户要求不变）
-    .filter((h) => h.growthRate === null || h.growthRate >= 0)
-    // 2) 再按出现次数降序取前 10（尽可能满足 10 条）
-    .sort((a, b) => b.count - a.count)
+    .filter((h) => h.growthRate === null || h.growthRate >= 0) // 先过滤负增长
+    .sort((a, b) => b.count - a.count) // 再按关键词次数降序
     .slice(0, 10);
   const hotspots = {
     totalPapers: cur.paper_count,
@@ -113,7 +108,7 @@ export async function buildOverview(
     topHotspots,
   };
 
-  // 板块 5 产品引用（与独立 /products 路由共用同一口径：过滤负增长后按引用篇数降序取 Top15）
+  // —— 板块 5 产品引用 Top15（口径见 lib/report/products.ts）
   const curP = getRangeProductCounts(brandName, year, startMonth, endMonth);
   const prevP = getRangeProductCounts(brandName, year - 1, startMonth, endMonth);
   const { totalProducts, hasYoY, items } = buildTopProducts({ cur: curP, prev: prevP });
@@ -124,7 +119,7 @@ export async function buildOverview(
     items,
   };
 
-  // 板块 6 小结
+  // —— 板块 6 小结（stats/topHotspots 仅作 AI 提示词输入，响应见 conclusion 路由）
   const stats = {
     totalPapers: cur.paper_count,
     totalIf: round(cur.total_factor),

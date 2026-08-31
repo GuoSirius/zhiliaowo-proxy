@@ -7,15 +7,14 @@ import { ApiError } from '../../types.js';
 export const reportTrendRoute = new Hono();
 
 /**
- * 板块 3 —— 近十年 SCI 文献年度数量分布 + 季度分布
- * GET /api/v1/:site/report/trend?year=2025&decadeMode=full
+ * 板块 3 —— 近十年年度分布 + 最近 4 个季度分布
+ * GET /api/v1/:site/report/trend?year=&decadeMode=full|sameRange
  *
- * - decade：优先用上游 2.4 年度新增；2.4 缺失的年份用本地 zlw_papers_agg 聚合补全；
- *   仍缺失的年份生成骨架并以 `count=0, hasData=false` 兜底。
- *   窗口终点为请求的 year，往回推 10 年，真正锚定 year。
- *   - decadeMode=full（默认）：各年取全年 1-12 月
- *   - decadeMode=sameRange：各年取 [startMonth, endMonth] 同区间，消除未完年的假下滑
- * - quarters：以 endMonth 为锚点的最近 4 个「已过完」季度（按真实日期判断）
+ * decade：① 优先上游 2.4 年度新增；② 缺失年份用本地聚合补全；
+ *   ③ 仍缺失则 count=0 且 hasData=false 兜底。窗口终点为请求的 year，往回推 10 年。
+ *   decadeMode=full（默认，各年 1-12 月）/ sameRange（各年取 [startMonth,endMonth]，消除未完年假下滑）。
+ * quarters：以 endMonth 所在季度为锚点，按真实日期判断该季度是否已过完；
+ *   未过完则从上一已过完季度往前推 4 个完整季度。
  */
 reportTrendRoute.get('/:site/report/trend', async (c) => {
   const { brand, year, startMonth, endMonth } = parseReportCtx(c);

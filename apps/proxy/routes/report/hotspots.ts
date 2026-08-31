@@ -2,57 +2,36 @@ import { Hono } from 'hono';
 import { parseReportCtx, parseSortBy } from '../../lib/report/params.js';
 import { getRangeAgg } from '../../lib/report/agg.js';
 import { getHotspotRangeStats } from '../../lib/report/hotspots.js';
+import { pct } from '../../lib/report/calc.js';
 import { ok } from '../../lib/response.js';
 
 export const reportHotspotsRoute = new Hono();
 
-/** 同比率：cur 相对 prev 的变化百分比；prev<=0 无法计算返回 null */
-function pct(cur: number, prev: number, d = 1): number | null {
-  if (prev <= 0) return null;
-  const f = Math.pow(10, d);
-  return Math.round(((cur - prev) / prev) * 100 * f) / f;
-}
-
 /**
- * 板块 4 —— 研究热点
- * GET /api/v1/:site/report/hotspots?year=2025&startMonth=1&endMonth=12&sortBy=count|growthRate
- * 数据来自本地 report 原始文献（title 本地关键词匹配，确定性可复现），2.6 列表聚合口径。
- *
- * 返回区间内 Top10 热点：每个热点含 引用篇数(count)、同比(growthRate)、该热点最高 IF(maxIf)。
- * 口径（依据需求文档「研究热点」小节 + 用户口径修正）：
- *   1) 去年用同样方式（getHotspotRangeStats）统计，给当年热点算同比；
- *   2) 先过滤负增长（保留增长率 null 的新品与 >= 0 的热点），负增长剔除（用户要求不变）；
- *   3) 再按当年「出现次数(count)」降序取前 10，尽可能满足 10 条。
- * sortBy 仅对最终列表做二次排序（默认 count）。
- * AI 兜底开关见 env AI_HOTSPOT_FALLBACK（默认关）；开启时同步阶段会对本地零命中文献限量送 AI 打标。
+ * 板块 4 —— 研究热点 Top10
+ * GET /api/v1/:site/report/hotspots?year=&startMonth=&endMonth=&sortBy=count|growthRate
+ * 数据源：本地聚合 zlw_papers_agg（title 关键词匹配，确定性可复现）。
+ * 口径：① 去年同区间算同比；② 先过滤负增长（保留无基线新品与 ≥0）；
+ *      ③ 再按「关键词命中次数(count)」降序取前 10（尽可能满足 10 条）。
+ * sortBy 仅对最终结果二次排序（默认 count）。AI 兜底见 env AI_HOTSPOT_FALLBACK。
  */
 reportHotspotsRoute.get('/:site/report/hotspots', async (c) => {
   const { brand, year, startMonth, endMonth } = parseReportCtx(c);
   const sortBy = parseSortBy(c);
 
-  // 当年区间热点（getHotspotRangeStats 已按 count 降序返回）
-  const cur = getHotspotRangeStats(brand, year, startMonth, endMonth);
-  // 去年同一区间（需求 step5：用同样方式统计），用于给选出的 10 个算同比
-  const prevList = getHotspotRangeStats(brand, year - 1, startMonth, endMonth);
+  const cur = getHotspotRangeStats(brand, year, startMonth, endMonth); // 已按 count 降序
+  const prevList = getHotspotRangeStats(brand, year - 1, startMonth, endMonth); // 去年同区间，用于算同比
   const prevCounts: Record<string, number> = {};
   for (const h of prevList) prevCounts[h.cn] = h.count;
   const curAgg = getRangeAgg(brand.brand, year, startMonth, endMonth);
 
-  // 1) 给所有当年热点算同比；2) 先过滤负增长（保留 null 新品与 >=0）；3) 再按出现次数降序取前 10（尽可能满足 10 条）
+  // 算同比 → 过滤负增长（保留无基线新品与 ≥0）→ 按关键词次数降序取前 10
   const topHotspots = cur
     .map((h) => {
       const prevCount = prevCounts[h.cn] ?? 0;
-      return {
-        cn: h.cn,
-        count: h.count,
-        prevCount,
-        growthRate: pct(h.count, prevCount),
-        maxIf: h.maxIf,
-      };
+      return { cn: h.cn, count: h.count, prevCount, growthRate: pct(h.count, prevCount), maxIf: h.maxIf };
     })
-    // 先过滤负增长（用户要求不变）：保留 null（无基线新品）或 >= 0
     .filter((h) => h.growthRate === null || h.growthRate >= 0)
-    // 再按出现次数降序取前 10（sortBy 仅做二次排序，默认 count）
     .sort((a, b) =>
       sortBy === 'growthRate'
         ? (b.growthRate ?? -Infinity) - (a.growthRate ?? -Infinity)

@@ -36,17 +36,10 @@ function renderConclusionPrompt(
 
 /**
  * 板块 6 —— 小结
- * GET /api/v1/:site/report/conclusion?year=2025&startMonth=1&endMonth=12
- * 数据来自本地 report 聚合（2.6 列表聚合口径）：
- *  - topJournals：Top3 期刊(by factor 去重取最高)，板块 6 独有，其他接口无此排名。
- *  - conclusion：AI 小结文案。若已配置 AI（aiEnabled），基于区间统计 + Top 热点套提示词生成；失败仅告警并返回 null。
- *
- * 设计说明：
- *  - 总篇数/均值IF/最高IF/IF≥10（stats.*）与 Top10 热点（topHotspots）不在此响应中返回——
- *    统计已在板块 2（core，且含同比），热点已在板块 4（hotspots，且含同比），此处重复且无增量。
- *    但二者仍需在路由内计算，作为 AI 提示词（renderConclusionPrompt）的输入，否则文案缺数据。
- *  - 板块 6 原规划的「Top6 通讯作者单位 + AI 译中文校名」因 corOrg 等字段 100% 为空（见讨论稿 §六-1），
- *    暂无法实现，待用户向知了窝确认字段权限后再补。
+ * GET /api/v1/:site/report/conclusion?year=&startMonth=&endMonth=
+ * 响应：topJournals（Top3 期刊 by IF，板块 6 独有）+ conclusion（AI 小结文案，未配 AI 时 null）。
+ * 注：区间统计与 Top10 热点不在此响应返回（已在板块 2/4 提供），仅在路由内计算并作为 AI 提示词输入。
+ * 原规划「Top6 通讯作者单位」因 corOrg 等字段全空暂无法实现。
  */
 reportConclusionRoute.get('/:site/report/conclusion', async (c) => {
   const { brand, year, startMonth, endMonth } = parseReportCtx(c);

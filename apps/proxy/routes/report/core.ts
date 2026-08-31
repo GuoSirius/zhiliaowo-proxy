@@ -9,15 +9,11 @@ export const reportCoreRoute = new Hono();
 
 /**
  * 板块 2 —— 引用文献核心数据
- * GET /api/v1/:site/report/core?year=2025&startMonth=1&endMonth=12
- *
- * 返回两块数据：
- * 1. 上方 5 个同比指标卡片：按传入区间 [startMonth, endMonth] 统计，
- *    同比为「去年同区间」（year-1 的 [startMonth, endMonth]）。
- * 2. 底部文案「截止至 {year} 年 {endMonth} 月」累计数据：
- *    调用 2.1 接口获取全历史累计，扣减 year 年 endMonth 之后的本地聚合，
- *    对应海报文案「全网共计收录引用...的 SCI 文献达 X 篇，总 IF 值达 Y」。
- * 同比 prev 仍用本地聚合 year-1 的 1~endMonth（2.1 无年份参数，无法直接取去年累计）。
+ * GET /api/v1/:site/report/core?year=&startMonth=&endMonth=
+ * ① 上方 5 个同比指标卡片：按传入区间 [startMonth,endMonth]，同比取去年同区间。
+ * ② 底部累计文案「截止至 {year} 年 {endMonth} 月」：调用 2.1 取全历史累计，
+ *    扣减 year 年 endMonth 之后（含同年剩余月 + 已同步未来年）的本地聚合。
+ *   （2.1 无年份参数，故累计的同比仍用本地聚合的去年 1~endMonth。）
  */
 reportCoreRoute.get('/:site/report/core', async (c) => {
   const { brand, year, startMonth, endMonth } = parseReportCtx(c);
@@ -28,9 +24,9 @@ reportCoreRoute.get('/:site/report/core', async (c) => {
   const avgCur = cur.paper_count ? cur.total_factor / cur.paper_count : 0;
   const avgPrev = prev.paper_count ? prev.total_factor / prev.paper_count : 0;
 
-  // 底部文案累计：2.1 全历史累计扣减 year 年 endMonth 之后的本地聚合
+  // 底部累计：调用 2.1 全历史累计扣减 year 年 endMonth 之后（见 lib/report/cumulative.ts）
   const cum = await getCumulativeStats(brand, year, endMonth);
-  // 同比仍用本地聚合的去年 1~endMonth（2.1 无年份参数，无法直接取去年累计）
+  // 累计的同比仍走本地聚合去年 1~endMonth（2.1 无年份参数）
   const cumPrev = getRangeAgg(brand.brand, year - 1, 1, endMonth);
 
   const data = {
