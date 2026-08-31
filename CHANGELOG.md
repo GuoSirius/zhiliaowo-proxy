@@ -1,5 +1,18 @@
 # Changelog
 
+## v2.2.3
+
+[compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v2.2.2...v2.2.3)
+
+### 📚 文档 (Documentation)
+
+- 修正 README report 章节口径（核心累计走2.1、季度按真实日期、板块6响应字段） ([df7b815](https://github.com/GuoSirius/zhiliaowo-proxy/commit/df7b815))
+- 精简对齐 report 路由与 overview 注释，移除 hotspots 重复 pct ([466f130](https://github.com/GuoSirius/zhiliaowo-proxy/commit/466f130))
+
+### ❤️ Contributors
+
+- 郭之存 ([@siriusSupreme](https://github.com/siriusSupreme))
+
 ## v2.2.2
 
 [compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v2.2.1...v2.2.2)
