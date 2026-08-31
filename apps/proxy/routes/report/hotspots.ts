@@ -19,23 +19,31 @@ function pct(cur: number, prev: number, d = 1): number | null {
  * 数据来自本地 report 原始文献（title 本地关键词匹配，确定性可复现），2.6 列表聚合口径。
  *
  * 返回区间内 Top10 热点：每个热点含 引用篇数(count)、同比(growthRate)、该热点最高 IF(maxIf)。
- * 默认按当年引用篇数降序；仅保留增长率 >= 0 的热点，负增长剔除。
- * 若合格数不足 10 条，返回实际条数。
+ * 口径（依据需求文档「研究热点」小节）：
+ *   1) 先按当年「出现次数(count)」降序，固定选出出现次数最多的 10 个；
+ *   2) 去年用同样方式（getHotspotRangeStats）统计，给这 10 个算同比；
+ *   3) 仅保留增长率 >= 0 的热点（含 null 新品），负增长剔除（用户要求不变）。
+ * 因第 3 步剔除，最终可能不足 10 条。
+ * sortBy 仅对最终列表做二次排序（默认 count）；Top10 的选取恒按 count 降序，不受 sortBy 影响。
  * AI 兜底开关见 env AI_HOTSPOT_FALLBACK（默认关）；开启时同步阶段会对本地零命中文献限量送 AI 打标。
  */
 reportHotspotsRoute.get('/:site/report/hotspots', async (c) => {
   const { brand, year, startMonth, endMonth } = parseReportCtx(c);
   const sortBy = parseSortBy(c);
 
+  // 当年区间热点（getHotspotRangeStats 已按 count 降序返回）
   const cur = getHotspotRangeStats(brand, year, startMonth, endMonth);
-  const prev = getRangeAgg(brand.brand, year - 1, startMonth, endMonth);
+  // 去年同一区间（需求 step5：用同样方式统计），用于给选出的 10 个算同比
+  const prevList = getHotspotRangeStats(brand, year - 1, startMonth, endMonth);
+  const prevCounts: Record<string, number> = {};
+  for (const h of prevList) prevCounts[h.cn] = h.count;
   const curAgg = getRangeAgg(brand.brand, year, startMonth, endMonth);
 
-  const prevCounts: Record<string, number> = {};
-  for (const [k, v] of Object.entries(prev.hotspot_counts)) prevCounts[k] = v;
+  // 1) 先按出现次数降序，固定选出 Top10（需求文档：只取出现次数最多的10个）
+  const topByCount = cur.slice(0, 10);
 
-  // 先算同比，过滤负增长，再按 sortBy 排序，最后取 Top10
-  const ranked = cur
+  // 2) 给这 10 个算同比；3) 保留增长率 null（无基线新品）或 >= 0，负增长剔除（不变）
+  const ranked = topByCount
     .map((h) => {
       const prevCount = prevCounts[h.cn] ?? 0;
       return {
@@ -46,15 +54,15 @@ reportHotspotsRoute.get('/:site/report/hotspots', async (c) => {
         maxIf: h.maxIf,
       };
     })
-    // 只保留增长率为 null（无基线新品）或 >= 0 的热点；负增长剔除
     .filter((h) => h.growthRate === null || h.growthRate >= 0)
+    // sortBy 仅对最终 ≤10 条做二次排序；默认 count 维持出现次数降序
     .sort((a, b) =>
       sortBy === 'growthRate'
         ? (b.growthRate ?? -Infinity) - (a.growthRate ?? -Infinity)
         : b.count - a.count,
     );
 
-  const topHotspots = ranked.slice(0, 10);
+  const topHotspots = ranked;
   const totalClassified = cur.reduce((s, h) => s + h.count, 0);
 
   return ok(c, {
