@@ -1,5 +1,17 @@
 # Changelog
 
+## v2.2.2
+
+[compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v2.2.1...v2.2.2)
+
+### 📚 文档 (Documentation)
+
+- 板块4标注排序键为关键词频率次数，厘清与产品的区别 ([ac97808](https://github.com/GuoSirius/zhiliaowo-proxy/commit/ac97808))
+
+### ❤️ Contributors
+
+- 郭之存 ([@siriusSupreme](https://github.com/siriusSupreme))
+
 ## v2.2.1
 
 [compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v2.2.0...v2.2.1)
