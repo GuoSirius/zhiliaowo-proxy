@@ -3,6 +3,7 @@ import { getRangeAgg } from './agg.js';
 import { getHotspotRangeStats } from './hotspots.js';
 import { getRangeProductCounts, buildTopProducts } from './products.js';
 import { getTopJournalsByFactor, loadFeaturedJournals } from './journals.js';
+import { getCumulativeStats } from './cumulative.js';
 import { round, pct } from './calc.js';
 import { aiEnabled } from '../ai.js';
 import { buildTrend } from './trend.js';
@@ -37,10 +38,10 @@ export async function buildOverview(
 
   // 板块 2 核心数据：
   // 上方 5 个卡片按传入区间 [startMonth, endMonth]（同比为去年同区间）；
-  // 底部文案累计按 [1, endMonth]（「截止至 {year} 年 {endMonth} 月」）。
+  // 底部文案累计：2.1 全历史累计扣减 year 年 endMonth 之后的本地聚合。
   const avgCur = cur.paper_count ? cur.total_factor / cur.paper_count : 0;
   const avgPrev = prev.paper_count ? prev.total_factor / prev.paper_count : 0;
-  const cum = getRangeAgg(brandName, year, 1, endMonth);
+  const cum = await getCumulativeStats(brand, year, endMonth);
   const cumPrev = getRangeAgg(brandName, year - 1, 1, endMonth);
   const core = {
     range: { year, startMonth, endMonth },
@@ -71,29 +72,34 @@ export async function buildOverview(
     },
     cumulative: {
       range: { year, startMonth: 1, endMonth },
-      totalPapers: cum.paper_count,
+      totalPapers: cum.totalPapers,
       prevTotalPapers: cumPrev.paper_count,
-      totalIf: round(cum.total_factor),
+      totalIf: cum.totalIf,
       prevTotalIf: round(cumPrev.total_factor),
+      maxIf: cum.maxIf,
+      avgIf: cum.avgIf,
     },
   };
 
   // 板块 3 趋势（2.4 优先 + 本地聚合补全 + 缺年补 0；decade 口径固定 full）
   const trend = await buildTrend(brand, year, startMonth, endMonth, 'full');
 
-  // 板块 4 研究热点
+  // 板块 4 研究热点（与独立 /hotspots 路由口径一致：过滤负增长，取 Top10）
   const allHotspots = getHotspotRangeStats(brand, year, startMonth, endMonth);
   const prevHotspotCounts = prev.hotspot_counts;
-  const topHotspots = allHotspots.slice(0, 10).map((h) => {
-    const pc = prevHotspotCounts[h.cn] ?? 0;
-    return {
-      cn: h.cn,
-      count: h.count,
-      prevCount: pc,
-      growthRate: pct(h.count, pc),
-      maxIf: h.maxIf,
-    };
-  });
+  const topHotspots = allHotspots
+    .map((h) => {
+      const pc = prevHotspotCounts[h.cn] ?? 0;
+      return {
+        cn: h.cn,
+        count: h.count,
+        prevCount: pc,
+        growthRate: pct(h.count, pc),
+        maxIf: h.maxIf,
+      };
+    })
+    .filter((h) => h.growthRate === null || h.growthRate >= 0)
+    .slice(0, 10);
   const hotspots = {
     totalPapers: cur.paper_count,
     totalClassified: allHotspots.reduce((s, h) => s + h.count, 0),

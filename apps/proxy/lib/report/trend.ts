@@ -32,13 +32,21 @@ interface QuarterDef extends QuarterPoint {
   end: number;
 }
 
-/** 根据 endMonth 确定「最近 4 个季度」：
- *  - 若 endMonth 是当前季度末月（3/6/9/12），则该季度计入；
- *  - 否则该季度不计入，从上一季度开始往前倒推 4 个季度。
+/** 判断 (year, quarter) 是否已经完整过完（基于当前真实日期）。 */
+function isQuarterPassed(year: number, quarter: number): boolean {
+  const endMonthOfQuarter = quarter * 3;
+  const lastDay = new Date(year, endMonthOfQuarter, 0);
+  return new Date() > lastDay;
+}
+
+/** 根据 endMonth 确定「最近 4 个已过完季度」：
+ *  - 目标季度为 endMonth 所在季度；
+ *  - 若该季度已过完（按真实日期），则从该季度开始往前倒推 4 个；
+ *  - 否则该季度不计入，从上一季度开始往前倒推 4 个。
  * 返回按时间正序（由早到晚）排列。 */
 function buildQuarterDefs(year: number, endMonth: number): QuarterDef[] {
   const currentQuarter = Math.ceil(endMonth / 3);
-  const lastIncluded = endMonth === currentQuarter * 3 ? currentQuarter : currentQuarter - 1;
+  const lastIncluded = isQuarterPassed(year, currentQuarter) ? currentQuarter : currentQuarter - 1;
 
   const defs: QuarterDef[] = [];
   let q = lastIncluded;

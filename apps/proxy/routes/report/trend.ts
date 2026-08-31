@@ -15,7 +15,7 @@ export const reportTrendRoute = new Hono();
  *   窗口终点为请求的 year，往回推 10 年，真正锚定 year。
  *   - decadeMode=full（默认）：各年取全年 1-12 月
  *   - decadeMode=sameRange：各年取 [startMonth, endMonth] 同区间，消除未完年的假下滑
- * - quarters：以 endMonth 为锚点的最近 4 个完整季度
+ * - quarters：以 endMonth 为锚点的最近 4 个「已过完」季度（按真实日期判断）
  */
 reportTrendRoute.get('/:site/report/trend', async (c) => {
   const { brand, year, startMonth, endMonth } = parseReportCtx(c);
