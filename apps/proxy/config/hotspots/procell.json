@@ -1,6 +1,6 @@
 {
   "brandKey": "procell",
-  "generatedAt": "2026-08-28T15:54:20.595Z",
+  "generatedAt": "2026-08-31T04:12:50.411Z",
   "items": [
     {
       "cn": "巨噬细胞",
@@ -159,15 +159,6 @@
         "neutrophil",
         "neutrophils",
         "neutrophilic"
-      ]
-    },
-    {
-      "cn": "囊泡",
-      "keywords": [
-        "vesicle",
-        "vesicles",
-        "extracellular vesicle",
-        "membrane vesicle"
       ]
     },
     {
@@ -356,15 +347,6 @@
         "PANoptosis",
         "panoptosis",
         "inflammatory cell death"
-      ]
-    },
-    {
-      "cn": "AI机器学习",
-      "keywords": [
-        "artificial intelligence",
-        "AI",
-        "machine learning",
-        "deep learning"
       ]
     },
     {
