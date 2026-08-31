@@ -183,9 +183,10 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 
   季度以 `endMonth` 为锚点取最近 4 个完整季度（若 `endMonth` 为当季末月则计入当季，否则从上一季度倒推），每条含 `year`。
 - **板块 4 研究热点**：`title` 本地词边界正则匹配 `config/hotspots/<brandKey>.json` 关键词表 → Top10（计数 + 最高 IF + 同比）。
-  口径（依据需求文档「研究热点」小节 + 用户口径修正）：**先过滤负增长**（保留增长率 ≥ 0，含无基线新品 null），**再按当年「出现次数」降序取前 10，尽可能满足 10 条**；上一年用同样方式（getHotspotRangeStats）统计给当年热点算同比。
+  口径（依据需求文档「研究热点」小节 + 用户口径修正）：**排序键 = 关键词频率次数**（即 `count` = 该关键词在指定年区间命中的去重文献篇数，见 `getHotspotRangeStats` 读取 `zlw_papers_agg.hotspot_counts`）。
+  **先过滤负增长**（保留增长率 ≥ 0，含无基线新品 null），**再按关键词频率次数（出现次数）降序取前 10，尽可能满足 10 条**；上一年用同样方式（getHotspotRangeStats）统计给当年热点算同比。
   AI 兜底开关 `AI_HOTSPOT_FALLBACK=1` 且已配 `AI_API_KEY` 时，对本地零命中文献限量（默认 200 篇）送 AI 打标，结果合并进聚合；失败仅告警、不影响主流程。
-  支持 `sortBy`：`count`（默认，按引用篇数降序）/ `growthRate`（按同比增长率降序二次排序）。
+  支持 `sortBy`：`count`（默认，按关键词频率次数降序）/ `growthRate`（按同比增长率降序二次排序）。
 - **板块 5 产品引用**：解析 `products[].goodsSpu` 聚合，当前区间按引用篇数取前 `topN`(默认 30，可放宽 50/100) 货号 → 取上一年同区间同批货号算同比增长率 → **先过滤负增长及无基线新品，再按 `sortBy`(默认 count) 降序取前 `outN`(默认 15)**。
   过滤后合格数不足 `outN` 时，自动翻倍候选池重试（≤ `maxPool`=300）尽量凑够 15 条；仍不足则返回实际能凑到的条数（`poolUsed` 反映是否触顶）。
   **仅返回货号（goodsSpu）+ 英文商品名（goodsLabel）**，中文名/分类由前端调网站接口获取。无去年同期基线时（单年部署）跳过增长率过滤、退化为按引用量降序取 Top15，`hasYoY=false`。
