@@ -85,13 +85,12 @@ export async function buildOverview(
   const trend = await buildTrend(brand, year, startMonth, endMonth, 'full');
 
   // 板块 4 研究热点（与独立 /hotspots 路由口径一致）
-  // 先按当年出现次数降序固定选出 Top10，再用同样方式统计去年给这 10 个算同比，最后剔除负增长。
+  // 先按当年出现次数算同比，再过滤负增长（保留 null 新品与 >=0），最后按出现次数降序取前 10（尽可能满足 10 条）。
   const allHotspots = getHotspotRangeStats(brand, year, startMonth, endMonth); // 已按 count 降序
   const prevHotspots = getHotspotRangeStats(brand, year - 1, startMonth, endMonth); // 去年同样方式
   const prevHotspotCounts: Record<string, number> = {};
   for (const h of prevHotspots) prevHotspotCounts[h.cn] = h.count;
   const topHotspots = allHotspots
-    .slice(0, 10) // 1) 固定选出出现次数最多的 10 个
     .map((h) => {
       const pc = prevHotspotCounts[h.cn] ?? 0;
       return {
@@ -102,8 +101,11 @@ export async function buildOverview(
         maxIf: h.maxIf,
       };
     })
-    // 3) 保留增长率 null（无基线新品）或 >= 0，负增长剔除（不变）
-    .filter((h) => h.growthRate === null || h.growthRate >= 0);
+    // 1) 先过滤负增长（保留 null 新品与 >=0，用户要求不变）
+    .filter((h) => h.growthRate === null || h.growthRate >= 0)
+    // 2) 再按出现次数降序取前 10（尽可能满足 10 条）
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
   const hotspots = {
     totalPapers: cur.paper_count,
     totalClassified: allHotspots.reduce((s, h) => s + h.count, 0),
