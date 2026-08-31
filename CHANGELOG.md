@@ -1,5 +1,17 @@
 # Changelog
 
+## v2.2.0
+
+[compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v2.1.0...v2.2.0)
+
+### 🚀 新功能 (Features)
+
+- 调整海报统计口径（core 2.1累计、quarters真实日期、热点过滤负增长） ([d7079b5](https://github.com/GuoSirius/zhiliaowo-proxy/commit/d7079b5))
+
+### ❤️ Contributors
+
+- 郭之存 ([@siriusSupreme](https://github.com/siriusSupreme))
+
 ## v2.1.0
 
 [compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v2.0.1...v2.1.0)
