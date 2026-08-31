@@ -14,7 +14,8 @@ dotenv.config({ path: resolve(__dirname, '..', '..', '..', '.env') });
 
 function usage(): never {
   console.error('用法: tsx scripts/sync.ts --brand=procell --year=2025 [--force]');
-  console.error('      tsx scripts/sync.ts --brand=procell --fromYear=2008 --toYear=2026 [--force]');
+  console.error('      tsx scripts/sync.ts --brand=procell --fromYear=2008 [--toYear=2026] [--force]');
+  console.error('      （--toYear 缺省默认当前真实年份；--year 与 --fromYear/--toYear 二选一）');
   process.exit(1);
 }
 
@@ -31,16 +32,24 @@ function parseYear(raw: string | boolean | undefined, label: string): number | n
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const brandKey = String(args.brand ?? '');
+  const nowYear = new Date().getFullYear();
   const singleYear = parseYear(args.year, 'year');
-  const fromYear = parseYear(args.fromYear, 'fromYear') ?? singleYear;
-  const toYear = parseYear(args.toYear, 'toYear') ?? singleYear;
+  // 与 recompute 保持一致：--year 单年 / --fromYear~--toYear 区间；
+  // 缺省时 toYear 默认「当前真实年份」，fromYear 再缺省则取 toYear（即单年 = 当前年）。
+  const fromYear = parseYear(args.fromYear, 'fromYear') ?? singleYear ?? nowYear;
+  const toYear = parseYear(args.toYear, 'toYear') ?? singleYear ?? nowYear;
   const force = !!args.force;
 
-  if (!brandKey || fromYear == null || toYear == null || fromYear > toYear) {
+  if (!brandKey || fromYear > toYear) {
     usage();
   }
 
   const brand = resolveBrandFlexible(brandKey);
+  console.log(
+    `[sync] 品牌=${brand.label} 年份范围=${fromYear}-${toYear}` +
+      (args.toYear == null && args.year == null ? `（toYear 默认当前年 ${nowYear}）` : '') +
+      ` force=${force}`,
+  );
   migrateReportDb();
   const client = new ZhiliaowoClient(new MemoryCache());
 

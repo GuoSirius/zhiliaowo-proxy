@@ -196,15 +196,23 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 数据落库在 `apps/proxy/data/report.db`（SQLite，运行时由同步脚本生成，不纳入 git）。三张表：`zlw_papers`（原始文献）、`zlw_papers_agg`（按月预聚合）、`zlw_sync_state`（同步状态）。
 
 ```bash
-# 1) 全量同步某品牌某年（首次/每周补跑）
+# 统一入参（sync / recompute 一致）：
+#   --brand           品牌 key（必填，默认 procell）
+#   --year            单年（= 该年同步/重算）
+#   --fromYear/--toYear  年份区间；--toYear 缺省时默认「当前真实年份」
+#   sync 额外支持 --force（强制重新拉取，忽略已同步状态）
+
+# 1) 同步某品牌单年（首次/每周补跑）
 pnpm --filter zhiliaowo-proxy sync -- --brand=procell --year=2025 [--force]
 
-# 1a) 同步某品牌一段年份（如补齐历史 2008-2026）
-pnpm --filter zhiliaowo-proxy sync -- --brand=procell --fromYear=2008 --toYear=2026 [--force]
+# 1a) 同步某品牌一段年份（如补齐历史 2008-2026，--toYear 缺省=当前年）
+pnpm --filter zhiliaowo-proxy sync -- --brand=procell --fromYear=2008 [--toYear=2026] [--force]
 
 # 2) 仅从本地 zlw_papers 重算月度聚合（不请求 API，修复口径/补算用）
 pnpm --filter zhiliaowo-proxy recompute --brand=procell --year=2025
 #   兼容旧位置写法：recompute procell 2025
+#   重算某品牌一段年份（--toYear 缺省=当前年）：
+pnpm --filter zhiliaowo-proxy recompute --brand=procell --fromYear=2008 [--toYear=2026]
 #   全品牌 × 全部已同步年份（改口径后批量重算用）：
 pnpm --filter zhiliaowo-proxy recompute --all
 

@@ -3,30 +3,42 @@ import { dirname, resolve } from 'node:path';
 import dotenv from 'dotenv';
 import { BRANDS, resolveBrand, resolveBrandFlexible } from '../config/brands.js';
 import { recomputeYearAgg } from '../lib/report/sync.js';
-import { reportDb } from '../lib/report/db.js';
+import { reportDb, localPaperCount } from '../lib/report/db.js';
 import { parseArgs } from './parse-args.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // 统一从仓库根 .env 读取（与 sync.ts 一致）
 dotenv.config({ path: resolve(__dirname, '..', '..', '..', '.env') });
 
-// 用法:
+// 用法（与 sync 保持一致）:
 //   pnpm --filter zhiliaowo-proxy recompute --brand=procell --year=2025
-//   pnpm --filter zhiliaowo-proxy recompute --all            # 全品牌 × 全部已同步年份
-//   pnpm --filter zhiliaowo-proxy recompute procell 2025     # 位置参数兼容（旧写法）
+//   pnpm --filter zhiliaowo-proxy recompute --brand=procell --fromYear=2008 [--toYear=2026]
+//   pnpm --filter zhiliaowo-proxy recompute procell 2025        # 位置参数兼容（旧写法）
+//   pnpm --filter zhiliaowo-proxy recompute --all               # 全品牌 × 全部已同步年份
 // 仅从本地 zlw_papers 重算月度聚合，不请求知了窝 API。
+// --toYear 缺省时默认「当前真实年份」；--year 与 --fromYear/--toYear 二选一。
 const args = parseArgs(process.argv.slice(2));
 const positional = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+const nowYear = new Date().getFullYear();
+
 const brandInput = String(args.brand ?? positional[0] ?? 'procell');
-const yearRaw = String(args.year ?? positional[1] ?? 2025);
+
+function parseYear(raw: string | boolean | undefined, label: string): number | null {
+  if (raw == null || raw === '' || raw === true) return null;
+  const n = Number(raw);
+  if (!Number.isInteger(n)) {
+    console.error(`${label} 无效: ${raw}`);
+    process.exit(1);
+  }
+  return n;
+}
+
+const singleYear = positional[1] != null ? parseYear(positional[1], 'year') : parseYear(args.year, 'year');
+const fromYear = parseYear(args.fromYear, 'fromYear') ?? singleYear ?? nowYear;
+const toYear = parseYear(args.toYear, 'toYear') ?? singleYear ?? nowYear;
 
 if (!brandInput) {
-  console.error('用法: recompute --brand=procell --year=2025');
-  process.exit(1);
-}
-const year = Number(yearRaw);
-if (!Number.isInteger(year)) {
-  console.error(`year 无效: ${yearRaw}`);
+  console.error('用法: recompute --brand=procell --year=2025 [--fromYear=.. --toYear=..] [--all]');
   process.exit(1);
 }
 
@@ -59,7 +71,21 @@ if (args.all === true) {
 }
 
 const brand = resolveBrandFlexible(brandInput);
-console.log(`[recompute] ${brand.brand} ${year} 开始重算聚合（仅本地，不请求 API）...`);
-const r = recomputeYearAgg(brand, year);
+console.log(
+  `[recompute] ${brand.brand} 年份范围 ${fromYear}-${toYear}` +
+    (args.toYear == null && args.year == null ? `（toYear 默认当前年 ${nowYear}）` : '') +
+    ` 开始重算聚合（仅本地，不请求 API）...`,
+);
+let total = 0;
+for (let year = fromYear; year <= toYear; year++) {
+  const cnt = localPaperCount(brand.brand, year);
+  if (cnt === 0) {
+    console.log(`[recompute] ${brand.brand} ${year}: 本地无文献，跳过`);
+    continue;
+  }
+  const r = recomputeYearAgg(brand, year);
+  total += r.localPapers;
+  console.log(`  ${year}: months=${r.months}, papers=${r.localPapers}`);
+}
 checkpoint();
-console.log(`[recompute] 完成: months=${r.months}, localPapers=${r.localPapers}（已 checkpoint）`);
+console.log(`[recompute] 完成: ${total} 篇（已 checkpoint）`);
