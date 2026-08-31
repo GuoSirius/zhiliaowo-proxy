@@ -134,8 +134,9 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 ## 海报数据接口（6 板块 / `report`）
 
 为静态海报页（前端不在本仓库，跑在 18899 端口）提供 6 个板块的数据接口。
-数据全部来自「知了窝 2.6 列表聚合 → 落库 `report.db` → 按月预聚合」的本地聚合层，
-不再依赖 2.3/2.4 图表接口（详见下方「板块 3 口径说明」）。
+数据主要来自「知了窝 2.6 列表聚合 → 落库 `report.db` → 按月预聚合」的本地聚合层；两类例外：
+- **板块 2 累计文案**通过 **2.1 品牌文献统计**接口取全历史累计，再扣减本地聚合中 endMonth 之后到最新的数据；
+- **板块 3 十年趋势**优先用 **2.4 年度数量**接口，缺失年份才回退本地聚合。
 
 ### 统一入参
 
@@ -143,7 +144,9 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 通用 query：`year`（默认当前年）、`startMonth`（默认 1）、`endMonth`（默认 12）。
 
 > **板块 2 `core` 的累计文案**：5 个同比指标卡片按传入的 `[startMonth, endMonth]` 统计；
-> 底部文案「截止至 {year} 年 {endMonth} 月」额外通过 `summary` 字段返回，统计范围为 `1 ~ endMonth`。
+> 底部文案「截止至 {year} 年 {endMonth} 月」额外通过 `summary` 字段返回——该值由 **2.1 全历史累计**扣减
+> 「year 年 endMonth 之后（含同年剩余月份 + 已同步未来年份）的本地聚合」得到，**并非本地 1~endMonth 聚合**；
+> 同比 prev 仍用本地聚合的去年 1~endMonth（2.1 无年份参数，无法直取去年累计）。
 >
 > **`trend` 额外参数**：`decadeMode=full|sameRange`（默认 `full`），见板块 3 说明。
 
@@ -151,7 +154,7 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 |---|---|---|---|---|
 | GET | `/api/v1/:site/report/overview` | 总编排（一次返回 6 块） | 本地聚合 | 结论文案依赖 AI（可空） |
 | GET | `/api/v1/:site/report/summary` | 1 研究概述 | 2.6 聚合 | 否 |
-| GET | `/api/v1/:site/report/core` | 2 核心数据（含 1~endMonth 累计） | 2.6 聚合 | 否 |
+| GET | `/api/v1/:site/report/core` | 2 核心数据（卡片 2.6 聚合；累计文案走 2.1） | 2.6 聚合 + 2.1 累计 | 否 |
 | GET | `/api/v1/:site/report/trend` | 3 十年趋势 + 季度 | 2.4 优先 + 2.6 聚合补全 | 否 |
 | GET | `/api/v1/:site/report/hotspots` | 4 研究热点 | 2.6 + 本地关键词 | 兜底可开（默认关） |
 | GET | `/api/v1/:site/report/products` | 5 产品引用 | 2.6 `products` 聚合 | 否 |
@@ -166,7 +169,7 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 - **板块 1 研究概述**：按 `config/journals/<brandKey>.json` 配置的「重点期刊」名单，对 `journal` 字段忽略大小写精确匹配统计篇数（如 Cell / Nature / STTT）。
 - **板块 2 核心数据**：
   - 上方 5 个同比指标卡片：总篇数、总 IF、IF≥10、平均 IF、最高 IF；每个指标返回 `{ value, prevValue, rate }`（同比为去年同区间 `[startMonth, endMonth]`，`prevValue<=0` 时 `rate: null`）。
-  - 底部文案累计块 `summary`：统计 `year` 年的 `1 ~ endMonth`，返回 `totalPapers`、`totalIf` 及去年同期 `prevTotalPapers`、`prevTotalIf`，对应海报文案「截止至 {year} 年 {endMonth} 月，全网共计收录引用...的 SCI 文献达 X 篇，总 IF 值达 Y」。
+  - 底部文案累计块 `summary`（`range` 形如 `{year, startMonth:1, endMonth}`，但数值口径**非**本地 1~endMonth 聚合）：通过 **2.1 接口**取全历史累计，扣减「year 年 endMonth 之后」的本地聚合，得到「截止至 {year} 年 {endMonth} 月」累计；返回 `totalPapers`、`totalIf`、`maxIf`、`avgIf` 及去年同期 `prevTotalPapers`、`prevTotalIf`（去年同期为本地聚合的去年 1~endMonth），对应海报文案「截止至 {year} 年 {endMonth} 月，全网共计收录引用...的 SCI 文献达 X 篇，总 IF 值达 Y」。
 - **板块 3 十年趋势**：数据源优先级为 **2.4 年度新增 → 本地聚合补全 → 缺年补 0**；窗口 = `[year-9, year]`，**以请求的 `year` 为锚点**。每个年份返回 `{ year, count, percent, hasData }`：
   - `percent` = 该年 `count` / 十年中最大 `count`（保留 1 位小数），仅以 `hasData: true` 的年份为基准
   - `hasData: false` 表示该年本地未同步，`count: 0` 是「无数据」而非「真实 0 篇」，前端应据此渲染而非当作 0 篇
@@ -181,7 +184,7 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
   > 例：2026 年 8 月生成海报，`full` 下 2026（5538）比 2025 全年（7855）看似下滑 29.5%，
   > 实为年未过完；`sameRange`（1-8 月）下 2026=5538 vs 2025=5193，实为增长 6.6%。
 
-  季度以 `endMonth` 为锚点取最近 4 个完整季度（若 `endMonth` 为当季末月则计入当季，否则从上一季度倒推），每条含 `year`。
+  季度以 `endMonth` 所在季度为锚点，但**某季度是否计入由「当前真实日期」判断该季度是否已完整过完**——未过完则不计入，从上一已过完季度往前推 4 个（例：endMonth=9 但当前才 8 月，Q3 未过完，则从 Q2 往前推 4 个），每条含 `year`。
 - **板块 4 研究热点**：`title` 本地词边界正则匹配 `config/hotspots/<brandKey>.json` 关键词表 → Top10（计数 + 最高 IF + 同比）。
   口径（依据需求文档「研究热点」小节 + 用户口径修正）：**排序键 = 关键词频率次数**（即 `count` = 该关键词在指定年区间命中的去重文献篇数，见 `getHotspotRangeStats` 读取 `zlw_papers_agg.hotspot_counts`）。
   **先过滤负增长**（保留增长率 ≥ 0，含无基线新品 null），**再按关键词频率次数（出现次数）降序取前 10，尽可能满足 10 条**；上一年用同样方式（getHotspotRangeStats）统计给当年热点算同比。
@@ -190,7 +193,7 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 - **板块 5 产品引用**：解析 `products[].goodsSpu` 聚合，当前区间按引用篇数取前 `topN`(默认 30，可放宽 50/100) 货号 → 取上一年同区间同批货号算同比增长率 → **先过滤负增长及无基线新品，再按 `sortBy`(默认 count) 降序取前 `outN`(默认 15)**。
   过滤后合格数不足 `outN` 时，自动翻倍候选池重试（≤ `maxPool`=300）尽量凑够 15 条；仍不足则返回实际能凑到的条数（`poolUsed` 反映是否触顶）。
   **仅返回货号（goodsSpu）+ 英文商品名（goodsLabel）**，中文名/分类由前端调网站接口获取。无去年同期基线时（单年部署）跳过增长率过滤、退化为按引用量降序取 Top15，`hasYoY=false`。
-- **板块 6 小结**：结构化部分（统计 + Top3 期刊 by IF + Top10 热点）本地确定；`conclusion` 文案需 AI（`AI_API_KEY` 已配时生成，否则 `null`）。
+- **板块 6 小结**：响应只返回 `topJournals`（Top3 期刊 by IF）+ `conclusion`（AI 文案，需 `AI_API_KEY`，否则 `null`）。统计与 Top10 热点仅在服务端本地计算、作为 AI 提示词输入，不随响应返回（避免与板块 2/4 重复）。
   ⚠️ 原规划的「Top6 通讯作者单位 + AI 译中文校名」因 `corOrg` 等字段 100% 为空暂无法实现。
 
 ### 同步工作流
