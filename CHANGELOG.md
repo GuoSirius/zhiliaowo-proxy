@@ -1,5 +1,30 @@
 # Changelog
 
+## v2.2.1
+
+[compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v2.2.0...v2.2.1)
+
+### 🚀 新功能 (Features)
+
+- 对齐 sync/recompute 传参，recompute 支持年份区间且截止年默认当前年 ([14b45b8](https://github.com/GuoSirius/zhiliaowo-proxy/commit/14b45b8))
+
+### 🐛 缺陷修复 (Bug Fixes)
+
+- 热点 Top10 按出现次数固定选出后再剔除负增长（贴合需求文档口径） ([d6c0833](https://github.com/GuoSirius/zhiliaowo-proxy/commit/d6c0833))
+- 热点改为先过滤负增长再按出现次数取前10（尽可能满足10条） ([a66f546](https://github.com/GuoSirius/zhiliaowo-proxy/commit/a66f546))
+
+### 📚 文档 (Documentation)
+
+- Update ([07c3587](https://github.com/GuoSirius/zhiliaowo-proxy/commit/07c3587))
+
+### 🎨 代码格式 (Style)
+
+- 优化 release 发版类型选择交互样式（高亮/配色/对齐） ([37a24e2](https://github.com/GuoSirius/zhiliaowo-proxy/commit/37a24e2))
+
+### ❤️ Contributors
+
+- 郭之存 ([@siriusSupreme](https://github.com/siriusSupreme))
+
 ## v2.2.0
 
 [compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v2.1.0...v2.2.0)
