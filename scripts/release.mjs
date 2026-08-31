@@ -17,10 +17,48 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 
+// ---------- 终端样式（纯 ANSI，无第三方依赖） ----------
+const USE_COLOR = process.stdout.isTTY && !process.env.NO_COLOR;
+const C = USE_COLOR
+  ? {
+      reset: '\x1B[0m',
+      bold: '\x1B[1m',
+      dim: '\x1B[2m',
+      green: '\x1B[32m',
+      blue: '\x1B[34m',
+      yellow: '\x1B[33m',
+      cyan: '\x1B[36m',
+      white: '\x1B[97m',
+      bgBlue: '\x1B[44m',
+    }
+  : new Proxy({}, { get: () => '' });
+
+// 显示宽度（宽字符按 2 计，用于终端对齐）
+function isWide(ch) {
+  const cp = ch.codePointAt(0);
+  return (
+    cp >= 0x1100 &&
+    (cp <= 0x115f ||
+      (cp >= 0x2e80 && cp <= 0xa4cf) ||
+      (cp >= 0xac00 && cp <= 0xd7a3) ||
+      (cp >= 0xf900 && cp <= 0xfaff) ||
+      (cp >= 0xfe30 && cp <= 0xfe4f) ||
+      (cp >= 0xff00 && cp <= 0xffef))
+  );
+}
+function dispLen(s) {
+  let n = 0;
+  for (const ch of s) n += isWide(ch) ? 2 : 1;
+  return n;
+}
+function padDisp(s, width) {
+  return s + ' '.repeat(Math.max(0, width - dispLen(s)));
+}
+
 const RELEASE_TYPES = [
-  { type: 'patch', label: 'patch  (修复 / 补丁)' },
-  { type: 'minor', label: 'minor  (新功能，向下兼容)' },
-  { type: 'major', label: 'major  (破坏性变更)' },
+  { type: 'patch', label: 'patch', desc: '修复 / 补丁', color: C.green },
+  { type: 'minor', label: 'minor', desc: '新功能（向下兼容）', color: C.blue },
+  { type: 'major', label: 'major', desc: '破坏性变更', color: C.yellow },
 ];
 
 // ---------- 基础工具 ----------
@@ -80,18 +118,35 @@ function syncVersions(version) {
   }
 }
 
-/** 渲染可选发版类型列表（高亮当前项） + 当前/新版本 */
+/** 渲染可选发版类型列表（高亮当前项） + 当前/新版本。
+ * 紧凑界面：不打印 changelog，避免干扰类型选择。 */
+const PAD = 2; // 统一缩进
+const SELECT_W = 42; // 选项主体补齐到的显示宽度，使版本号右对齐
+const RULE_W = 52; // 上下分隔线宽度（= SELECT_W + 版本号宽度）
+
 function renderScreen(currentVersion, selectedType) {
+  const pad = ' '.repeat(PAD);
   const lines = [];
-  lines.push(`当前版本: v${currentVersion}`);
   lines.push('');
-  lines.push('↑/↓ 切换发版类型,  Enter 确认,  Ctrl+C 取消');
+  lines.push(`${pad}${C.bold}${C.cyan}当前版本  ${C.white}v${currentVersion}${C.reset}`);
   lines.push('');
+  lines.push(pad + C.dim + '─'.repeat(RULE_W) + C.reset);
   for (const opt of RELEASE_TYPES) {
     const nv = bump(currentVersion, opt.type);
-    const mark = opt.type === selectedType ? '●' : ' ';
-    lines.push(`${mark} ${opt.label.padEnd(28)} →  v${nv}`);
+    const sel = opt.type === selectedType;
+    const arrow = sel ? '▶' : ' ';
+    if (sel) {
+      const body = `${arrow} ${opt.label}  ${opt.desc}`;
+      const row = padDisp(body, SELECT_W) + ` → ${C.white}v${nv}`;
+      lines.push(pad + C.bgBlue + C.bold + row + C.reset);
+    } else {
+      const body = `${arrow} ${C.bold}${opt.color}${opt.label}${C.reset}  ${C.dim}${opt.desc}${C.reset}`;
+      lines.push(pad + padDisp(body, SELECT_W) + ` ${C.dim}→ v${nv}${C.reset}`);
+    }
   }
+  lines.push(pad + C.dim + '─'.repeat(RULE_W) + C.reset);
+  lines.push('');
+  lines.push(`${pad}${C.dim}↑/↓ 切换      Enter 确认      Ctrl+C 取消${C.reset}`);
   return lines.join('\n');
 }
 
@@ -113,7 +168,7 @@ function selectRelease(currentVersion) {
         return;
       } else if (k === '\x03') {
         cleanup();
-        process.stdout.write('\n\n已取消发布。\n');
+        process.stdout.write(`\n\n${C.dim}已取消发布。${C.reset}\n`);
         reject(new Error('cancelled'));
         return;
       } else {
@@ -169,7 +224,7 @@ async function main() {
   }
 
   const newVersion = bump(currentVersion, selected);
-  process.stdout.write(`\n\n确认发布 v${newVersion}\n`);
+  process.stdout.write(`\n\n${C.bold}${C.green}✔ 确认发布 ${C.white}v${newVersion}${C.reset}\n`);
 
   // 4. 自动发布：changelogen 按选定类型 bump 根包版本号 + 增量写中文 CHANGELOG（与 changelog.config.js 对齐）
   run(`pnpm exec changelogen --${selected} --bump`);
