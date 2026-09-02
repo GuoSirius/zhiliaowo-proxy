@@ -12,3 +12,8 @@ coverage/
 data/report.db
 data/report.db-wal
 data/report.db-shm
+
+# AI 助手运行时产物（记忆笔记、定时任务运行日志等）
+# 纯本地工作数据、非源码：每台机器/每次运行都不同，入库只会产生无意义 diff，
+# 且日志含环境细节。仅是不入库，目录本身保留。
+.workbuddy/

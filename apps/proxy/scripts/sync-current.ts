@@ -5,7 +5,7 @@ import { BRANDS, resolveBrand } from '../config/brands.js';
 import { ZhiliaowoClient } from '../lib/zhiliaowo.js';
 import { MemoryCache } from '../lib/cache.js';
 import { migrateReportDb } from '../lib/report/db.js';
-import { syncYear } from '../lib/report/sync.js';
+import { syncYear, CONCURRENCY_INFO } from '../lib/report/sync.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: resolve(__dirname, '..', '..', '..', '.env') });
@@ -17,6 +17,7 @@ dotenv.config({ path: resolve(__dirname, '..', '..', '..', '.env') });
  * 仅落库 + 重算聚合，不启服务。
  */
 async function main() {
+  console.log(`[sync-current] 并发=${CONCURRENCY_INFO}`);
   migrateReportDb();
   const client = new ZhiliaowoClient(new MemoryCache());
   const now = new Date();

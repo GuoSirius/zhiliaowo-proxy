@@ -5,7 +5,7 @@ import { resolveBrandFlexible } from '../config/brands.js';
 import { ZhiliaowoClient } from '../lib/zhiliaowo.js';
 import { MemoryCache } from '../lib/cache.js';
 import { migrateReportDb } from '../lib/report/db.js';
-import { syncYear } from '../lib/report/sync.js';
+import { syncYear, CONCURRENCY_INFO } from '../lib/report/sync.js';
 import { parseArgs } from './parse-args.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -48,7 +48,7 @@ async function main() {
   console.log(
     `[sync] 品牌=${brand.label} 年份范围=${fromYear}-${toYear}` +
       (args.toYear == null && args.year == null ? `（toYear 默认当前年 ${nowYear}）` : '') +
-      ` force=${force}`,
+      ` force=${force} 并发=${CONCURRENCY_INFO}`,
   );
   migrateReportDb();
   const client = new ZhiliaowoClient(new MemoryCache());
