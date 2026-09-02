@@ -60,9 +60,15 @@ async function main() {
   for (let year = fromYear; year <= toYear; year++) {
     console.log(`[sync] 开始同步 ${brand.label} ${year}（force=${force}）`);
     const t0 = Date.now();
+    // 上游每页上限 15 条，页数可达数百，按整百分点 + 首尾页节流输出，避免日志爆炸
+    let lastPct = -1;
     const result = await syncYear(client, brand, year, {
       force,
       onProgress: (p) => {
+        const pctInt = Math.floor(p.pct);
+        const isLast = p.page === p.totalPages;
+        if (pctInt === lastPct && !isLast) return;
+        lastPct = pctInt;
         console.log(
           `[${brand.label} ${year}] 第 ${p.page}/${p.totalPages} 页  本页 ${p.pageItems} 条 (${p.pageMs}ms)  ` +
             `累计 ${p.fetched}/${p.total} (${p.pct.toFixed(1)}%)  已用时 ${(p.elapsedMs / 1000).toFixed(1)}s  ` +
@@ -76,8 +82,11 @@ async function main() {
       console.log(`✅ 已是最新，跳过同步（${brand.label} ${year}，共 ${result.totalCount} 篇），耗时 ${sec}s`);
     } else {
       console.log(
-        `✅ 同步完成 ${brand.label} ${year}：拉取 ${result.pagesFetched}/${result.pages} 页，` +
-          `落库 ${result.inserted} 条，失败页 ${result.failedPages}，耗时 ${(result.durationMs / 1000).toFixed(1)}s`,
+        `✅ 同步完成 ${brand.label} ${year}：拉取 ${result.pagesFetched}/${result.pages} 页` +
+          `（上游每页生效 ${result.effectivePageSize} 条），落库 ${result.inserted} 条，` +
+          `失败页 ${result.failedPages}，补拉 ${result.refilledPages} 页，` +
+          `耗时 ${(result.durationMs / 1000).toFixed(1)}s` +
+          (result.shortfall > 0 ? `  ⚠️ 缺口 ${result.shortfall} 条` : ''),
       );
       totalInserted += result.inserted;
       totalFetched += result.totalCount ?? 0;

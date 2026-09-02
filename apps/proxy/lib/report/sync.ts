@@ -11,7 +11,19 @@ import { loadHotspots, classifyHotspot, type HotspotEntry } from './hotspots.js'
 import { round } from './calc.js';
 import { loadPromptFile } from '../prompts.js';
 
+/**
+ * 请求时「期望」的每页条数。注意：上游存在硬上限并对超限做静默钳制 ——
+ * 实测 2.6 接口 pageSize 上限为 15，传 16/20/100/1000 均被回退为 15，且回显
+ * `pageSize=15`、`totalPage=ceil(totalCount/15)`。因此这里传大值只是「尽量多要」，
+ * 实际生效值一律以上游回显的 `pageSize` 为准（见 resolvePagePlan），
+ * 绝不能用请求的 pageSize 自行计算总页数，否则会严重少拉（曾导致只拉到 1.5% 的数据）。
+ */
 const DEFAULT_PAGE_SIZE = Number(process.env.REPORT_PAGE_SIZE ?? 1000);
+/**
+ * 上游 pageSize 硬上限（2026-09-02 实测 Procell/Elabscience 多年度一致为 15）。
+ * 仅在响应未回显 pageSize 时作为兜底推断值使用。
+ */
+const UPSTREAM_MAX_PAGE_SIZE = 15;
 const DEFAULT_CONCURRENCY = Number(process.env.REPORT_SYNC_CONCURRENCY ?? 3);
 const MAX_RETRY = 3;
 
@@ -37,6 +49,14 @@ export interface SyncResult {
   inserted: number;
   durationMs: number;
   failedPages: number;
+  /** 上游实际生效的每页条数（可能小于请求值，见 UPSTREAM_MAX_PAGE_SIZE 注释） */
+  effectivePageSize: number;
+  /** 并发轮后串行补拉成功的页数 */
+  refilledPages: number;
+  /** 条数少于满页的页数（上游分页自然结果，仅用于告警） */
+  shortPages: number;
+  /** 相对上游 totalCount 的缺口条数（0 表示完整） */
+  shortfall: number;
 }
 
 interface PaperRecord {
@@ -161,6 +181,58 @@ async function fetchPageWithRetry(
     }
   }
   throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+}
+
+interface PagePlan {
+  /** 上游实际生效的每页条数（回显优先，其次按首页实际条数推断） */
+  effectivePageSize: number;
+  /** 需要遍历的总页数（上游 totalPage 优先，其次按生效 pageSize 计算） */
+  totalPages: number;
+  /** 计划来源，便于日志排查 */
+  source: 'upstream-echo' | 'inferred-length' | 'fallback-max';
+}
+
+/**
+ * 由首页响应推导分页计划。
+ * 上游 totalPage = ceil(totalCount / 生效 pageSize)，实测自洽可信（末页 7 条、越界页 0 条），
+ * 因此优先直接采用，避免本地重算与上游口径不一致。
+ */
+function resolvePagePlan(first: PaperList, requestedPageSize: number, totalCount: number): PagePlan {
+  const echoSize = Number(first.pageSize);
+  const len = Array.isArray(first.data) ? first.data.length : 0;
+
+  let effectivePageSize: number;
+  let source: PagePlan['source'];
+  if (Number.isFinite(echoSize) && echoSize > 0) {
+    effectivePageSize = echoSize;
+    source = 'upstream-echo';
+  } else if (len > 0) {
+    // 未回显时以首页实际条数推断，但不超过上游已知硬上限
+    effectivePageSize = Math.min(len, UPSTREAM_MAX_PAGE_SIZE);
+    source = 'inferred-length';
+  } else {
+    effectivePageSize = Math.min(requestedPageSize, UPSTREAM_MAX_PAGE_SIZE);
+    source = 'fallback-max';
+  }
+
+  const echoPages = Number(first.totalPage);
+  let totalPages: number;
+  if (Number.isFinite(echoPages) && echoPages > 0) {
+    totalPages = echoPages;
+  } else if (totalCount > 0 && effectivePageSize > 0) {
+    totalPages = Math.ceil(totalCount / effectivePageSize);
+  } else {
+    totalPages = 0; // 空年份（totalCount=0）：无需翻页
+  }
+
+  return { effectivePageSize, totalPages, source };
+}
+
+/** 第 pn 页应有的条数（末页取余数，其余为满页） */
+function expectedPageSize(pn: number, totalPages: number, totalCount: number, pageSize: number): number {
+  if (pn < totalPages) return pageSize;
+  const rest = totalCount - (totalPages - 1) * pageSize;
+  return Math.max(1, rest);
 }
 
 async function mapWithConcurrency<T, U>(
@@ -337,8 +409,18 @@ export async function syncYear(
   const localCount = localPaperCount(brand.brand, year);
 
   const first = await fetchPageWithRetry(client, brand, year, 1, pageSize);
-  const totalCount = first.totalCount;
-  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const totalCount = first.totalCount ?? 0;
+
+  // 关键：总页数必须基于「上游实际生效的 pageSize」推导，不能用请求的 pageSize。
+  // 上游对超限 pageSize 做静默钳制（上限 15），若用请求值 1000 计算会得到 9 页而实际需 597 页。
+  const plan = resolvePagePlan(first, pageSize, totalCount);
+  const { effectivePageSize, totalPages } = plan;
+  if (effectivePageSize !== pageSize) {
+    console.warn(
+      `[sync] ${brand.brand} ${year} 上游将 pageSize 由 ${pageSize} 钳制为 ${effectivePageSize}` +
+        `（共 ${totalCount} 篇 / ${totalPages} 页）`,
+    );
+  }
 
   if (
     !opts.force &&
@@ -365,6 +447,10 @@ export async function syncYear(
       inserted: 0,
       durationMs,
       failedPages: 0,
+      effectivePageSize,
+      refilledPages: 0,
+      shortPages: 0,
+      shortfall: 0,
     };
   }
 
@@ -425,8 +511,51 @@ export async function syncYear(
     }
   });
 
+  // 补拉：并发轮中请求失败或返回空页的页码，串行重试一轮（并发下上游偶发抖动会静默丢数）。
+  // 只重试「空/失败」页；短页（0 < 条数 < 满页）通常是上游分页本身的结果，重试无收益，仅统计告警。
+  let refilledPages = 0;
+  let shortPages = 0;
+  if (totalPages > 1) {
+    const broken: number[] = [];
+    for (let pn = 2; pn <= totalPages; pn++) {
+      const rows = fetchedRows[pn - 1];
+      if (!rows || rows.length === 0) {
+        broken.push(pn);
+        continue;
+      }
+      const want = expectedPageSize(pn, totalPages, totalCount, effectivePageSize);
+      if (rows.length < want) shortPages++;
+    }
+    if (broken.length > 0) {
+      console.warn(
+        `[sync] ${brand.brand} ${year} 检测到 ${broken.length} 个空/失败页（共 ${totalPages} 页），串行补拉中…`,
+      );
+      for (const pn of broken) {
+        try {
+          const res = await fetchPageWithRetry(client, brand, year, pn, pageSize);
+          const rows = res.data ?? [];
+          if (rows.length > 0) {
+            fetchedRows[pn - 1] = rows;
+            refilledPages++;
+          }
+        } catch (e) {
+          console.warn(`[sync] ${brand.brand} ${year} 第 ${pn} 页补拉失败：${(e as Error).message}`);
+        }
+      }
+    }
+  }
+
   const allItems: PaperItem[] = [];
   for (const r of fetchedRows) if (r) allItems.push(...r);
+
+  // 完整性校验：与上游 totalCount 对账，缺口需显式告警而不是静默接受
+  const shortfall = Math.max(0, totalCount - allItems.length);
+  if (shortfall > 0) {
+    console.warn(
+      `[sync] ⚠️ ${brand.brand} ${year} 数据量缺口：上游 totalCount=${totalCount}，` +
+        `实际拉取 ${allItems.length} 条（差 ${shortfall} 条，短页 ${shortPages} 个）`,
+    );
+  }
 
   // 上游分页在并发请求下可能返回重复 id（如排序不稳定导致页间重叠），
   // 先按 id 去重再转 record，避免 records.length 虚高、实际落库数偏少。
@@ -503,6 +632,10 @@ export async function syncYear(
     inserted: records.length,
     durationMs,
     failedPages,
+    effectivePageSize,
+    refilledPages,
+    shortPages,
+    shortfall,
   };
 }
 

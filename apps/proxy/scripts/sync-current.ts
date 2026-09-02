@@ -28,17 +28,27 @@ async function main() {
     for (const year of years) {
       console.log(`[sync-current] 开始 ${brand.label} ${year}`);
       try {
+        // 上游每页上限 15 条，页数可达数百，按整百分点 + 首尾页节流输出
+        let lastPct = -1;
         const r = await syncYear(client, brand, year, {
-          onProgress: (p) =>
+          onProgress: (p) => {
+            const pctInt = Math.floor(p.pct);
+            const isLast = p.page === p.totalPages;
+            if (pctInt === lastPct && !isLast) return;
+            lastPct = pctInt;
             console.log(
-              `[${brand.label} ${year}] 第 ${p.page}/${p.totalPages} 页 累计 ${p.fetched}/${p.total} (${p.pct.toFixed(1)}%)`,
-            ),
+              `[${brand.label} ${year}] 第 ${p.page}/${p.totalPages} 页（每页 ${p.pageItems} 条）` +
+                ` 累计 ${p.fetched}/${p.total} (${p.pct.toFixed(1)}%)`,
+            );
+          },
         });
         if (r.skipped) {
           console.log(`[sync-current] ${brand.label} ${year} 已是最新，跳过`);
         } else {
           console.log(
-            `[sync-current] ${brand.label} ${year} 完成：落库 ${r.inserted} 条，失败 ${r.failedPages} 页`,
+            `[sync-current] ${brand.label} ${year} 完成：落库 ${r.inserted} 条（上游 ${r.totalCount} 篇 / ${r.pages} 页，` +
+              `每页生效 ${r.effectivePageSize} 条），失败 ${r.failedPages} 页，补拉 ${r.refilledPages} 页` +
+              (r.shortfall > 0 ? `  ⚠️ 缺口 ${r.shortfall} 条` : ''),
           );
         }
       } catch (e) {
