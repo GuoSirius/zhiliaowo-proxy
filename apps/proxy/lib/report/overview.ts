@@ -34,7 +34,7 @@ export async function buildOverview(
     journal: name,
     count: lowerCounts.get(name.toLowerCase()) ?? 0,
   }));
-  const summary = { totalPapers: cur.paper_count, featuredJournals };
+  const summary = { range: { year, startMonth, endMonth }, totalPapers: cur.paper_count, featuredJournals };
 
   // —— 板块 2 核心数据（5 卡片按区间同比 + 2.1 累计扣减，口径见 routes/report/core.ts）
   const avgCur = cur.paper_count ? cur.total_factor / cur.paper_count : 0;
@@ -77,6 +77,15 @@ export async function buildOverview(
       maxIf: cum.maxIf,
       avgIf: cum.avgIf,
     },
+    summary: {
+      range: { year, startMonth: 1, endMonth },
+      totalPapers: cum.totalPapers,
+      prevTotalPapers: cumPrev.paper_count,
+      totalIf: cum.totalIf,
+      prevTotalIf: round(cumPrev.total_factor),
+      maxIf: cum.maxIf,
+      avgIf: cum.avgIf,
+    },
   };
 
   // —— 板块 3 趋势（近十年 + 季度，口径见 lib/report/trend.ts；overview 固定 full）
@@ -102,39 +111,32 @@ export async function buildOverview(
     .sort((a, b) => b.count - a.count) // 再按关键词次数降序
     .slice(0, 10);
   const hotspots = {
+    range: { year, startMonth, endMonth },
     totalPapers: cur.paper_count,
     totalClassified: allHotspots.reduce((s, h) => s + h.count, 0),
     aiFallback: process.env.AI_HOTSPOT_FALLBACK === '1',
+    sortBy: 'count',
     topHotspots,
   };
 
   // —— 板块 5 产品引用 Top15（口径见 lib/report/products.ts）
   const curP = getRangeProductCounts(brandName, year, startMonth, endMonth);
   const prevP = getRangeProductCounts(brandName, year - 1, startMonth, endMonth);
-  const { totalProducts, hasYoY, items } = buildTopProducts({ cur: curP, prev: prevP });
+  const { totalProducts, hasYoY, items, poolUsed } = buildTopProducts({ cur: curP, prev: prevP });
   const products = {
     range: { year, startMonth, endMonth },
     totalProducts,
     hasYoY,
+    poolUsed,
     items,
   };
 
-  // —— 板块 6 小结（stats/topHotspots 仅作 AI 提示词输入，响应见 conclusion 路由）
-  const stats = {
-    totalPapers: cur.paper_count,
-    totalIf: round(cur.total_factor),
-    avgIf: round(avgCur),
-    maxIf: round(cur.max_factor),
-    ifGe10: cur.factor_ge10,
-  };
+  // —— 板块 6 小结（响应口径与 conclusion 单独接口一致：仅 range/aiEnabled/topJournals/conclusion）
   const topJournals = getTopJournalsByFactor(brandName, year, startMonth, endMonth, 3);
   const conclusion = {
+    range: { year, startMonth, endMonth },
     aiEnabled: aiEnabled(),
-    stats,
     topJournals,
-    topHotspots: allHotspots
-      .slice(0, 10)
-      .map((h) => ({ cn: h.cn, count: h.count, maxIf: h.maxIf })),
     conclusion: null,
   };
 
