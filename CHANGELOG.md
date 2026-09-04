@@ -1,5 +1,21 @@
 # Changelog
 
+## v2.2.4
+
+[compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v2.2.3...v2.2.4)
+
+### 🚀 新功能 (Features)
+
+- 同步并发支持按 CPU 核心数自动推导；.workbuddy 加入 gitignore ([b847d67](https://github.com/GuoSirius/zhiliaowo-proxy/commit/b847d67))
+
+### 🐛 缺陷修复 (Bug Fixes)
+
+- 分页总页数改用上游回显 pageSize/totalPage，修复上游钳制 pageSize 导致的静默丢数 ([f4de531](https://github.com/GuoSirius/zhiliaowo-proxy/commit/f4de531))
+
+### ❤️ Contributors
+
+- 郭之存 ([@siriusSupreme](https://github.com/siriusSupreme))
+
 ## v2.2.3
 
 [compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v2.2.2...v2.2.3)
