@@ -65,6 +65,15 @@ reportCoreRoute.get('/:site/report/core', async (c) => {
       maxIf: cum.maxIf,
       avgIf: cum.avgIf,
     },
+    cumulative: {
+      range: { year, startMonth: 1, endMonth },
+      totalPapers: cum.totalPapers,
+      prevTotalPapers: cumPrev.paper_count,
+      totalIf: cum.totalIf,
+      prevTotalIf: round(cumPrev.total_factor),
+      maxIf: cum.maxIf,
+      avgIf: cum.avgIf,
+    },
   };
   return ok(c, data);
 });
