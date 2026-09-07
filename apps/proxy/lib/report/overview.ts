@@ -3,6 +3,7 @@ import { getRangeAgg } from './agg.js';
 import { getHotspotRangeStats } from './hotspots.js';
 import { getRangeProductCounts, buildTopProducts } from './products.js';
 import { getTopJournalsByFactor, loadFeaturedJournals } from './journals.js';
+import { selectInstitutions } from './schools.js';
 import { getCumulativeStats } from './cumulative.js';
 import { round, pct } from './calc.js';
 import { aiEnabled } from '../ai.js';
@@ -131,12 +132,14 @@ export async function buildOverview(
     items,
   };
 
-  // —— 板块 6 小结（响应口径与 conclusion 单独接口一致：仅 range/aiEnabled/topJournals/conclusion）
+  // —— 板块 6 小结（响应口径与 conclusion 单独接口一致：range/aiEnabled/topJournals/institutions/conclusion）
   const topJournals = getTopJournalsByFactor(brandName, year, startMonth, endMonth, 3);
+  const institutions = (await selectInstitutions(6)).map((i) => ({ name: i.name, source: i.source }));
   const conclusion = {
     range: { year, startMonth, endMonth },
     aiEnabled: aiEnabled(),
     topJournals,
+    institutions,
     conclusion: null,
   };
 

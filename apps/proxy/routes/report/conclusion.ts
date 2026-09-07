@@ -3,6 +3,7 @@ import { parseReportCtx } from '../../lib/report/params.js';
 import { getRangeAgg } from '../../lib/report/agg.js';
 import { getHotspotRangeStats } from '../../lib/report/hotspots.js';
 import { getTopJournalsByFactor } from '../../lib/report/journals.js';
+import { selectInstitutions } from '../../lib/report/schools.js';
 import { round } from '../../lib/report/calc.js';
 import { loadPromptFile, renderTemplate } from '../../lib/prompts.js';
 import { aiEnabled, callAi } from '../../lib/ai.js';
@@ -37,9 +38,14 @@ function renderConclusionPrompt(
 /**
  * 板块 6 —— 小结
  * GET /api/v1/:site/report/conclusion?year=&startMonth=&endMonth=
- * 响应：topJournals（Top3 期刊 by IF，板块 6 独有）+ conclusion（AI 小结文案，未配 AI 时 null）。
+ * 响应：topJournals（Top3 期刊 by IF，板块 6 独有）+ institutions（机构展示，见下）
+ *       + conclusion（AI 小结文案，未配 AI 时 null）。
  * 注：区间统计与 Top10 热点不在此响应返回（已在板块 2/4 提供），仅在路由内计算并作为 AI 提示词输入。
- * 原规划「Top6 通讯作者单位」因 corOrg 等字段全空暂无法实现。
+ *
+ * 机构（原规划「Top6 通讯作者单位」）：
+ * 因知了窝 API 不返回 corOrg/org 等机构字段，无法取得真实通讯作者单位，
+ * 改为「AI 真实优先、Excel 兜底」：当前真实路径恒空，实际由 config/schools.json
+ * （由 docs/学校.xlsx 预生成）每次随机抽取 6 所展示。source=excel-fallback 即兜底。
  */
 reportConclusionRoute.get('/:site/report/conclusion', async (c) => {
   const { brand, year, startMonth, endMonth } = parseReportCtx(c);
@@ -74,12 +80,19 @@ reportConclusionRoute.get('/:site/report/conclusion', async (c) => {
     }
   }
 
+  // 板块6机构：AI 真实优先、Excel 随机兜底（当前数据源无机构字段，实际走兜底）
+  const institutions = (await selectInstitutions(6)).map((i) => ({
+    name: i.name,
+    source: i.source,
+  }));
+
   // 注意：stats / topHotspots 仅作为 AI 提示词输入（见 renderConclusionPrompt），
   // 不再随响应返回——统计见板块 2(core)、热点见板块 4(hotspots)，此处重复且无增量。
   return ok(c, {
     range: { year, startMonth, endMonth },
     aiEnabled: aiEnabled(),
     topJournals,
+    institutions,
     conclusion,
   });
 });

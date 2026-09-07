@@ -193,8 +193,9 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 - **板块 5 产品引用**：解析 `products[].goodsSpu` 聚合，当前区间按引用篇数取前 `topN`(默认 30，可放宽 50/100) 货号 → 取上一年同区间同批货号算同比增长率 → **先过滤负增长及无基线新品，再按 `sortBy`(默认 count) 降序取前 `outN`(默认 15)**。
   过滤后合格数不足 `outN` 时，自动翻倍候选池重试（≤ `maxPool`=300）尽量凑够 15 条；仍不足则返回实际能凑到的条数（`poolUsed` 反映是否触顶）。
   **仅返回货号（goodsSpu）+ 英文商品名（goodsLabel）**，中文名/分类由前端调网站接口获取。无去年同期基线时（单年部署）跳过增长率过滤、退化为按引用量降序取 Top15，`hasYoY=false`。
-- **板块 6 小结**：响应只返回 `topJournals`（Top3 期刊 by IF）+ `conclusion`（AI 文案，需 `AI_API_KEY`，否则 `null`）。统计与 Top10 热点仅在服务端本地计算、作为 AI 提示词输入，不随响应返回（避免与板块 2/4 重复）。
-  ⚠️ 原规划的「Top6 通讯作者单位 + AI 译中文校名」因 `corOrg` 等字段 100% 为空暂无法实现。
+- **板块 6 小结**：响应返回 `topJournals`（Top3 期刊 by IF）+ `institutions`（机构展示，每次 6 所）+ `conclusion`（AI 文案，需 `AI_API_KEY`，否则 `null`）。统计与 Top10 热点仅在服务端本地计算、作为 AI 提示词输入，不随响应返回（避免与板块 2/4 重复）。
+  - **机构（`institutions`，每次 6 所）**：采用「AI 真实优先、Excel 兜底」。实测知了窝 API 的 `zlw_papers` 表**根本没有 `corOrg`/`org` 等机构字段**（作者字段也只有姓名、不含单位），故真实路径恒为空，实际由 `config/schools.json`（由 `docs/学校.xlsx` 经 `scripts/gen-schools.py` 预生成）**每次随机抽取 6 所**展示，`source: "excel-fallback"` 即兜底标记。若上游未来开放机构字段，在 `lib/report/schools.ts` 的 `getRealInstitutions()` 接入 AI 提取即可自动切换为真实数据。
+  - 重新生成清单：`python scripts/gen-schools.py`（Excel 更新后执行）。可用 `SCHOOLS_FILE` 环境变量覆盖清单路径。
 
 ### 同步工作流
 
