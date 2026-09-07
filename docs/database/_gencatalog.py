@@ -1,6 +1,9 @@
 import json, os
 from collections import defaultdict
-with open("D:/workspace/resource/知了窝/zhiliaowo-proxy/docs/database/_schema_dump.json", encoding="utf-8") as f:
+from pathlib import Path
+
+HERE = Path(__file__).parent
+with open(HERE / "_schema_dump.json", encoding="utf-8") as f:
     D = json.load(f)
 by_tbl = defaultdict(list)
 for db in D:
@@ -39,7 +42,7 @@ for db, groups in PREFIX.items():
             if mul: acc.append("MUL("+",".join(mul)+")")
             if acc: out.append(f" ｜ 索引：`{'; '.join(acc)}`")
             out.append("")
-    path = f"D:/workspace/resource/知了窝/zhiliaowo-proxy/docs/database/catalog-{db}.md"
+    path = HERE / f"catalog-{db}.md"
     with open(path,"w",encoding="utf-8") as f:
         f.write("\n".join(out))
     print("wrote", path, len(out), "lines")
