@@ -8,8 +8,8 @@
 FROM node:24-alpine AS build
 WORKDIR /app
 
-# 启用 corepack，使用与 packageManager 对齐的 pnpm 版本（pnpm@11.23.0）
-RUN corepack enable && corepack prepare pnpm@11.23.0 --activate
+# 启用 corepack，使用与 packageManager 对齐的 pnpm 版本（pnpm@12.3.4）
+RUN corepack enable && corepack prepare pnpm@12.3.4 --activate
 
 # 国内构建可改用镜像源（默认走 .npmrc 中的 npmmirror）
 ARG PNPM_REGISTRY=https://registry.npmmirror.com

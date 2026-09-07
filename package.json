@@ -2,7 +2,7 @@
   "name": "zhiliaowo-monorepo",
   "private": true,
   "version": "2.2.4",
-  "packageManager": "pnpm@11.23.0",
+  "packageManager": "pnpm@12.3.4",
   "engines": {
     "node": ">=24"
   },

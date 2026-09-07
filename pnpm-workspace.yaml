@@ -2,9 +2,10 @@ packages:
   - 'apps/*'
   - 'packages/*'
 
-# pnpm 11：原生构建脚本白名单用 allowBuilds（map: 包名 → true/false）
+# pnpm 12：原生构建脚本白名单用 allowBuilds（map: 包名 → true/false）
 # 替代已废弃的 onlyBuiltDependencies；解决安装的 ERR_PNPM_IGNORED_BUILDS
 # （better-sqlite3 / esbuild / puppeteer / vue-demi 需要跑 install 脚本）
+# 注：allowBuilds 在 pnpm 12 仍被支持，无需迁移。
 allowBuilds:
   better-sqlite3: true
   esbuild: true
