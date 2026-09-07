@@ -5,6 +5,9 @@ dist/
 !.env.example
 *.log
 .DS_Store
+
+# 定时任务运行日志统一存放目录（由 automation prompt 指定写入此处，禁止散落在根目录）
+logs/
 coverage/
 .idea/
 .vscode/
