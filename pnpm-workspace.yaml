@@ -2,6 +2,10 @@ packages:
   - 'apps/*'
   - 'packages/*'
 
+# 放开 pnpm 12 默认的 blockExoticSubdeps：node-xlsx 0.23+ 依赖的 xlsx 改为 SheetJS CDN URL 分发，
+# 不放开则 pnpm up -r --latest 报 ERR_PNPM_EXOTIC_SUBDEP。代价：lockfile 会含 cdn.sheetjs.com 的 xlsx URL。
+blockExoticSubdeps: false
+
 # pnpm 12：原生构建脚本白名单用 allowBuilds（map: 包名 → true/false）
 # 替代已废弃的 onlyBuiltDependencies；解决安装的 ERR_PNPM_IGNORED_BUILDS
 # （better-sqlite3 / esbuild / puppeteer / vue-demi 需要跑 install 脚本）
@@ -23,23 +27,25 @@ onlyBuiltDependencies:
 # 升级只需在此统一改一处，再跑 `pnpm up -r --latest` 即可全量更新。
 catalog:
   # 类型 / 构建（全包共用）
-  typescript: ^5.7.2
+  # 锁 ^6.0.0：vue-tsc@3.3.11 内部 require('typescript/lib/tsc')，
+  # 该子路径在 TS 7.0.2 的 exports 中被移除（ERR_PACKAGE_PATH_NOT_EXPORTED），TS 6 仍保留。
+  typescript: ^6.0.0
   # 钉到 ^24 匹配 Node 24 运行时（26.x 太新触发 minimumReleaseAge 策略拦截）
-  "@types/node": ^24.0.0
+  "@types/node": ^26.4.1
   # 前端共用
-  vue: ^3.5.13
-  pinia: ^2.3.0
-  vite: ^6.0.0
-  "@vitejs/plugin-vue": ^5.2.0
-  vue-tsc: ^2.1.10
-  unocss: ^0.65.0
+  vue: ^3.5.42
+  pinia: ^4.0.3
+  vite: ^8.2.2
+  "@vitejs/plugin-vue": ^6.0.8
+  vue-tsc: ^3.3.11
+  unocss: ^66.10.0
   # 提交 / 发布（根层工具）
   "@commitlint/cli": ^21.2.2
   "@commitlint/config-conventional": ^21.2.2
   changelogen: ^0.6.2
   husky: ^9.1.7
   # 共享层
-  zod: ^3.23.8
+  zod: ^4.5.4
 
 minimumReleaseAgeExclude:
   - puppeteer-core@25.9.0
