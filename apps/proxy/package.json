@@ -26,19 +26,19 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@zhiliaowo/core": "workspace:*",
     "@hono/node-server": "^2.1.1",
+    "@zhiliaowo/core": "workspace:*",
     "better-sqlite3": "^13.0.3",
     "dotenv": "^17.4.2",
-    "hono": "^4.13.4",
+    "hono": "^4.13.7",
     "ioredis": "^6.0.0",
-    "puppeteer": "^25.9.0",
+    "puppeteer": "^25.10.0",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "catalog:",
-    "tsx": "^4.23.12",
+    "tsx": "^4.23.13",
     "typescript": "catalog:"
   }
 }

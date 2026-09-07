@@ -18,13 +18,19 @@
     "commitlint": "commitlint --edit",
     "changelog": "changelogen",
     "release": "node scripts/release.mjs",
-    "upgrade": "pnpm up -r --latest"
+    "upgrade": "pnpm up -r --latest --exclude=typescript --exclude=vue-tsc"
   },
   "devDependencies": {
     "@commitlint/cli": "catalog:",
     "@commitlint/config-conventional": "catalog:",
     "changelogen": "catalog:",
     "husky": "catalog:",
-    "node-xlsx": "^0.21.0"
+    "node-xlsx": "^0.24.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "typescript": "^6.0.0",
+      "vue-tsc": "^3.3.11"
+    }
   }
 }
