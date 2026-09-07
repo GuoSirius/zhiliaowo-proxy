@@ -1,5 +1,31 @@
 # Changelog
 
+## v2.3.0
+
+[compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v2.2.4...v2.3.0)
+
+### 🚀 新功能 (Features)
+
+- 板块6 小结补充机构信息（AI 真实优先 / Excel 兜底随机6所） ([2f2a966](https://github.com/GuoSirius/zhiliaowo-proxy/commit/2f2a966))
+- 补充 admin/h5 的 unocss.config.ts（内联 preset，修复 Config file not found） ([3d733db](https://github.com/GuoSirius/zhiliaowo-proxy/commit/3d733db))
+
+### 🐛 缺陷修复 (Bug Fixes)
+
+- Overview 各板块响应字段对齐分接口：补齐区间与排序字段，板块2 保留双累计块，板块6 去冗余 ([61069b2](https://github.com/GuoSirius/zhiliaowo-proxy/commit/61069b2))
+- 板块2 单独接口补齐 cumulative 块，与总览接口双别名共存对齐 ([b44be05](https://github.com/GuoSirius/zhiliaowo-proxy/commit/b44be05))
+- Pnpm-workspace 放开 blockExoticSubdeps 并将 typescript 锁到 ^6.0.0 ([7da59d7](https://github.com/GuoSirius/zhiliaowo-proxy/commit/7da59d7))
+
+### 📦 杂项维护 (Chores)
+
+- 升级并锁定 pnpm 至 12.3.4 ([0fe30b8](https://github.com/GuoSirius/zhiliaowo-proxy/commit/0fe30b8))
+- 定时任务日志统一归集到 logs/ 并加入 .gitignore ([497b9e2](https://github.com/GuoSirius/zhiliaowo-proxy/commit/497b9e2))
+- 全量依赖升级（pnpm up -r --latest）+ pnpm.overrides 硬锁 typescript/vue-tsc ([4fcca69](https://github.com/GuoSirius/zhiliaowo-proxy/commit/4fcca69))
+- Update ([9675824](https://github.com/GuoSirius/zhiliaowo-proxy/commit/9675824))
+
+### ❤️ Contributors
+
+- 郭之存 ([@siriusSupreme](https://github.com/siriusSupreme))
+
 ## v2.2.4
 
 [compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v2.2.3...v2.2.4)
