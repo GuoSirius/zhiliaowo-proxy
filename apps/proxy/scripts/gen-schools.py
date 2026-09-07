@@ -18,7 +18,7 @@ def _find_src() -> str:
         '../docs/学校.xlsx',
         'docs/学校.xlsx',
         '../../docs/学校.xlsx',
-        'D:/workspace/resource/知了窝/docs/学校.xlsx',
+        '../../../docs/学校.xlsx',
     ]
     for c in candidates:
         if os.path.exists(c):
