@@ -17,8 +17,8 @@ export interface EnrichedProduct {
   growthRate: number | null;
   /** 站点生产库回查的产品名称（PROD_MYSQL 启用且命中时填充，否则缺省） */
   productName?: string;
-  /** 站点生产库回查的产品分类（PROD_MYSQL 启用且命中时填充，否则缺省）；值为 sort_i（一级分类 ID，数值型） */
-  productCategory?: string | number;
+  /** 站点生产库回查的产品分类（PROD_MYSQL 启用且命中时填充，否则缺省）；值为一级分类名（JOIN goodstype_web 取 name_cn/name_en） */
+  productCategory?: string;
 }
 
 export interface TopProductsResult {
@@ -135,17 +135,20 @@ export function buildTopProducts(opts: BuildTopProductsOpts): TopProductsResult 
  *
  * 文献/统计按 brand 共享，但产品名称/分类是站点级数据（知了窝 API 不返回），故在此只读回查。
  * 字段来源（需求文档「产品引用版块」+ 生产库 information_schema 实测）：
- *   - 主表 = <dbPrefix>product_main（如 procellcn_product_main / pricella_product_main / elabcn_product_main / elabcom_product_main；非 goods）
- *   - 主键 = catid（与 spu 对应）
- *   - 产品名称 = 主表 title_c 列（中文站产品名；英文站如需英文名可改用 title 列）
- *   - 产品分类 = 主表 sort_i 列（一级分类 ID，数值型；需求文档要求「直接用 sort_i」）
+ *   - 主表 = <dbPrefix>product_main（主键 catid，与 spu 对应）
+ *   - 产品名称 = 主表 title_c（中文站）/ title（英文站），按 locale 取
+ *   - 产品分类 = 主表 sort_i（一级分类 ID）→ LEFT JOIN <dbPrefix>goodstype_web ON goodstypeid = sort_i，
+ *     按站点 locale 取 name_cn（中文站）/ name_en（英文站），即分类文字（需求文档写「直接用 sort_i」，此处转文字展示）
  * - 未启用 PROD_MYSQL / 缺凭据 / 出错 → 原样返回 items（仅 goodsLabel），绝不阻断响应。
  * - 连接参数按站点解析（env.prodMysqlForSite）：两品牌站点账号密码各异也能正确对接。
  */
-// 生产库 product_main 表：表名 / 列名已由 information_schema 实测确认（2026-09-08）。
+// 生产库表名/列名已由 information_schema 实测确认（2026-09-08）。
 const productMetaTable = (dbPrefix: string): string => `${dbPrefix}product_main`;
-const PRODUCT_META_NAME_COL = 'title_c';
-const PRODUCT_META_CAT_COL = 'sort_i';
+const productCatTable = (dbPrefix: string): string => `${dbPrefix}goodstype_web`;
+// 产品名按 locale 取：中文站 title_c，英文站 title（cn/en 主表列名不同；实测 procellcn/elabcn 用 title_c，pricella/elabcom 用 title）
+const productNameCol = (locale: 'cn' | 'en'): string => (locale === 'en' ? 'title' : 'title_c');
+// 分类名按 locale 取：中文站 name_cn，英文站 name_en（goodstype_web 两列均在）
+const productCatNameCol = (locale: 'cn' | 'en'): string => (locale === 'en' ? 'name_en' : 'name_cn');
 
 export async function enrichProductsWithMeta(
   items: EnrichedProduct[],
@@ -155,13 +158,18 @@ export async function enrichProductsWithMeta(
   const db = await getProdMysql(site);
   if (!db) return items;
   try {
-    // 表名来自本项目 SITES 配置（可信、非用户输入）；catid 列表参数化绑定防注入
+    // 表名/列名来自本项目 SITES 配置（可信、非用户输入）；catid 列表参数化绑定防注入
     const table = productMetaTable(site.dbPrefix);
-    // CAST(catid AS CHAR)：DB 中 catid 为数值型，而 items.spu 来自 JSON 字符串（goodsSpu），
-    // 统一转字符串后 Map 主键才能匹配，否则 enrichment 会静默全部落空。
-    const rows = await db.query<{ spu: string; productName: string | null; productCategory: string | number | null }>(
-      `SELECT CAST(catid AS CHAR) AS spu, ${PRODUCT_META_NAME_COL} AS productName, ${PRODUCT_META_CAT_COL} AS productCategory ` +
-        `FROM ${table} WHERE catid IN (?)`,
+    // CAST(catid AS CHAR)：DB 中 catid 为数值型，items.spu 来自 JSON 字符串（goodsSpu），统一转字符串才能匹配。
+    // 产品名：product_main.title_c(cn)/title(en) 按 locale 取。
+    // 分类：product_main.sort_i（一级分类 ID）LEFT JOIN goodstype_web.goodstypeid 取分类文字（name_cn/name_en）。
+    const nameCol = productNameCol(site.locale);
+    const catNameCol = productCatNameCol(site.locale);
+    const catTable = productCatTable(site.dbPrefix);
+    const rows = await db.query<{ spu: string; productName: string | null; productCategory: string | null }>(
+      `SELECT CAST(p.catid AS CHAR) AS spu, p.${nameCol} AS productName, g.${catNameCol} AS productCategory ` +
+        `FROM ${table} p LEFT JOIN ${catTable} g ON g.goodstypeid = p.sort_i ` +
+        `WHERE p.catid IN (?)`,
       [items.map((i) => i.spu)],
     );
     const meta = new Map(rows.map((r) => [r.spu, r]));
