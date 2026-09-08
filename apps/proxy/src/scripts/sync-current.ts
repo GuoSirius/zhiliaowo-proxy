@@ -5,7 +5,7 @@ import { BRANDS, resolveBrand } from '../config/brands.js';
 import { ZhiliaowoClient } from '../datasources/zhiliaowo.js';
 import { MemoryCache } from '../shared/cache.js';
 import { migrateReportDb } from '../datasources/report-db.js';
-import { syncYear, CONCURRENCY_INFO } from '../services/report/sync.js';
+import { syncYear, CONCURRENCY_INFO } from '../services/report/sync/index.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: resolve(__dirname, '..', '..', '..', '.env') });

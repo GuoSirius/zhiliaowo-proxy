@@ -162,3 +162,38 @@ export function localPaperCount(brand: string, year: number): number {
 
 // 模块加载即建表（幂等），确保后续 import 该模块时的 prepare 不会因表不存在而失败
 migrateReportDb();
+
+// ---------- 预编译写入语句（供同步 / 重算使用） ----------
+// 放在本模块可确保「建表 → prepare」顺序正确，调用方无需关心初始化时机。
+
+export const upsertPaperStmt = reportDb.prepare(`
+  INSERT INTO zlw_papers
+    (id, brand, year, month, pub_time, doi, title, journal, factor, authors, url, cn_fields, products, raw, synced_at)
+  VALUES
+    (@id, @brand, @year, @month, @pub_time, @doi, @title, @journal, @factor, @authors, @url, @cn_fields, @products, @raw, @synced_at)
+  ON CONFLICT(id, brand) DO UPDATE SET
+    year=excluded.year, month=excluded.month, pub_time=excluded.pub_time,
+    doi=excluded.doi, title=excluded.title, journal=excluded.journal, factor=excluded.factor,
+    authors=excluded.authors, url=excluded.url, cn_fields=excluded.cn_fields,
+    products=excluded.products, raw=excluded.raw, synced_at=excluded.synced_at
+`);
+
+export const upsertAggStmt = reportDb.prepare(`
+  INSERT INTO zlw_papers_agg
+    (brand, year, month, paper_count, total_factor, factor_ge10, max_factor, journal_counts, hotspot_counts, hotspot_max_if, computed_at, synced_total)
+  VALUES
+    (@brand, @year, @month, @paper_count, @total_factor, @factor_ge10, @max_factor, @journal_counts, @hotspot_counts, @hotspot_max_if, @computed_at, @synced_total)
+  ON CONFLICT(brand, year, month) DO UPDATE SET
+    paper_count=excluded.paper_count, total_factor=excluded.total_factor, factor_ge10=excluded.factor_ge10,
+    max_factor=excluded.max_factor, journal_counts=excluded.journal_counts,
+    hotspot_counts=excluded.hotspot_counts, hotspot_max_if=excluded.hotspot_max_if,
+    computed_at=excluded.computed_at, synced_total=excluded.synced_total
+`);
+
+export const upsertStateStmt = reportDb.prepare(`
+  INSERT INTO zlw_sync_state (brand, year, total_count, last_synced_at, status, duration_ms)
+  VALUES (@brand, @year, @total_count, @last_synced_at, @status, @duration_ms)
+  ON CONFLICT(brand, year) DO UPDATE SET
+    total_count=excluded.total_count, last_synced_at=excluded.last_synced_at,
+    status=excluded.status, duration_ms=excluded.duration_ms
+`);

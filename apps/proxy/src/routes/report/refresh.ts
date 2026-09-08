@@ -1,7 +1,7 @@
 import { Hono, type Context } from 'hono';
 import { parseReportCtx } from '../../services/report/params.js';
 import { getClient } from '../../shared/client.js';
-import { syncYear, type SyncResult } from '../../services/report/sync.js';
+import { syncYear, type SyncResult } from '../../services/report/sync/index.js';
 import { ok, fail } from '../../shared/response.js';
 import { env } from '../../shared/env.js';
 
