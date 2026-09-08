@@ -1,6 +1,6 @@
 import { ZhiliaowoClient } from './zhiliaowo.js';
 import type { ResolvedBrand } from '../config/brands.js';
-import type { PaperList } from '../types.js';
+import type { PaperList } from '../models/types.js';
 import { sleep } from '../shared/utils.js';
 import { env } from '../shared/env.js';
 

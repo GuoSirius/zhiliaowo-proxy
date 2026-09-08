@@ -10,7 +10,7 @@ import { serve } from '@hono/node-server';
 import { networkInterfaces } from 'node:os';
 import { initClient } from './shared/client.js';
 import { ok, fail } from './shared/response.js';
-import { ApiError } from './types.js';
+import { ApiError } from './models/types.js';
 import { statisticsRoute } from './routes/statistics.js';
 import { citeStatRoute } from './routes/cite-stat.js';
 import { paperSumRoute } from './routes/paper-sum.js';

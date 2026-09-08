@@ -1,4 +1,4 @@
-import { ApiError } from '../types.js';
+import { ApiError } from '../models/types.js';
 import { env } from '../shared/env.js';
 
 /**

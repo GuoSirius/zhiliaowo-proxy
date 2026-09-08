@@ -15,10 +15,12 @@ zhiliaowo-proxy/                 # 单体仓库根（同时是 pnpm workspace �
 ├── apps/
 │   ├── proxy/                   # 后端：Hono BFF（代理 + 海报 6 板块数据接口）
 │   │   ├── src/config/          # 品牌 / 热点关键词 / 期刊 / 提示词 / 学校清单
-│   │   ├── src/lib/             # 知了窝客户端 / 缓存 / AI / report 聚合与同步
+│   │   ├── src/datasources/     # 数据访问层：知了窝 API / AI / SQLite 读写 / 分页拉取
+│   │   ├── src/models/          # 类型契约层：知了窝响应结构 + 领域模型
+│   │   ├── src/services/        # 业务逻辑层：report 6 板块聚合、同步编排（sync/）
+│   │   ├── src/shared/          # 基础设施层：env 中心 / 缓存 / HTTP 客户端 / 响应封装 / 通用工具
 │   │   ├── src/routes/          # 代理接口 + widget 302 分发 + report 6 板块接口
 │   │   ├── src/scripts/         # sync / sync:current / recompute（含定时任务入口）
-│   │   ├── src/shared/env.ts    # ★ 环境变量中心：业务代码唯一读取配置的地方
 │   │   └── src/test/            # 单元测试
 │   ├── admin/                   # 管理后台（Vue3 + Vite + UnoCSS + Pinia）
 └── packages/

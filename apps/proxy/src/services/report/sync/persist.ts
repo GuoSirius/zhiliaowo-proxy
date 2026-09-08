@@ -1,4 +1,4 @@
-import type { PaperItem } from '../../../types.js';
+import type { PaperItem } from '../../../models/types.js';
 import type { PaperRecord, AggData } from './types.js';
 import { reportDb } from '../../../datasources/report-db.js';
 import { classifyHotspot, type HotspotEntry } from '../hotspots.js';

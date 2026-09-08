@@ -1,6 +1,6 @@
 import type { Context } from 'hono';
 import { resolveBrand, type ResolvedBrand } from '../../config/brands.js';
-import { ApiError } from '../../types.js';
+import { ApiError } from '../../models/types.js';
 import { reportDb } from '../../datasources/report-db.js';
 
 export interface ReportCtx {

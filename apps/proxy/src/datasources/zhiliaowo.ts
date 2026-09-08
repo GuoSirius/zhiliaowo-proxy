@@ -1,5 +1,5 @@
 import { resolveBrand, type ResolvedBrand } from '../config/brands.js';
-import { ApiError } from '../types.js';
+import { ApiError } from '../models/types.js';
 import { env } from '../shared/env.js';
 import type { Cache } from '../shared/cache.js';
 import type {
@@ -8,7 +8,7 @@ import type {
   CountSeries,
   GoodsCiteNum,
   PaperList,
-} from '../types.js';
+} from '../models/types.js';
 
 const API_BASE = env.zhiliaowo.apiBase;
 

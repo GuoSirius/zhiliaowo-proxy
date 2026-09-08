@@ -1,6 +1,6 @@
 import { ZhiliaowoClient } from '../../../datasources/zhiliaowo.js';
 import type { ResolvedBrand } from '../../../config/brands.js';
-import type { PaperItem } from '../../../types.js';
+import type { PaperItem } from '../../../models/types.js';
 import {
   reportDb,
   getSyncState,

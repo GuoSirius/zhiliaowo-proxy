@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { parseReportCtx } from '../../services/report/params.js';
 import { buildTrend, type DecadeMode } from '../../services/report/trend.js';
 import { ok } from '../../shared/response.js';
-import { ApiError } from '../../types.js';
+import { ApiError } from '../../models/types.js';
 
 export const reportTrendRoute = new Hono();
 
