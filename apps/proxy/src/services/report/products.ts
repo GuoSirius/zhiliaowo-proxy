@@ -15,10 +15,10 @@ export interface EnrichedProduct {
   count: number;
   prevCount: number;
   growthRate: number | null;
-  /** 站点生产库回查的中文名（PROD_MYSQL 启用且命中时填充，否则缺省） */
-  cnName?: string;
-  /** 站点生产库回查的分类（PROD_MYSQL 启用且命中时填充，否则缺省） */
-  category?: string;
+  /** 站点生产库回查的产品名称（PROD_MYSQL 启用且命中时填充，否则缺省） */
+  productName?: string;
+  /** 站点生产库回查的产品分类（PROD_MYSQL 启用且命中时填充，否则缺省） */
+  productCategory?: string;
 }
 
 export interface TopProductsResult {
@@ -131,17 +131,20 @@ export function buildTopProducts(opts: BuildTopProductsOpts): TopProductsResult 
 }
 
 /**
- * 板块 5 站点差异：按 site 解析连接、回查该站点生产库，补全产品「中文名 / 分类」。
+ * 板块 5 站点差异：按 site 解析连接、回查该站点生产库，补全产品「名称 / 分类」。
  *
- * 文献/统计按 brand 共享，但产品中文名/分类是站点级数据（知了窝 API 不返回），故在此只读回查。
+ * 文献/统计按 brand 共享，但产品名称/分类是站点级数据（知了窝 API 不返回），故在此只读回查。
+ * 字段来源（需求文档「产品引用版块」）：
+ *   - 产品名称 = 网站主表「产品名称字段」→ 列 name
+ *   - 产品分类 = 网站「一级分类」→ 列 sort_i
  * - 未启用 PROD_MYSQL / 缺凭据 / 出错 → 原样返回 items（仅 goodsLabel），绝不阻断响应。
  * - 连接参数按站点解析（env.prodMysqlForSite）：两品牌站点账号密码各异也能正确对接。
  * - 主键为 catid（与 spu 对应）；表名/列名由下方常量推导，⚠️ 启用前须与四站点生产库 schema 对齐。
  */
-// ⚠️ 推测默认值：表名 = `<dbPrefix>goods`，中文名列 = name，分类列 = category。启用 PROD_MYSQL_<SITE>_ENABLED=1 前务必核对。
+// ⚠️ 推测默认值：表名 = `<dbPrefix>goods`，产品名称列 = name，产品分类列 = sort_i（一级分类）。启用 PROD_MYSQL_<SITE>_ENABLED=1 前务必核对。
 const productMetaTable = (dbPrefix: string): string => `${dbPrefix}goods`;
 const PRODUCT_META_NAME_COL = 'name';
-const PRODUCT_META_CAT_COL = 'category';
+const PRODUCT_META_CAT_COL = 'sort_i';
 
 export async function enrichProductsWithMeta(
   items: EnrichedProduct[],
@@ -153,15 +156,15 @@ export async function enrichProductsWithMeta(
   try {
     // 表名来自本项目 SITES 配置（可信、非用户输入）；catid 列表参数化绑定防注入
     const table = productMetaTable(site.dbPrefix);
-    const rows = await db.query<{ spu: string; cnName: string | null; category: string | null }>(
-      `SELECT catid AS spu, ${PRODUCT_META_NAME_COL} AS cnName, ${PRODUCT_META_CAT_COL} AS category ` +
+    const rows = await db.query<{ spu: string; productName: string | null; productCategory: string | null }>(
+      `SELECT catid AS spu, ${PRODUCT_META_NAME_COL} AS productName, ${PRODUCT_META_CAT_COL} AS productCategory ` +
         `FROM ${table} WHERE catid IN (?)`,
       [items.map((i) => i.spu)],
     );
     const meta = new Map(rows.map((r) => [r.spu, r]));
     return items.map((i) => {
       const m = meta.get(i.spu);
-      return m ? { ...i, cnName: m.cnName ?? undefined, category: m.category ?? undefined } : i;
+      return m ? { ...i, productName: m.productName ?? undefined, productCategory: m.productCategory ?? undefined } : i;
     });
   } catch (e) {
     console.warn(
