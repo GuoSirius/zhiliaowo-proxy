@@ -1,5 +1,25 @@
 # Changelog
 
+## v2.3.1
+
+[compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v2.3.0...v2.3.1)
+
+### 🐛 缺陷修复 (Bug Fixes)
+
+- _gencatalog.py 去除硬编码绝对路径，改用脚本相对目录 ([66de95c](https://github.com/GuoSirius/zhiliaowo-proxy/commit/66de95c))
+- Gen-schools.py 去除硬编码绝对路径，改用相对路径候选 ([28f0994](https://github.com/GuoSirius/zhiliaowo-proxy/commit/28f0994))
+- **trend:** Quarters 起点改为两道闸门——季度末(3/6/9/12)且已过完 ([a9fe108](https://github.com/GuoSirius/zhiliaowo-proxy/commit/a9fe108))
+- **trend:** Decade 指定 year 改为「截止 endmonth」= 1~endmonth 本地聚合 ([6ad42d8](https://github.com/GuoSirius/zhiliaowo-proxy/commit/6ad42d8))
+- **trend:** Decade 在 samerange 模式下指定 year 也按 [startmonth, endmonth] 同区间 ([3f3279b](https://github.com/GuoSirius/zhiliaowo-proxy/commit/3f3279b))
+
+### 📚 文档 (Documentation)
+
+- 新增 elabscience/procell 生产库结构分析与关联图 ([6739ce5](https://github.com/GuoSirius/zhiliaowo-proxy/commit/6739ce5))
+
+### ❤️ Contributors
+
+- 郭之存 ([@siriusSupreme](https://github.com/siriusSupreme))
+
 ## v2.3.0
 
 [compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v2.2.4...v2.3.0)
