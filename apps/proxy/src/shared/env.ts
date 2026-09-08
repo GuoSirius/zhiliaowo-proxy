@@ -15,11 +15,12 @@ import dotenv from 'dotenv';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const cwd = process.cwd();
 
-// apps/proxy 上溯两层 = 仓库根（zhiliaowo-proxy）
-const ROOT_ENV = resolve(__dirname, '..', '..', '..', '.env');
-// apps/proxy/config（品牌配置：hotspots / journals / prompts / schools）
-const CONFIG_DIR = resolve(__dirname, '..', '..', 'config');
-// apps/proxy/data（SQLite：report.db）
+// __dirname = apps/proxy/src/shared
+// 上溯四级到仓库根：shared → src → proxy → apps → zhiliaowo-proxy
+const ROOT_ENV = resolve(__dirname, '..', '..', '..', '..', '.env');
+// 上溯一级到 src：src/config（品牌配置：hotspots / journals / prompts / schools）
+const CONFIG_DIR = resolve(__dirname, '..', 'config');
+// 上溯两级到 apps/proxy：apps/proxy/data（SQLite：report.db）
 const DATA_DIR = resolve(__dirname, '..', '..', 'data');
 
 // 仅装载存在的根 .env；dotenv 不会覆盖已存在于环境中的变量，重复调用幂等安全。
