@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
-import { parseReportCtx } from '../../lib/report/params.js';
-import { buildOverview } from '../../lib/report/overview.js';
-import { ok } from '../../lib/response.js';
+import { parseReportCtx } from '../../services/report/params.js';
+import { buildOverview } from '../../services/report/overview.js';
+import { ok } from '../../shared/response.js';
 
 export const reportOverviewRoute = new Hono();
 

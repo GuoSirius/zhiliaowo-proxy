@@ -1,5 +1,5 @@
 import { createCache, type Cache } from './cache.js';
-import { ZhiliaowoClient } from './zhiliaowo.js';
+import { ZhiliaowoClient } from '../datasources/zhiliaowo.js';
 
 let client: ZhiliaowoClient | null = null;
 

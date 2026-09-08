@@ -2,10 +2,10 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import dotenv from 'dotenv';
 import { BRANDS, resolveBrand } from '../config/brands.js';
-import { ZhiliaowoClient } from '../lib/zhiliaowo.js';
-import { MemoryCache } from '../lib/cache.js';
-import { migrateReportDb } from '../lib/report/db.js';
-import { syncYear, CONCURRENCY_INFO } from '../lib/report/sync.js';
+import { ZhiliaowoClient } from '../datasources/zhiliaowo.js';
+import { MemoryCache } from '../shared/cache.js';
+import { migrateReportDb } from '../datasources/report-db.js';
+import { syncYear, CONCURRENCY_INFO } from '../services/report/sync.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: resolve(__dirname, '..', '..', '..', '.env') });

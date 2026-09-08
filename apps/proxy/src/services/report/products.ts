@@ -1,4 +1,4 @@
-import { reportDb } from './db.js';
+import { reportDb } from '../../datasources/report-db.js';
 import { round } from './calc.js';
 
 export interface ProductCount {

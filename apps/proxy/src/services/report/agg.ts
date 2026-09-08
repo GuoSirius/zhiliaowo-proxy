@@ -1,4 +1,4 @@
-import { reportDb } from './db.js';
+import { reportDb } from '../../datasources/report-db.js';
 
 /** 某品牌某年某月区间的聚合结果（多个月份相加） */
 export interface RangeAgg {

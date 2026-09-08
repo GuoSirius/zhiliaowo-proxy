@@ -1,5 +1,5 @@
 import type { Redis } from 'ioredis';
-import { env } from '../shared/env.js';
+import { env } from './env.js';
 
 /**
  * 缓存抽象接口 —— 业务代码只依赖此接口，不感知具体实现。

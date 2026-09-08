@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { classifyHotspot, type HotspotEntry } from '../lib/report/hotspots.js';
+import { classifyHotspot, type HotspotEntry } from '../services/report/hotspots.js';
 
 function mk(cn: string, keywords: string[]): HotspotEntry {
   return {

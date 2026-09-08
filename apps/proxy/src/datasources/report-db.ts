@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import { dirname } from 'node:path';
 import { mkdirSync } from 'node:fs';
-import { env } from '../../shared/env.js';
+import { env } from '../shared/env.js';
 
 /**
  * 报告数据层（6 板块海报）—— 独立 SQLite 库（report.db）。

@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { reportDb } from './db.js';
+import { reportDb } from '../../datasources/report-db.js';
 import { env } from '../../shared/env.js';
 import { round } from './calc.js';
 

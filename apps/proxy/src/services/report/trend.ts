@@ -1,8 +1,8 @@
 import type { ResolvedBrand } from '../../config/brands.js';
-import { getClient } from '../client.js';
+import { getClient } from '../../shared/client.js';
 import { getRangeAgg } from './agg.js';
 import { round } from './calc.js';
-import { reportDb } from './db.js';
+import { reportDb } from '../../datasources/report-db.js';
 
 /**
  * decade 统计口径：

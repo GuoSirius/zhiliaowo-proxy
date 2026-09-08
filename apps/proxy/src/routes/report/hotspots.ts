@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
-import { parseReportCtx, parseSortBy } from '../../lib/report/params.js';
-import { getRangeAgg } from '../../lib/report/agg.js';
-import { getHotspotRangeStats } from '../../lib/report/hotspots.js';
-import { pct } from '../../lib/report/calc.js';
-import { ok } from '../../lib/response.js';
+import { parseReportCtx, parseSortBy } from '../../services/report/params.js';
+import { getRangeAgg } from '../../services/report/agg.js';
+import { getHotspotRangeStats } from '../../services/report/hotspots.js';
+import { pct } from '../../services/report/calc.js';
+import { ok } from '../../shared/response.js';
 import { env } from '../../shared/env.js';
 
 export const reportHotspotsRoute = new Hono();

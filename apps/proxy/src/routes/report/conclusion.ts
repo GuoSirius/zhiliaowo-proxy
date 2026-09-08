@@ -1,13 +1,13 @@
 import { Hono } from 'hono';
-import { parseReportCtx } from '../../lib/report/params.js';
-import { getRangeAgg } from '../../lib/report/agg.js';
-import { getHotspotRangeStats } from '../../lib/report/hotspots.js';
-import { getTopJournalsByFactor } from '../../lib/report/journals.js';
-import { selectInstitutions } from '../../lib/report/schools.js';
-import { round } from '../../lib/report/calc.js';
-import { loadPromptFile, renderTemplate } from '../../lib/prompts.js';
-import { aiEnabled, callAi } from '../../lib/ai.js';
-import { ok } from '../../lib/response.js';
+import { parseReportCtx } from '../../services/report/params.js';
+import { getRangeAgg } from '../../services/report/agg.js';
+import { getHotspotRangeStats } from '../../services/report/hotspots.js';
+import { getTopJournalsByFactor } from '../../services/report/journals.js';
+import { selectInstitutions } from '../../services/report/schools.js';
+import { round } from '../../services/report/calc.js';
+import { loadPromptFile, renderTemplate } from '../../shared/prompts.js';
+import { aiEnabled, callAi } from '../../datasources/ai.js';
+import { ok } from '../../shared/response.js';
 
 export const reportConclusionRoute = new Hono();
 

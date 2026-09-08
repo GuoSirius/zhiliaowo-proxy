@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { env } from '../shared/env.js';
+import { env } from './env.js';
 
 /** 提示词目录（统一经 env 中心读取：优先 env AI_PROMPT_DIR，否则回退 config/prompts） */
 export function promptsDir(): string {

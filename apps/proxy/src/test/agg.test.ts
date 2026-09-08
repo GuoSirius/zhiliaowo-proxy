@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mergeCounts, mergeMax } from '../lib/report/agg.js';
+import { mergeCounts, mergeMax } from '../services/report/agg.js';
 
 test('mergeCounts: 累加同 key，缺失 key 补 0', () => {
   const target: Record<string, number> = { a: 1, b: 2 };

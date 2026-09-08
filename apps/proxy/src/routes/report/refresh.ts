@@ -1,8 +1,8 @@
 import { Hono, type Context } from 'hono';
-import { parseReportCtx } from '../../lib/report/params.js';
-import { getClient } from '../../lib/client.js';
-import { syncYear, type SyncResult } from '../../lib/report/sync.js';
-import { ok, fail } from '../../lib/response.js';
+import { parseReportCtx } from '../../services/report/params.js';
+import { getClient } from '../../shared/client.js';
+import { syncYear, type SyncResult } from '../../services/report/sync.js';
+import { ok, fail } from '../../shared/response.js';
 import { env } from '../../shared/env.js';
 
 export const reportRefreshRoute = new Hono();

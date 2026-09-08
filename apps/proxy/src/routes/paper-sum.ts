@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { resolveBrand } from '../config/brands.js';
-import { getClient } from '../lib/client.js';
-import { ok } from '../lib/response.js';
+import { getClient } from '../shared/client.js';
+import { ok } from '../shared/response.js';
 
 export const paperSumRoute = new Hono();
 

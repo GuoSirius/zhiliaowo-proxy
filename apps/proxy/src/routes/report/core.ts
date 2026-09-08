@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
-import { parseReportCtx } from '../../lib/report/params.js';
-import { getRangeAgg } from '../../lib/report/agg.js';
-import { getCumulativeStats } from '../../lib/report/cumulative.js';
-import { round, pct } from '../../lib/report/calc.js';
-import { ok } from '../../lib/response.js';
+import { parseReportCtx } from '../../services/report/params.js';
+import { getRangeAgg } from '../../services/report/agg.js';
+import { getCumulativeStats } from '../../services/report/cumulative.js';
+import { round, pct } from '../../services/report/calc.js';
+import { ok } from '../../shared/response.js';
 
 export const reportCoreRoute = new Hono();
 
@@ -24,7 +24,7 @@ reportCoreRoute.get('/:site/report/core', async (c) => {
   const avgCur = cur.paper_count ? cur.total_factor / cur.paper_count : 0;
   const avgPrev = prev.paper_count ? prev.total_factor / prev.paper_count : 0;
 
-  // 底部累计：调用 2.1 全历史累计扣减 year 年 endMonth 之后（见 lib/report/cumulative.ts）
+  // 底部累计：调用 2.1 全历史累计扣减 year 年 endMonth 之后（见 services/report/cumulative.ts）
   const cum = await getCumulativeStats(brand, year, endMonth);
   // 累计的同比仍走本地聚合去年 1~endMonth（2.1 无年份参数）
   const cumPrev = getRangeAgg(brand.brand, year - 1, 1, endMonth);

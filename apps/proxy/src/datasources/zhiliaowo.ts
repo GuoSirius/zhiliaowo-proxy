@@ -1,7 +1,7 @@
 import { resolveBrand, type ResolvedBrand } from '../config/brands.js';
 import { ApiError } from '../types.js';
 import { env } from '../shared/env.js';
-import type { Cache } from './cache.js';
+import type { Cache } from '../shared/cache.js';
 import type {
   BrandStatistics,
   CiteStat,

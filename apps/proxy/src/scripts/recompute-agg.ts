@@ -2,8 +2,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import dotenv from 'dotenv';
 import { BRANDS, resolveBrand, resolveBrandFlexible } from '../config/brands.js';
-import { recomputeYearAgg } from '../lib/report/sync.js';
-import { reportDb, localPaperCount } from '../lib/report/db.js';
+import { recomputeYearAgg } from '../services/report/sync.js';
+import { reportDb, localPaperCount } from '../datasources/report-db.js';
 import { parseArgs } from './parse-args.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

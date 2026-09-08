@@ -6,13 +6,13 @@ import { getTopJournalsByFactor, loadFeaturedJournals } from './journals.js';
 import { selectInstitutions } from './schools.js';
 import { getCumulativeStats } from './cumulative.js';
 import { round, pct } from './calc.js';
-import { aiEnabled } from '../ai.js';
+import { aiEnabled } from '../../datasources/ai.js';
 import { buildTrend } from './trend.js';
 import { env } from '../../shared/env.js';
 
 /**
  * 编排全部 6 个板块（一次性返回，供前端整页渲染）。
- * 所有计算复用 lib/report 各原语，口径与分板块接口完全一致，此处不再重复定义。
+ * 所有计算复用 services/report 各原语，口径与分板块接口完全一致，此处不再重复定义。
  */
 export async function buildOverview(
   brand: ResolvedBrand,
@@ -90,10 +90,10 @@ export async function buildOverview(
     },
   };
 
-  // —— 板块 3 趋势（近十年 + 季度，口径见 lib/report/trend.ts；overview 固定 full）
+  // —— 板块 3 趋势（近十年 + 季度，口径见 services/report/trend.ts；overview 固定 full）
   const trend = await buildTrend(brand, year, startMonth, endMonth, 'full');
 
-  // —— 板块 4 研究热点 Top10（口径见 lib/report/hotspots.ts & routes/report/hotspots.ts）
+  // —— 板块 4 研究热点 Top10（口径见 services/report/hotspots.ts & routes/report/hotspots.ts）
   const allHotspots = getHotspotRangeStats(brand, year, startMonth, endMonth); // 已按 count 降序
   const prevHotspots = getHotspotRangeStats(brand, year - 1, startMonth, endMonth); // 去年同样方式
   const prevHotspotCounts: Record<string, number> = {};
@@ -121,7 +121,7 @@ export async function buildOverview(
     topHotspots,
   };
 
-  // —— 板块 5 产品引用 Top15（口径见 lib/report/products.ts）
+  // —— 板块 5 产品引用 Top15（口径见 services/report/products.ts）
   const curP = getRangeProductCounts(brandName, year, startMonth, endMonth);
   const prevP = getRangeProductCounts(brandName, year - 1, startMonth, endMonth);
   const { totalProducts, hasYoY, items, poolUsed } = buildTopProducts({ cur: curP, prev: prevP });

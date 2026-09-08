@@ -1,16 +1,16 @@
 import { cpus } from 'node:os';
-import { ZhiliaowoClient } from '../zhiliaowo.js';
+import { ZhiliaowoClient } from '../../datasources/zhiliaowo.js';
 import type { ResolvedBrand } from '../../config/brands.js';
 import type { PaperItem, PaperList } from '../../types.js';
-import { aiEnabled, callAi } from '../ai.js';
+import { aiEnabled, callAi } from '../../datasources/ai.js';
 import {
   reportDb,
   getSyncState,
   localPaperCount,
-} from './db.js';
+} from '../../datasources/report-db.js';
 import { loadHotspots, classifyHotspot, type HotspotEntry } from './hotspots.js';
 import { round } from './calc.js';
-import { loadPromptFile } from '../prompts.js';
+import { loadPromptFile } from '../../shared/prompts.js';
 import { env } from '../../shared/env.js';
 
 /**

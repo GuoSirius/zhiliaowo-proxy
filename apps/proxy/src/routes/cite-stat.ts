@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { resolveBrand } from '../config/brands.js';
-import { getClient } from '../lib/client.js';
-import { ok, fail } from '../lib/response.js';
+import { getClient } from '../shared/client.js';
+import { ok, fail } from '../shared/response.js';
 
 export const citeStatRoute = new Hono();
 

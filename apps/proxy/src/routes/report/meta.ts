@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
-import { parseReportCtx } from '../../lib/report/params.js';
-import { reportDb, localPaperCount } from '../../lib/report/db.js';
-import { ok } from '../../lib/response.js';
+import { parseReportCtx } from '../../services/report/params.js';
+import { reportDb, localPaperCount } from '../../datasources/report-db.js';
+import { ok } from '../../shared/response.js';
 
 export const reportMetaRoute = new Hono();
 

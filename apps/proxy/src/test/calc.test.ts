@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { round, pct } from '../lib/report/calc.js';
+import { round, pct } from '../services/report/calc.js';
 
 test('round: 默认 2 位小数', () => {
   assert.equal(round(3.14159), 3.14);

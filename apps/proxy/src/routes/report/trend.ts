@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
-import { parseReportCtx } from '../../lib/report/params.js';
-import { buildTrend, type DecadeMode } from '../../lib/report/trend.js';
-import { ok } from '../../lib/response.js';
+import { parseReportCtx } from '../../services/report/params.js';
+import { buildTrend, type DecadeMode } from '../../services/report/trend.js';
+import { ok } from '../../shared/response.js';
 import { ApiError } from '../../types.js';
 
 export const reportTrendRoute = new Hono();

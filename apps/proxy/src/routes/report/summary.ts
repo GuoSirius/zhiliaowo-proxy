@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
-import { parseReportCtx } from '../../lib/report/params.js';
-import { getRangeAgg } from '../../lib/report/agg.js';
-import { loadFeaturedJournals } from '../../lib/report/journals.js';
-import { ok } from '../../lib/response.js';
+import { parseReportCtx } from '../../services/report/params.js';
+import { getRangeAgg } from '../../services/report/agg.js';
+import { loadFeaturedJournals } from '../../services/report/journals.js';
+import { ok } from '../../shared/response.js';
 
 export const reportSummaryRoute = new Hono();
 
