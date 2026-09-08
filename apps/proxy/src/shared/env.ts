@@ -168,32 +168,76 @@ export const env = {
   },
 
   /**
-   * 生产库（只读）连接参数 —— 用于对接四个站点生产 MySQL 的替代数据源。
+   * 生产库（只读）连接参数 —— 用于对接四站点生产 MySQL 的替代数据源。
+   *
+   * ⚠️ 四个站点的**账号/密码/库名各不相同**（两品牌站点凭据不同），故本模块**按站点解析**，
+   * 字段解析优先级：**站点级 > 品牌级 > 全局默认**：
+   *   - 站点级  ：PROD_MYSQL_<SITEKEY>_USER / _PASSWORD / _DATABASE / _HOST / _PORT / _ENABLED
+   *   - 品牌级  ：PROD_MYSQL_<BRANDKEY>_USER / _PASSWORD / _DATABASE / _HOST / _PORT / _ENABLED
+   *   - 全局默认：PROD_MYSQL_USER / _PASSWORD / _DATABASE / _HOST / _PORT / _ENABLED
+   * 例：Procell 中文站 = PROD_MYSQL_PROCELLCN_USER；Procell 品牌共用 = PROD_MYSQL_PROCELL_USER。
+   *
    * ⚠️ 只读是**强制约束**：无论本配置如何，下游 datasource 只建立 SELECT 连接，
-   * 绝不执行任何写入/DDL/DML（防止误改生产数据）。
+   * 绝不执行任何写入/DDL/DML（防止误改生产数据）。datasource 据此只发 SELECT。
+   *
+   * @param siteKey   路由站点 key（elabcn/elabcom/procellcn/pricella，转大写）
+   * @param brandKey  品牌 key（elabscience/procell，转大写），用于品牌级回退
    */
-  prodMysql: {
-    get enabled(): boolean {
-      return bool('PROD_MYSQL_ENABLED');
-    },
-    get host(): string {
-      return str('PROD_MYSQL_HOST', '10.30.30.130');
-    },
-    get port(): number {
-      return num('PROD_MYSQL_PORT', 3307);
-    },
-    get user(): string | undefined {
-      return opt('PROD_MYSQL_USER');
-    },
-    get password(): string | undefined {
-      return opt('PROD_MYSQL_PASSWORD');
-    },
-    get database(): string | undefined {
-      return opt('PROD_MYSQL_DATABASE');
-    },
-    /** 强制只读，datasource 必须据此只发 SELECT */
-    readonly: true as const,
+  prodMysqlForSite(siteKey: string, brandKey: string): ProdMysqlConn {
+    const upSite = (siteKey ?? '').toUpperCase();
+    const upBrand = (brandKey ?? '').toUpperCase();
+    // 字段解析：站点级优先 → 品牌级回退 → 全局默认（最后可选兜底值）
+    const field = (name: string, fallback?: string): string | undefined =>
+      opt(`PROD_MYSQL_${upSite}_${name}`) ??
+      opt(`PROD_MYSQL_${upBrand}_${name}`) ??
+      opt(`PROD_MYSQL_${name}`) ??
+      fallback;
+    const fieldStr = (name: string, fallback: string): string => field(name) ?? fallback;
+    const fieldNum = (name: string, fallback: number): number => {
+      const v = field(name);
+      if (v === undefined) return fallback;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : fallback;
+    };
+    const fieldBool = (name: string, fallback = false): boolean => {
+      const v = field(name);
+      if (v === undefined) return fallback;
+      return v === '1' || v.toLowerCase() === 'true';
+    };
+    return {
+      get enabled(): boolean {
+        return fieldBool('ENABLED');
+      },
+      get host(): string {
+        return fieldStr('HOST', '10.30.30.130');
+      },
+      get port(): number {
+        return fieldNum('PORT', 3307);
+      },
+      get user(): string | undefined {
+        return field('USER');
+      },
+      get password(): string | undefined {
+        return field('PASSWORD');
+      },
+      get database(): string | undefined {
+        return field('DATABASE');
+      },
+      /** 强制只读，datasource 必须据此只发 SELECT */
+      readonly: true as const,
+    };
   },
 };
+
+/** 生产库（只读）单站点连接参数契约 */
+export interface ProdMysqlConn {
+  enabled: boolean;
+  host: string;
+  port: number;
+  user: string | undefined;
+  password: string | undefined;
+  database: string | undefined;
+  readonly: true;
+}
 
 export type Env = typeof env;

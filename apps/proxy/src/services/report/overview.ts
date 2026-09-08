@@ -133,7 +133,7 @@ export async function buildOverview(
   const prevP = getRangeProductCounts(brandName, year - 1, startMonth, endMonth);
   const { totalProducts, hasYoY, items, poolUsed } = buildTopProducts({ cur: curP, prev: prevP });
   // 站点差异：按 dbPrefix 回查生产库补全中文名/分类（未启用则原样）
-  const enrichedItems = await enrichProductsWithMeta(items, site.dbPrefix);
+  const enrichedItems = await enrichProductsWithMeta(items, site);
   const products = {
     range: { year, startMonth, endMonth },
     totalProducts,
