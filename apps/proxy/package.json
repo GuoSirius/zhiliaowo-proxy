@@ -12,9 +12,9 @@
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test",
-    "sync": "tsx scripts/sync.ts",
-    "sync:current": "tsx scripts/sync-current.ts",
-    "recompute": "tsx scripts/recompute-agg.ts"
+    "sync": "tsx src/scripts/sync.ts",
+    "sync:current": "tsx src/scripts/sync-current.ts",
+    "recompute": "tsx src/scripts/recompute-agg.ts"
   },
   "keywords": [
     "zhiliaowo",
