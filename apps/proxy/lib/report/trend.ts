@@ -110,9 +110,12 @@ async function loadUpstreamDecade(
 
 /**
  * 近十年年度分布：
- * 1. 优先用上游 2.4 年度新增数据；
- * 2. 2.4 缺失的年份用本地 zlw_papers_agg 聚合补全；
- * 3. 仍缺失的年份生成骨架并以 count=0、hasData=false 兜底。
+ *  - 倒推 9 年（year-9 ~ year-1）：优先上游 2.4 年度新增 → 本地 zlw_papers_agg 补全 →
+ *    仍缺失则补 0；本地口径随 decadeMode：full=全年(1-12)，sameRange=[startMonth,endMonth]。
+ *  - 指定 year（海报年）：口径固定为「全年减去 endMonth 月份以后」= 本地 1~endMonth 聚合，
+ *    与海报累计文案「截止至 {year} 年 {endMonth} 月」一致——即未完年按截止月截断，避免
+ *    与往年全年量直接对比时出现明显假下滑。不再使用 2.4 的「年度新增」全年量。
+ *  - 仍缺失则生成骨架并以 count=0、hasData=false 兜底。
  * 窗口终点为请求的 year，往回推 10 年。
  */
 async function buildDecade(
@@ -126,18 +129,24 @@ async function buildDecade(
 
   const raw: Array<{ year: number; count: number; hasData: boolean }> = [];
   for (let y = year - 9; y <= year; y++) {
-    if (upstream.has(y)) {
-      // 优先 2.4
-      raw.push({ year: y, count: upstream.get(y)!, hasData: true });
-      continue;
+    if (y < year) {
+      // 倒推 9 年：维持原口径（2.4 优先 → 本地补全 → 缺年补 0）
+      if (upstream.has(y)) {
+        raw.push({ year: y, count: upstream.get(y)!, hasData: true });
+        continue;
+      }
+      const hasData = hasYearData(brand.brand, y);
+      const agg =
+        mode === 'sameRange'
+          ? getRangeAgg(brand.brand, y, startMonth, endMonth)
+          : getRangeAgg(brand.brand, y, 1, 12);
+      raw.push({ year: y, count: hasData ? agg.paper_count : 0, hasData });
+    } else {
+      // 指定 year：「截止 endMonth」= 1~endMonth 本地聚合（不再用 2.4 全年量）
+      const hasData = hasYearData(brand.brand, year);
+      const agg = getRangeAgg(brand.brand, year, 1, endMonth);
+      raw.push({ year, count: hasData ? agg.paper_count : 0, hasData });
     }
-    // 本地聚合补全
-    const hasData = hasYearData(brand.brand, y);
-    const agg =
-      mode === 'sameRange'
-        ? getRangeAgg(brand.brand, y, startMonth, endMonth)
-        : getRangeAgg(brand.brand, y, 1, 12);
-    raw.push({ year: y, count: hasData ? agg.paper_count : 0, hasData });
   }
 
   // percent 只以有数据的年份为分母基准，避免未同步年份拉低整体尺度
