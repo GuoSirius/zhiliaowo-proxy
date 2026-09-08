@@ -17,8 +17,8 @@ export interface EnrichedProduct {
   growthRate: number | null;
   /** 站点生产库回查的产品名称（PROD_MYSQL 启用且命中时填充，否则缺省） */
   productName?: string;
-  /** 站点生产库回查的产品分类（PROD_MYSQL 启用且命中时填充，否则缺省） */
-  productCategory?: string;
+  /** 站点生产库回查的产品分类（PROD_MYSQL 启用且命中时填充，否则缺省）；值为 sort_i（一级分类 ID，数值型） */
+  productCategory?: string | number;
 }
 
 export interface TopProductsResult {
@@ -134,16 +134,17 @@ export function buildTopProducts(opts: BuildTopProductsOpts): TopProductsResult 
  * 板块 5 站点差异：按 site 解析连接、回查该站点生产库，补全产品「名称 / 分类」。
  *
  * 文献/统计按 brand 共享，但产品名称/分类是站点级数据（知了窝 API 不返回），故在此只读回查。
- * 字段来源（需求文档「产品引用版块」）：
- *   - 产品名称 = 网站主表「产品名称字段」→ 列 name
- *   - 产品分类 = 网站「一级分类」→ 列 sort_i
+ * 字段来源（需求文档「产品引用版块」+ 生产库 information_schema 实测）：
+ *   - 主表 = <dbPrefix>product_main（如 procellcn_product_main / pricella_product_main / elabcn_product_main / elabcom_product_main；非 goods）
+ *   - 主键 = catid（与 spu 对应）
+ *   - 产品名称 = 主表 title_c 列（中文站产品名；英文站如需英文名可改用 title 列）
+ *   - 产品分类 = 主表 sort_i 列（一级分类 ID，数值型；需求文档要求「直接用 sort_i」）
  * - 未启用 PROD_MYSQL / 缺凭据 / 出错 → 原样返回 items（仅 goodsLabel），绝不阻断响应。
  * - 连接参数按站点解析（env.prodMysqlForSite）：两品牌站点账号密码各异也能正确对接。
- * - 主键为 catid（与 spu 对应）；表名/列名由下方常量推导，⚠️ 启用前须与四站点生产库 schema 对齐。
  */
-// ⚠️ 推测默认值：表名 = `<dbPrefix>goods`，产品名称列 = name，产品分类列 = sort_i（一级分类）。启用 PROD_MYSQL_<SITE>_ENABLED=1 前务必核对。
-const productMetaTable = (dbPrefix: string): string => `${dbPrefix}goods`;
-const PRODUCT_META_NAME_COL = 'name';
+// 生产库 product_main 表：表名 / 列名已由 information_schema 实测确认（2026-09-08）。
+const productMetaTable = (dbPrefix: string): string => `${dbPrefix}product_main`;
+const PRODUCT_META_NAME_COL = 'title_c';
 const PRODUCT_META_CAT_COL = 'sort_i';
 
 export async function enrichProductsWithMeta(
@@ -156,8 +157,10 @@ export async function enrichProductsWithMeta(
   try {
     // 表名来自本项目 SITES 配置（可信、非用户输入）；catid 列表参数化绑定防注入
     const table = productMetaTable(site.dbPrefix);
-    const rows = await db.query<{ spu: string; productName: string | null; productCategory: string | null }>(
-      `SELECT catid AS spu, ${PRODUCT_META_NAME_COL} AS productName, ${PRODUCT_META_CAT_COL} AS productCategory ` +
+    // CAST(catid AS CHAR)：DB 中 catid 为数值型，而 items.spu 来自 JSON 字符串（goodsSpu），
+    // 统一转字符串后 Map 主键才能匹配，否则 enrichment 会静默全部落空。
+    const rows = await db.query<{ spu: string; productName: string | null; productCategory: string | number | null }>(
+      `SELECT CAST(catid AS CHAR) AS spu, ${PRODUCT_META_NAME_COL} AS productName, ${PRODUCT_META_CAT_COL} AS productCategory ` +
         `FROM ${table} WHERE catid IN (?)`,
       [items.map((i) => i.spu)],
     );
