@@ -1,6 +1,6 @@
 {
   "name": "zhiliaowo-proxy",
-  "version": "2.3.1",
+  "version": "3.0.0",
   "description": "知了窝开放平台 BFF 代理服务与 6 板块海报数据接口（Hono + SQLite + 缓存抽象）",
   "type": "module",
   "engines": {

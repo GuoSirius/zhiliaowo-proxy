@@ -1,5 +1,35 @@
 # Changelog
 
+## v3.0.0
+
+[compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v2.3.1...v3.0.0)
+
+### 🚀 新功能 (Features)
+
+- Add four-site routing with locale-aware config and prod-mysql product meta ([9415c40](https://github.com/GuoSirius/zhiliaowo-proxy/commit/9415c40))
+
+### 🐛 缺陷修复 (Bug Fixes)
+
+- **proxy:** 修正同步脚本路径适配 src 搬迁恢复定时任务 ([98ede03](https://github.com/GuoSirius/zhiliaowo-proxy/commit/98ede03))
+- **proxy:** 修正 env 中心的 .env 与 config 目录路径 ([c639975](https://github.com/GuoSirius/zhiliaowo-proxy/commit/c639975))
+- Prod-mysql 凭据按站点解析（站点级>品牌级>全局），支持两品牌不同账号密码 ([5accbf3](https://github.com/GuoSirius/zhiliaowo-proxy/commit/5accbf3))
+- **products:** 返回字段改名 productName/productCategory，分类改取 sort_i（一级分类，按需求文档） ([6218b47](https://github.com/GuoSirius/zhiliaowo-proxy/commit/6218b47))
+- **products:** 修正 prod-mysql 真实 schema（表 product_main / 名称 title_c / 分类 sort_i），并补 mysql2 依赖 ([d589b7f](https://github.com/GuoSirius/zhiliaowo-proxy/commit/d589b7f))
+- **products:** Sort_i 转文字（join goodstype_web 取分类名），产品名+分类名均按 locale 区分中英文站 ([3c451b8](https://github.com/GuoSirius/zhiliaowo-proxy/commit/3c451b8))
+- **products:** Enrichment 按 cat 列匹配（goodsspu=目录编号=cat，非数值主键 catid） ([bd82643](https://github.com/GuoSirius/zhiliaowo-proxy/commit/bd82643))
+
+### ♻️ 代码重构 (Refactors)
+
+- **proxy:** 源码整体迁入 src/ 落实方案a目录骨架 ([5d1de52](https://github.com/GuoSirius/zhiliaowo-proxy/commit/5d1de52))
+- **proxy:** 收口环境变量到 env 中心并移除 h5 生成模块 ([81659ee](https://github.com/GuoSirius/zhiliaowo-proxy/commit/81659ee))
+- **proxy:** 抽出 shared/datasources/services 轻分层并移除 lib 目录 ([4ac6161](https://github.com/GuoSirius/zhiliaowo-proxy/commit/4ac6161))
+- **proxy:** 拆分 sync.ts 为 sync/ 子模块并将数据访问归位 ([a237433](https://github.com/GuoSirius/zhiliaowo-proxy/commit/a237433))
+- **proxy:** 归位 models 类型契约层并同步 README 目录结构 ([4c41344](https://github.com/GuoSirius/zhiliaowo-proxy/commit/4c41344))
+
+### ❤️ Contributors
+
+- 郭之存 ([@siriusSupreme](https://github.com/siriusSupreme))
+
 ## v2.3.1
 
 [compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v2.3.0...v2.3.1)
