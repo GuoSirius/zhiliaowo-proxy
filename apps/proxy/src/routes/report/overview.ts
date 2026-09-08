@@ -10,7 +10,7 @@ export const reportOverviewRoute = new Hono();
  * GET /api/v1/:site/report/overview?year=2025&startMonth=1&endMonth=12
  */
 reportOverviewRoute.get('/:site/report/overview', async (c) => {
-  const { brand, year, startMonth, endMonth } = parseReportCtx(c);
-  const data = await buildOverview(brand, year, startMonth, endMonth);
+  const { brand, site, year, startMonth, endMonth } = parseReportCtx(c);
+  const data = await buildOverview(brand, year, startMonth, endMonth, site);
   return ok(c, data);
 });

@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { parseReportCtx, parseSortBy } from '../../services/report/params.js';
 import { getRangeAgg } from '../../services/report/agg.js';
-import { getHotspotRangeStats } from '../../services/report/hotspots.js';
+import { getHotspotRangeStats, buildHotspotZhToEn } from '../../services/report/hotspots.js';
 import { pct } from '../../services/report/calc.js';
 import { ok } from '../../shared/response.js';
 import { env } from '../../shared/env.js';
@@ -17,7 +17,7 @@ export const reportHotspotsRoute = new Hono();
  * sortBy 仅对最终结果二次排序（默认 count）。AI 兜底见 env AI_HOTSPOT_FALLBACK。
  */
 reportHotspotsRoute.get('/:site/report/hotspots', async (c) => {
-  const { brand, year, startMonth, endMonth } = parseReportCtx(c);
+  const { brand, site, year, startMonth, endMonth } = parseReportCtx(c);
   const sortBy = parseSortBy(c);
 
   const cur = getHotspotRangeStats(brand, year, startMonth, endMonth); // 已按 count 降序
@@ -27,7 +27,7 @@ reportHotspotsRoute.get('/:site/report/hotspots', async (c) => {
   const curAgg = getRangeAgg(brand.brand, year, startMonth, endMonth);
 
   // 算同比 → 过滤负增长（保留无基线新品与 ≥0）→ 按关键词次数降序取前 10
-  const topHotspots = cur
+  const topHotspotsRaw = cur
     .map((h) => {
       const prevCount = prevCounts[h.cn] ?? 0;
       return { cn: h.cn, count: h.count, prevCount, growthRate: pct(h.count, prevCount), maxIf: h.maxIf };
@@ -39,6 +39,11 @@ reportHotspotsRoute.get('/:site/report/hotspots', async (c) => {
         : b.count - a.count,
     )
     .slice(0, 10);
+  // 英文站：中文热点标签映射为英文（无 en 配置时保留原 cn）
+  const topHotspots =
+    site.locale === 'en'
+      ? topHotspotsRaw.map((h) => ({ ...h, cn: buildHotspotZhToEn(brand.key)[h.cn] ?? h.cn }))
+      : topHotspotsRaw;
   const totalClassified = cur.reduce((s, h) => s + h.count, 0);
 
   return ok(c, {

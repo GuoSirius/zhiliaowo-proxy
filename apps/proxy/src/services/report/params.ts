@@ -1,10 +1,13 @@
 import type { Context } from 'hono';
-import { resolveBrand, type ResolvedBrand } from '../../config/brands.js';
+import { resolveSite, type ResolvedBrand, type ResolvedSite } from '../../config/brands.js';
 import { ApiError } from '../../models/types.js';
 import { reportDb } from '../../datasources/report-db.js';
 
 export interface ReportCtx {
+  /** 品牌级（文献/统计/聚合等 brand 共享，与语言无关） */
   brand: ResolvedBrand;
+  /** 站点级（locale 中/英文站 + dbPrefix 四站点生产库前缀），展示层差异据此取 */
+  site: ResolvedSite;
   year: number;
   startMonth: number;
   endMonth: number;
@@ -29,9 +32,17 @@ export interface ParseReportOpts {
 
 /** 解析 :site + year + startMonth + endMonth 公共参数 */
 export function parseReportCtx(c: Context, opts: ParseReportOpts = {}): ReportCtx {
-  const site = c.req.param('site');
-  if (!site) throw new ApiError(400, 'missing site param');
-  const brand = resolveBrand(site);
+  const siteParam = c.req.param('site');
+  if (!siteParam) throw new ApiError(400, 'missing site param');
+  // 站点级解析一次，品牌级语义从其投影（避免重复校验 appId）
+  const site = resolveSite(siteParam);
+  const brand: ResolvedBrand = {
+    key: site.brandKey,
+    label: site.label,
+    brand: site.brand,
+    appIdEnv: site.appIdEnv,
+    appId: site.appId,
+  };
   const yearParam = c.req.query('year');
   const year =
     yearParam != null ? Number(yearParam) : (latestSyncedYear(brand.brand) ?? new Date().getFullYear());
@@ -43,7 +54,7 @@ export function parseReportCtx(c: Context, opts: ParseReportOpts = {}): ReportCt
     if (!Number.isInteger(endMonth) || endMonth < 1 || endMonth > 12) {
       throw new ApiError(400, 'endMonth 必须是 1-12 之间的整数');
     }
-    return { brand, year, startMonth: 1, endMonth };
+    return { brand, site, year, startMonth: 1, endMonth };
   }
 
   // 缺失时用默认值；显式传值则必须落在 1-12，越界直接报错（不再静默 clamp，避免口径悄悄偏移）
@@ -58,7 +69,7 @@ export function parseReportCtx(c: Context, opts: ParseReportOpts = {}): ReportCt
     throw new ApiError(400, 'endMonth 必须是 1-12 之间的整数');
   }
   if (endMonth < startMonth) throw new ApiError(400, 'endMonth 不能小于 startMonth');
-  return { brand, year, startMonth, endMonth };
+  return { brand, site, year, startMonth, endMonth };
 }
 
 /** 排序键：count=按数量；growthRate=按同比增长率。默认 count，非法值 400。 */

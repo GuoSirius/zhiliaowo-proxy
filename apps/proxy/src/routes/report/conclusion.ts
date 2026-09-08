@@ -6,12 +6,13 @@ import { getTopJournalsByFactor } from '../../services/report/journals.js';
 import { selectInstitutions } from '../../services/report/schools.js';
 import { round } from '../../services/report/calc.js';
 import { loadPromptFile, renderTemplate } from '../../shared/prompts.js';
+import type { Locale } from '../../config/brands.js';
 import { aiEnabled, callAi } from '../../datasources/ai.js';
 import { ok } from '../../shared/response.js';
 
 export const reportConclusionRoute = new Hono();
 
-/** 将结构化数据渲染进结论提示词模板的占位符 */
+/** 将结构化数据渲染进结论提示词模板的占位符（locale 决定中文/英文提示词模板） */
 function renderConclusionPrompt(
   brandKey: string,
   brandLabel: string,
@@ -19,9 +20,10 @@ function renderConclusionPrompt(
   stats: { totalPapers: number; avgIf: number; maxIf: number; ifGe10: number },
   topJournals: Array<{ journal: string; maxIf: number; count: number }>,
   topHotspots: Array<{ cn: string; count: number }>,
+  locale: Locale = 'cn',
 ): string {
   const tpl =
-    loadPromptFile(brandKey, 'conclusion') ??
+    loadPromptFile(brandKey, 'conclusion', locale) ??
     '你是一位生物医学科研文献分析助手。请基于以下结构化数据撰写一段小结文案。';
   return renderTemplate(tpl, {
     brand: brandLabel,
@@ -48,7 +50,7 @@ function renderConclusionPrompt(
  * （由 docs/学校.xlsx 预生成）每次随机抽取 6 所展示。source=excel-fallback 即兜底。
  */
 reportConclusionRoute.get('/:site/report/conclusion', async (c) => {
-  const { brand, year, startMonth, endMonth } = parseReportCtx(c);
+  const { brand, site, year, startMonth, endMonth } = parseReportCtx(c);
 
   const agg = getRangeAgg(brand.brand, year, startMonth, endMonth);
   const avgIf = agg.paper_count ? agg.total_factor / agg.paper_count : 0;
@@ -69,7 +71,7 @@ reportConclusionRoute.get('/:site/report/conclusion', async (c) => {
   let conclusionError: string | null = null;
   if (aiEnabled()) {
     try {
-      const system = renderConclusionPrompt(brand.key, brand.label, year, stats, topJournals, topHotspots);
+      const system = renderConclusionPrompt(brand.key, brand.label, year, stats, topJournals, topHotspots, site.locale);
       conclusion = await callAi(system, '请直接输出小结文案，不要任何额外解释。', {
         temperature: 0.4,
         maxTokens: 600,

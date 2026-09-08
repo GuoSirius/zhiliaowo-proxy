@@ -1,4 +1,5 @@
 import { reportDb } from '../../datasources/report-db.js';
+import { prodMysqlEnabled, getProdMysql } from '../../datasources/prod-mysql.js';
 import { round } from './calc.js';
 
 export interface ProductCount {
@@ -13,6 +14,10 @@ export interface EnrichedProduct {
   count: number;
   prevCount: number;
   growthRate: number | null;
+  /** 站点生产库回查的中文名（PROD_MYSQL 启用且命中时填充，否则缺省） */
+  cnName?: string;
+  /** 站点生产库回查的分类（PROD_MYSQL 启用且命中时填充，否则缺省） */
+  category?: string;
 }
 
 export interface TopProductsResult {
@@ -121,5 +126,45 @@ export function buildTopProducts(opts: BuildTopProductsOpts): TopProductsResult 
 
     // 合格数不足 → 翻倍候选池重试（受 maxPool 限制）
     pool = Math.min(maxPool, pool * 2);
+  }
+}
+
+/**
+ * 板块 5 站点差异：按 site.dbPrefix 回查四站点生产库，补全产品「中文名 / 分类」。
+ *
+ * 文献/统计按 brand 共享，但产品中文名/分类是站点级数据（知了窝 API 不返回），故在此只读回查。
+ * - 未启用 PROD_MYSQL / 缺凭据 / 出错 → 原样返回 items（仅 goodsLabel），绝不阻断响应。
+ * - 主键为 catid（与 spu 对应）；表名/列名由下方常量推导，⚠️ 启用前须与四站点生产库 schema 对齐。
+ */
+// ⚠️ 推测默认值：表名 = `<dbPrefix>goods`，中文名列 = name，分类列 = category。启用 PROD_MYSQL_ENABLED=1 前务必核对。
+const productMetaTable = (dbPrefix: string): string => `${dbPrefix}goods`;
+const PRODUCT_META_NAME_COL = 'name';
+const PRODUCT_META_CAT_COL = 'category';
+
+export async function enrichProductsWithMeta(
+  items: EnrichedProduct[],
+  dbPrefix: string,
+): Promise<EnrichedProduct[]> {
+  if (!prodMysqlEnabled() || items.length === 0) return items;
+  const db = await getProdMysql();
+  if (!db) return items;
+  try {
+    // 表名来自本项目 SITES 配置（可信、非用户输入）；catid 列表参数化绑定防注入
+    const table = productMetaTable(dbPrefix);
+    const rows = await db.query<{ spu: string; cnName: string | null; category: string | null }>(
+      `SELECT catid AS spu, ${PRODUCT_META_NAME_COL} AS cnName, ${PRODUCT_META_CAT_COL} AS category ` +
+        `FROM ${table} WHERE catid IN (?)`,
+      [items.map((i) => i.spu)],
+    );
+    const meta = new Map(rows.map((r) => [r.spu, r]));
+    return items.map((i) => {
+      const m = meta.get(i.spu);
+      return m ? { ...i, cnName: m.cnName ?? undefined, category: m.category ?? undefined } : i;
+    });
+  } catch (e) {
+    console.warn(
+      `[products] prod-mysql 产品元数据 enrichment 失败，降级为仅 goodsLabel：${(e as Error).message}`,
+    );
+    return items;
   }
 }

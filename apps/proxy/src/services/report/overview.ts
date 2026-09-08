@@ -1,7 +1,7 @@
-import type { ResolvedBrand } from '../../config/brands.js';
+import type { ResolvedBrand, ResolvedSite } from '../../config/brands.js';
 import { getRangeAgg } from './agg.js';
-import { getHotspotRangeStats } from './hotspots.js';
-import { getRangeProductCounts, buildTopProducts } from './products.js';
+import { getHotspotRangeStats, buildHotspotZhToEn } from './hotspots.js';
+import { getRangeProductCounts, buildTopProducts, enrichProductsWithMeta } from './products.js';
 import { getTopJournalsByFactor, loadFeaturedJournals } from './journals.js';
 import { selectInstitutions } from './schools.js';
 import { getCumulativeStats } from './cumulative.js';
@@ -19,6 +19,7 @@ export async function buildOverview(
   year: number,
   startMonth: number,
   endMonth: number,
+  site: ResolvedSite,
 ): Promise<Record<string, unknown>> {
   const brandName = brand.brand;
   const brandKey = brand.key;
@@ -98,7 +99,7 @@ export async function buildOverview(
   const prevHotspots = getHotspotRangeStats(brand, year - 1, startMonth, endMonth); // 去年同样方式
   const prevHotspotCounts: Record<string, number> = {};
   for (const h of prevHotspots) prevHotspotCounts[h.cn] = h.count;
-  const topHotspots = allHotspots
+  const topHotspotsRaw = allHotspots
     .map((h) => {
       const pc = prevHotspotCounts[h.cn] ?? 0;
       return {
@@ -112,6 +113,12 @@ export async function buildOverview(
     .filter((h) => h.growthRate === null || h.growthRate >= 0) // 先过滤负增长
     .sort((a, b) => b.count - a.count) // 再按关键词次数降序
     .slice(0, 10);
+  // 英文站：将中文热点标签映射为英文（无 en 配置时保留原 cn）
+  const zhToEn = site.locale === 'en' ? buildHotspotZhToEn(brand.key) : {};
+  const topHotspots =
+    site.locale === 'en'
+      ? topHotspotsRaw.map((h) => ({ ...h, cn: zhToEn[h.cn] ?? h.cn }))
+      : topHotspotsRaw;
   const hotspots = {
     range: { year, startMonth, endMonth },
     totalPapers: cur.paper_count,
@@ -125,12 +132,14 @@ export async function buildOverview(
   const curP = getRangeProductCounts(brandName, year, startMonth, endMonth);
   const prevP = getRangeProductCounts(brandName, year - 1, startMonth, endMonth);
   const { totalProducts, hasYoY, items, poolUsed } = buildTopProducts({ cur: curP, prev: prevP });
+  // 站点差异：按 dbPrefix 回查生产库补全中文名/分类（未启用则原样）
+  const enrichedItems = await enrichProductsWithMeta(items, site.dbPrefix);
   const products = {
     range: { year, startMonth, endMonth },
     totalProducts,
     hasYoY,
     poolUsed,
-    items,
+    items: enrichedItems,
   };
 
   // —— 板块 6 小结（响应口径与 conclusion 单独接口一致：range/aiEnabled/topJournals/institutions/conclusion）
