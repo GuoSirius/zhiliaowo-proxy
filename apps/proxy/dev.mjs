@@ -24,7 +24,7 @@ const tsxCli = findTsxCli();
 
 const child = spawn(
   process.execPath,
-  [tsxCli, 'watch', 'index.ts'],
+  [tsxCli, 'watch', 'src/index.ts'],
   {
     cwd: __dirname,
     stdio: ['ignore', 'inherit', 'inherit'],
