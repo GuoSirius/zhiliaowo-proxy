@@ -158,18 +158,20 @@ export async function enrichProductsWithMeta(
   const db = await getProdMysql(site);
   if (!db) return items;
   try {
-    // 表名/列名来自本项目 SITES 配置（可信、非用户输入）；catid 列表参数化绑定防注入
+    // 表名/列名来自本项目 SITES 配置（可信、非用户输入）；spu 列表参数化绑定防注入
     const table = productMetaTable(site.dbPrefix);
-    // CAST(catid AS CHAR)：DB 中 catid 为数值型，items.spu 来自 JSON 字符串（goodsSpu），统一转字符串才能匹配。
+    // items.spu 来自知了窝 goodsSpu（产品目录编号，如 "CL-0233"），对应 product_main.`cat` 列（varchar），
+    // **不**对应 `catid`（数值主键，如 70858）。故 WHERE 与 SELECT 都按 `cat` 列匹配/返回，
+    // 使 Map 主键与 items[i].spu 字符串对齐（之前用 catid 导致 "CL-0233" 等目录编号全不匹配，enrichment 静默全空）。
     // 产品名：product_main.title_c(cn)/title(en) 按 locale 取。
     // 分类：product_main.sort_i（一级分类 ID）LEFT JOIN goodstype_web.goodstypeid 取分类文字（name_cn/name_en）。
     const nameCol = productNameCol(site.locale);
     const catNameCol = productCatNameCol(site.locale);
     const catTable = productCatTable(site.dbPrefix);
     const rows = await db.query<{ spu: string; productName: string | null; productCategory: string | null }>(
-      `SELECT CAST(p.catid AS CHAR) AS spu, p.${nameCol} AS productName, g.${catNameCol} AS productCategory ` +
+      `SELECT p.cat AS spu, p.${nameCol} AS productName, g.${catNameCol} AS productCategory ` +
         `FROM ${table} p LEFT JOIN ${catTable} g ON g.goodstypeid = p.sort_i ` +
-        `WHERE p.catid IN (?)`,
+        `WHERE p.cat IN (?)`,
       [items.map((i) => i.spu)],
     );
     const meta = new Map(rows.map((r) => [r.spu, r]));
