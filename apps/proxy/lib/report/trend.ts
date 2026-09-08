@@ -39,14 +39,17 @@ function isQuarterPassed(year: number, quarter: number): boolean {
   return new Date() > lastDay;
 }
 
-/** 根据 endMonth 确定「最近 4 个已过完季度」：
- *  - 目标季度为 endMonth 所在季度；
- *  - 若该季度已过完（按真实日期），则从该季度开始往前倒推 4 个；
- *  - 否则该季度不计入，从上一季度开始往前倒推 4 个。
+/** 根据 endMonth 确定「最近 4 个完整季度」的起点：
+ *  - 起点候选为 endMonth 所在季度（endQuarter = ceil(endMonth/3)）；
+ *  - 仅当 endMonth 是季度末（3/6/9/12）**且**该季度已过完（按真实日期）时，才把 endQuarter 作为起点；
+ *  - 否则起点退回到 endQuarter - 1（即往前推 4 个季度、不包含 endMonth 所在的季度——
+ *    避免 endMonth=11/4 等中间月份被误归入 Q4/Q2 等尚未走完的季度）。
  * 返回按时间正序（由早到晚）排列。 */
 function buildQuarterDefs(year: number, endMonth: number): QuarterDef[] {
-  const currentQuarter = Math.ceil(endMonth / 3);
-  const lastIncluded = isQuarterPassed(year, currentQuarter) ? currentQuarter : currentQuarter - 1;
+  const endQuarter = Math.ceil(endMonth / 3);
+  const isQuarterEnd = endMonth === endQuarter * 3;
+  const lastIncluded =
+    isQuarterEnd && isQuarterPassed(year, endQuarter) ? endQuarter : endQuarter - 1;
 
   const defs: QuarterDef[] = [];
   let q = lastIncluded;
