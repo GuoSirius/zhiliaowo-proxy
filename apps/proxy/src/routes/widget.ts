@@ -1,8 +1,9 @@
 import { Hono } from 'hono';
 import { resolveBrand } from '../config/brands.js';
+import { env } from '../shared/env.js';
 
 /** 开放组件（iframe）基址：默认 v11，切换版本/域名改此处 */
-const WIDGET_BASE = (process.env.ZLIW_WIDGET_BASE ?? 'https://open.zhiliaowo.cn/v_widget/v11').replace(/\/$/, '');
+const WIDGET_BASE = env.zhiliaowo.widgetBase;
 
 export const widgetRoute = new Hono();
 

@@ -1,14 +1,13 @@
 import Database from 'better-sqlite3';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
+import { dirname } from 'node:path';
 import { mkdirSync } from 'node:fs';
+import { env } from '../../shared/env.js';
 
 /**
- * 报告数据层（6 板块海报）—— 独立 SQLite 库，与 H5 库分离。
+ * 报告数据层（6 板块海报）—— 独立 SQLite 库（report.db）。
  * 路径按模块文件定位（而非 process.cwd），避免 CLI / 服务启动时 cwd 不一致导致读写不同库。
  */
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const DB_PATH = resolve(__dirname, '..', '..', '..', 'data', 'report.db');
+const DB_PATH = env.report.dbPath;
 mkdirSync(dirname(DB_PATH), { recursive: true });
 
 export const reportDb = new Database(DB_PATH);

@@ -1,6 +1,5 @@
 import { readFileSync, existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
+import { env } from '../../shared/env.js';
 
 export interface Institution {
   name: string;
@@ -14,10 +13,9 @@ interface SchoolsFile {
   schools: Array<{ name: string; nums?: number | null }>;
 }
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 // docs/学校.xlsx 经 scripts/gen-schools.py 预生成为 config/schools.json（零运行时依赖）。
-// 若需指向其它文件，可用 SCHOOLS_FILE 环境变量覆盖。
-const SCHOOLS_FILE = process.env.SCHOOLS_FILE ?? resolve(__dirname, '..', '..', 'config', 'schools.json');
+// 若需指向其它文件，可用 SCHOOLS_FILE 环境变量覆盖（统一经 env 中心读取）。
+const SCHOOLS_FILE = env.config.schoolsFile;
 
 let cache: Institution[] | null = null;
 

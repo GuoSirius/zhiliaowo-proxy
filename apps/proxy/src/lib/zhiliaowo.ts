@@ -1,5 +1,6 @@
 import { resolveBrand, type ResolvedBrand } from '../config/brands.js';
 import { ApiError } from '../types.js';
+import { env } from '../shared/env.js';
 import type { Cache } from './cache.js';
 import type {
   BrandStatistics,
@@ -9,7 +10,7 @@ import type {
   PaperList,
 } from '../types.js';
 
-const API_BASE = (process.env.ZLIW_API_BASE ?? 'https://open.zhiliaowo.cn/openapi/v12').replace(/\/$/, '');
+const API_BASE = env.zhiliaowo.apiBase;
 
 /** 默认缓存时长（秒）：文献数据变化慢，缓存 1 小时足够 */
 const DEFAULT_TTL = 3600;

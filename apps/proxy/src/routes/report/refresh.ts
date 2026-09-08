@@ -3,6 +3,7 @@ import { parseReportCtx } from '../../lib/report/params.js';
 import { getClient } from '../../lib/client.js';
 import { syncYear, type SyncResult } from '../../lib/report/sync.js';
 import { ok, fail } from '../../lib/response.js';
+import { env } from '../../shared/env.js';
 
 export const reportRefreshRoute = new Hono();
 
@@ -31,7 +32,7 @@ reportRefreshRoute.post('/:site/report/refresh', async (c) => {
   const force = !!body.force;
 
   // 鉴权：仅当显式配置了 ADMIN_TOKEN 才校验
-  const adminToken = process.env.ADMIN_TOKEN;
+  const adminToken = env.admin.token;
   if (adminToken) {
     const token = extractToken(c);
     if (token !== adminToken) {

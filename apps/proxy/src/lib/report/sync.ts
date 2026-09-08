@@ -11,6 +11,7 @@ import {
 import { loadHotspots, classifyHotspot, type HotspotEntry } from './hotspots.js';
 import { round } from './calc.js';
 import { loadPromptFile } from '../prompts.js';
+import { env } from '../../shared/env.js';
 
 /**
  * 请求时「期望」的每页条数。注意：上游存在硬上限并对超限做静默钳制 ——
@@ -19,7 +20,7 @@ import { loadPromptFile } from '../prompts.js';
  * 实际生效值一律以上游回显的 `pageSize` 为准（见 resolvePagePlan），
  * 绝不能用请求的 pageSize 自行计算总页数，否则会严重少拉（曾导致只拉到 1.5% 的数据）。
  */
-const DEFAULT_PAGE_SIZE = Number(process.env.REPORT_PAGE_SIZE ?? 1000);
+const DEFAULT_PAGE_SIZE = env.report.pageSize;
 /**
  * 上游 pageSize 硬上限（2026-09-02 实测 Procell/Elabscience 多年度一致为 15）。
  * 仅在响应未回显 pageSize 时作为兜底推断值使用。
@@ -58,12 +59,12 @@ function resolveConcurrency(raw: string | undefined): number {
   return Math.max(1, Math.floor(n));
 }
 
-const DEFAULT_CONCURRENCY = resolveConcurrency(process.env.REPORT_SYNC_CONCURRENCY);
+const DEFAULT_CONCURRENCY = resolveConcurrency(env.report.syncConcurrencyRaw);
 
 /** 人类可读的并发配置来源（如「12（自动：16 核 × 2，钳制 [4, 12]）」），供 CLI 日志输出 */
 export const CONCURRENCY_INFO = `${DEFAULT_CONCURRENCY}（${
-  process.env.REPORT_SYNC_CONCURRENCY
-    ? `配置值 ${process.env.REPORT_SYNC_CONCURRENCY}`
+  env.report.syncConcurrencyRaw
+    ? `配置值 ${env.report.syncConcurrencyRaw}`
     : `自动：${cpus()?.length || 1} 核 × ${AUTO_CONCURRENCY_PER_CORE}，钳制 [${AUTO_CONCURRENCY_MIN}, ${AUTO_CONCURRENCY_MAX}]`
 }）`;
 
@@ -345,10 +346,10 @@ function computeMonthAgg(
  * 仅对「本地零命中」的文献限量（AI_HOTSPOT_FALLBACK_CAP，默认 200）送 AI 打标，
  * 结果合并进各月 hotspot_counts 复用。任何失败都只告警、绝不中断主同步流程。
  */
-const AI_HOTSPOT_FALLBACK_CAP = Number(process.env.AI_HOTSPOT_FALLBACK_CAP ?? 200);
+const AI_HOTSPOT_FALLBACK_CAP = env.ai.hotspotFallbackCap;
 
 function aiHotspotFallbackEnabled(): boolean {
-  return process.env.AI_HOTSPOT_FALLBACK === '1' && aiEnabled();
+  return env.ai.hotspotFallback && aiEnabled();
 }
 
 function defaultHotspotFallbackPrompt(cnList: string[]): string {

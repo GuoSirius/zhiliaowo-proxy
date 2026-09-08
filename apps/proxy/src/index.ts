@@ -29,18 +29,14 @@ import { reportRefreshRoute } from './routes/report/refresh.js';
 import { reportMetaRoute } from './routes/report/meta.js';
 import { widgetRoute } from './routes/widget.js';
 import { migrateReportDb } from './lib/report/db.js';
-import { h5App, renderDocToHtml } from './h5/index.js';
-import { getH5 } from './h5/store/h5.repo.js';
+import { env } from './shared/env.js';
 
 const app = new Hono();
 
 // CORS：仅对白名单内的 Origin 回显，避免任意站点跨域读取报告数据。
 // 通过 ALLOWED_ORIGINS（逗号分隔）配置允许的前端域名；未配置时回退为回显请求
-// Origin，保持本地多 dev 端口（admin/h5 独立端口）联调兼容。
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? '')
-  .split(',')
-  .map((o) => o.trim())
-  .filter(Boolean);
+// Origin，保持本地多 dev 端口（admin 独立端口）联调兼容。
+const ALLOWED_ORIGINS = env.server.allowedOrigins;
 
 app.use('*', async (c, next) => {
   const origin = c.req.header('Origin');
@@ -80,18 +76,7 @@ app.route('/api/v1', reportMetaRoute);
 // 开放组件（iframe）302 分发：/w/:site/* → 知了窝 v_widget，appId 不落前端
 app.route('/w', widgetRoute);
 
-// H5 生成器（文档 CRUD / 导出 / 品牌 / 模板 / 开放平台代理）
-app.route('/api/h5', h5App);
-
-// H5 分享页：GET /h5/:id → 自包含 HTML（静态渲染，可直链 / 嵌入）
-app.get('/h5/:id', (c) => {
-  const doc = getH5(c.req.param('id'));
-  if (!doc) return c.notFound();
-  const html = renderDocToHtml(doc);
-  c.header('Content-Type', 'text/html; charset=utf-8');
-  return c.body(html);
-});
-
+// 统一错误处理：ApiError 按状态码返回，其余按 500 兜底
 app.onError((err, c) => {
   if (err instanceof ApiError) {
     return fail(c, err.status, err.message);
@@ -102,9 +87,9 @@ app.onError((err, c) => {
 
 app.notFound((c) => fail(c, 404, 'not found'));
 
-const port = Number(process.env.PORT ?? 3000);
+const port = env.server.port;
 // 默认绑定 0.0.0.0：同时覆盖 127.0.0.1 / localhost / 本机 LAN IP；可用 HOST 环境变量覆盖
-const hostname = process.env.HOST ?? '0.0.0.0';
+const hostname = env.server.host;
 
 function lanIp(): string | undefined {
   for (const nets of Object.values(networkInterfaces())) {

@@ -2,7 +2,7 @@
 # 知了窝代理服务（zhiliaowo-proxy）—— pnpm monorepo 多阶段构建
 #
 # 部署内容：core（共享层，proxy 运行时依赖） + proxy（Hono 服务，端口 3000）
-# 注意：admin / h5 为独立前端，各自构建与部署，本镜像不涵盖。
+# 注意：admin 为独立前端，自行构建与部署，本镜像不涵盖。
 
 # ---------- 构建阶段 ----------
 FROM node:24-alpine AS build

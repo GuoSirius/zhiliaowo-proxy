@@ -1,15 +1,11 @@
 import { ApiError } from '../types.js';
+import { env } from '../shared/env.js';
 
 /**
  * OpenAI 兼容的 AI 客户端（用于板块 4 兜底 / 板块 6 小结生成 / 机构名中译）。
- * 配置来自 .env：AI_API_KEY / AI_BASE_URL / AI_MODEL / AI_TIMEOUT_MS。
+ * 配置来自 .env：AI_API_KEY / AI_BASE_URL / AI_MODEL / AI_TIMEOUT_MS（统一经 env 中心读取）。
  * 不引入额外依赖，直接使用全局 fetch（Node >= 18）。
  */
-
-const AI_API_KEY = process.env.AI_API_KEY;
-const AI_BASE_URL = (process.env.AI_BASE_URL ?? 'https://apihub.agnes-ai.com/v1').replace(/\/$/, '');
-const AI_MODEL = process.env.AI_MODEL ?? 'agnes-2.5-flash';
-const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS ?? 60000);
 
 export interface AiOptions {
   temperature?: number;
@@ -18,7 +14,7 @@ export interface AiOptions {
 
 /** 是否已配置可用的 AI（未配置时上层应禁用 AI 相关功能，避免运行时报错） */
 export function aiEnabled(): boolean {
-  return !!AI_API_KEY;
+  return !!env.ai.apiKey;
 }
 
 /**
@@ -30,7 +26,12 @@ export async function callAi(
   prompt: string,
   opts: AiOptions = {},
 ): Promise<string> {
-  if (!AI_API_KEY) {
+  const apiKey = env.ai.apiKey;
+  const baseUrl = env.ai.baseUrl;
+  const model = env.ai.model;
+  const timeoutMs = env.ai.timeoutMs;
+
+  if (!apiKey) {
     throw new ApiError(500, 'AI_API_KEY 未配置，无法调用 AI');
   }
 
@@ -39,16 +40,16 @@ export async function callAi(
   messages.push({ role: 'user', content: prompt });
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const resp = await fetch(`${AI_BASE_URL}/chat/completions`, {
+    const resp = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${AI_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: AI_MODEL,
+        model,
         messages,
         temperature: opts.temperature ?? 0.3,
         max_tokens: opts.maxTokens ?? 2000,
@@ -69,7 +70,7 @@ export async function callAi(
   } catch (e) {
     if (e instanceof ApiError) throw e;
     if (e instanceof DOMException && e.name === 'AbortError') {
-      throw new ApiError(504, `AI 调用超时（>${AI_TIMEOUT_MS}ms）`);
+      throw new ApiError(504, `AI 调用超时（>${timeoutMs}ms）`);
     }
     throw new ApiError(502, `AI 调用失败：${(e as Error).message}`);
   } finally {

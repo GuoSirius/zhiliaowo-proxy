@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import type { ResolvedBrand } from '../../config/brands.js';
+import { env } from '../../shared/env.js';
 import { getRangeAgg } from './agg.js';
 import { round } from './calc.js';
 
@@ -10,10 +10,7 @@ import { round } from './calc.js';
  * 取命中词数最多的热点为主热点。纯本地、可复现、零 API 成本，优于 AI 自由分类。
  */
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const HOTSPOT_DIR = process.env.HOTSPOT_DIR
-  ? resolve(process.cwd(), process.env.HOTSPOT_DIR)
-  : resolve(__dirname, '..', '..', 'config', 'hotspots');
+const HOTSPOT_DIR = env.config.hotspotDir;
 
 export interface HotspotDef {
   cn: string;

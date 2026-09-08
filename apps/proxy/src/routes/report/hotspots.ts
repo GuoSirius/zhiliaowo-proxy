@@ -4,6 +4,7 @@ import { getRangeAgg } from '../../lib/report/agg.js';
 import { getHotspotRangeStats } from '../../lib/report/hotspots.js';
 import { pct } from '../../lib/report/calc.js';
 import { ok } from '../../lib/response.js';
+import { env } from '../../shared/env.js';
 
 export const reportHotspotsRoute = new Hono();
 
@@ -44,7 +45,7 @@ reportHotspotsRoute.get('/:site/report/hotspots', async (c) => {
     range: { year, startMonth, endMonth },
     totalPapers: curAgg.paper_count,
     totalClassified,
-    aiFallback: process.env.AI_HOTSPOT_FALLBACK === '1',
+    aiFallback: env.ai.hotspotFallback,
     sortBy,
     topHotspots,
   });

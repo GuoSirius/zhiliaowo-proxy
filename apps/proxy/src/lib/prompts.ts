@@ -1,14 +1,10 @@
 import { readFileSync, existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
+import { resolve } from 'node:path';
+import { env } from '../shared/env.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-/** 提示词目录：优先 env AI_PROMPT_DIR，否则回退到 config/prompts */
+/** 提示词目录（统一经 env 中心读取：优先 env AI_PROMPT_DIR，否则回退 config/prompts） */
 export function promptsDir(): string {
-  return process.env.AI_PROMPT_DIR
-    ? resolve(process.cwd(), process.env.AI_PROMPT_DIR)
-    : resolve(__dirname, '..', '..', 'config', 'prompts');
+  return env.ai.promptDir;
 }
 
 /** 读取品牌专属提示词文件（config/prompts/<brandKey>-<name>.md），缺失返回 null */

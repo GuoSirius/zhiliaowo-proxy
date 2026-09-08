@@ -8,6 +8,7 @@ import { getCumulativeStats } from './cumulative.js';
 import { round, pct } from './calc.js';
 import { aiEnabled } from '../ai.js';
 import { buildTrend } from './trend.js';
+import { env } from '../../shared/env.js';
 
 /**
  * 编排全部 6 个板块（一次性返回，供前端整页渲染）。
@@ -115,7 +116,7 @@ export async function buildOverview(
     range: { year, startMonth, endMonth },
     totalPapers: cur.paper_count,
     totalClassified: allHotspots.reduce((s, h) => s + h.count, 0),
-    aiFallback: process.env.AI_HOTSPOT_FALLBACK === '1',
+    aiFallback: env.ai.hotspotFallback,
     sortBy: 'count',
     topHotspots,
   };

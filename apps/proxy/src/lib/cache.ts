@@ -1,4 +1,5 @@
 import type { Redis } from 'ioredis';
+import { env } from '../shared/env.js';
 
 /**
  * 缓存抽象接口 —— 业务代码只依赖此接口，不感知具体实现。
@@ -52,10 +53,10 @@ export class RedisCache implements Cache {
  * 业务代码无需任何改动即可在两种实现间切换。
  */
 export async function createCache(): Promise<Cache> {
-  const driver = (process.env.CACHE_DRIVER ?? 'memory').toLowerCase();
+  const driver = env.cache.driver;
 
   if (driver === 'redis') {
-    const url = process.env.CACHE_REDIS_URL;
+    const url = env.cache.redisUrl;
     if (!url) {
       console.warn('[cache] CACHE_DRIVER=redis 但未设置 CACHE_REDIS_URL，回退 memory');
       return new MemoryCache();

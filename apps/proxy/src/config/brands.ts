@@ -1,4 +1,5 @@
 import { ApiError } from '../types.js';
+import { env } from '../shared/env.js';
 
 /**
  * 单 brand 配置
@@ -46,14 +47,14 @@ export function resolveBrand(site: string): ResolvedBrand {
   if (!cfg) {
     throw new ApiError(404, `unknown site: ${site}`);
   }
-  const appId = process.env[cfg.appIdEnv];
+  const appId = env.zhiliaowo.appId(cfg.appIdEnv);
   if (!appId) {
     throw new ApiError(500, `missing required env: ${cfg.appIdEnv} for site ${site}`);
   }
   return { ...cfg, appId };
 }
 
-/** 按知了窝标准品牌名（brand 参数值）反查并解析（h5 模块使用 theme.brandKey） */
+/** 按知了窝标准品牌名（brand 参数值）反查并解析（前端按 theme.brandKey 反查） */
 export function resolveBrandByName(brand: string): ResolvedBrand {
   const cfg = Object.values(BRANDS).find(
     (b) => b.brand.toLowerCase() === brand.toLowerCase(),
