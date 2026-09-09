@@ -60,7 +60,7 @@ export function computeMonthAgg(
   hotspots: HotspotEntry[],
 ): AggData {
   const rows = reportDb
-    .prepare('SELECT title, factor, journal FROM zlw_papers WHERE brand=? AND year=? AND month=?')
+    .prepare('SELECT title, factor, journal FROM zlw_papers WHERE brand=? AND year=? AND month=? AND deleted_at IS NULL')
     .all(brand, year, month) as Array<{
     title: string | null;
     factor: number | null;
@@ -95,4 +95,36 @@ export function computeMonthAgg(
     hotspot_counts: hs,
     hotspot_max_if: hsMaxIf,
   };
+}
+
+/**
+ * 软删除对账：同步拉全量且完整时，把本地仍活跃但不在本次上游集合中的行标记为 deleted_at。
+ * - 仅当 fetchedIds 非空才执行，避免「上游返回 0 条」时误清空整年。
+ * - 用临时表承载 fetchedIds，规避 SQLite 变量上限（单年可达近万条，超默认 999）。
+ * - 上游重现的文献由 upsert 自动清 deleted_at 复活，这里只处理「彻底失效」的行。
+ * 返回本次软删除的条数（0 表示无失效）。
+ */
+export function softDeleteOrphans(
+  brand: string,
+  year: number,
+  fetchedIds: string[],
+  syncedAt: string,
+): number {
+  if (fetchedIds.length === 0) return 0;
+  reportDb.exec('CREATE TEMP TABLE IF NOT EXISTS _sync_fetched_ids (id TEXT PRIMARY KEY)');
+  reportDb.exec('DELETE FROM _sync_fetched_ids');
+  const insertId = reportDb.prepare('INSERT OR IGNORE INTO _sync_fetched_ids (id) VALUES (?)');
+  const tx = reportDb.transaction((ids: string[]) => {
+    for (const id of ids) insertId.run(id);
+  });
+  tx(fetchedIds);
+  const info = reportDb
+    .prepare(
+      'UPDATE zlw_papers SET deleted_at=? ' +
+        'WHERE brand=? AND year=? AND deleted_at IS NULL ' +
+        'AND id NOT IN (SELECT id FROM _sync_fetched_ids)',
+    )
+    .run(syncedAt, brand, year);
+  reportDb.exec('DROP TABLE IF EXISTS _sync_fetched_ids');
+  return info.changes;
 }

@@ -32,10 +32,12 @@ export function migrateReportDb(): void {
       products   TEXT,
       raw        TEXT NOT NULL,
       synced_at  TEXT NOT NULL,
+      deleted_at TEXT,
       PRIMARY KEY (id, brand)
     );
     CREATE INDEX IF NOT EXISTS idx_papers_brand_year ON zlw_papers(brand, year);
     CREATE INDEX IF NOT EXISTS idx_papers_pubtime    ON zlw_papers(brand, pub_time);
+    CREATE INDEX IF NOT EXISTS idx_papers_active     ON zlw_papers(brand, year, deleted_at);
 
     CREATE TABLE IF NOT EXISTS zlw_papers_agg (
       brand          TEXT NOT NULL,
@@ -67,6 +69,7 @@ export function migrateReportDb(): void {
   // 对已有库做向后兼容迁移（新库由上面 CREATE 直接建好，这里不执行）
   migratePapersPrimaryKey();
   applyAggColumnMigrations();
+  applyPapersSoftDeleteMigration();
 }
 
 /**
@@ -100,9 +103,9 @@ function migratePapersPrimaryKey(): void {
         products   TEXT,
         raw        TEXT NOT NULL,
         synced_at  TEXT NOT NULL,
-        PRIMARY KEY (id, brand)
+        deleted_at TEXT
       );
-      INSERT INTO zlw_papers_new SELECT * FROM zlw_papers;
+      INSERT INTO zlw_papers_new SELECT *, NULL FROM zlw_papers;
       DROP TABLE zlw_papers;
       ALTER TABLE zlw_papers_new RENAME TO zlw_papers;
       CREATE INDEX IF NOT EXISTS idx_papers_brand_year ON zlw_papers(brand, year);
@@ -153,9 +156,25 @@ export function getSyncState(brand: string, year: number): SyncStateRow | undefi
     .get(brand, year) as SyncStateRow | undefined;
 }
 
+/**
+ * 软删除列迁移：zlw_papers 增加 deleted_at（NULL=活跃，非 NULL=上游已失效的文献）。
+ * 幂等：仅当列不存在时 ADD COLUMN，旧行默认活跃。
+ */
+function applyPapersSoftDeleteMigration(): void {
+  const info = reportDb.pragma('table_info(zlw_papers)') as Array<{ name: string }>;
+  const cols = new Set(info.map((c) => c.name));
+  if (!cols.has('deleted_at')) {
+    console.log('[db] zlw_papers 增加软删除列 deleted_at...');
+    reportDb.exec('ALTER TABLE zlw_papers ADD COLUMN deleted_at TEXT');
+    reportDb.exec('CREATE INDEX IF NOT EXISTS idx_papers_active ON zlw_papers(brand, year, deleted_at)');
+    console.log('[db] 软删除列迁移完成');
+  }
+}
+
+/** 活跃文献数（不含软删除），用于同步幂等校验 */
 export function localPaperCount(brand: string, year: number): number {
   const row = reportDb
-    .prepare('SELECT COUNT(*) AS c FROM zlw_papers WHERE brand=? AND year=?')
+    .prepare('SELECT COUNT(*) AS c FROM zlw_papers WHERE brand=? AND year=? AND deleted_at IS NULL')
     .get(brand, year) as { c: number };
   return row.c;
 }
@@ -168,14 +187,15 @@ migrateReportDb();
 
 export const upsertPaperStmt = reportDb.prepare(`
   INSERT INTO zlw_papers
-    (id, brand, year, month, pub_time, doi, title, journal, factor, authors, url, cn_fields, products, raw, synced_at)
+    (id, brand, year, month, pub_time, doi, title, journal, factor, authors, url, cn_fields, products, raw, synced_at, deleted_at)
   VALUES
-    (@id, @brand, @year, @month, @pub_time, @doi, @title, @journal, @factor, @authors, @url, @cn_fields, @products, @raw, @synced_at)
+    (@id, @brand, @year, @month, @pub_time, @doi, @title, @journal, @factor, @authors, @url, @cn_fields, @products, @raw, @synced_at, NULL)
   ON CONFLICT(id, brand) DO UPDATE SET
     year=excluded.year, month=excluded.month, pub_time=excluded.pub_time,
     doi=excluded.doi, title=excluded.title, journal=excluded.journal, factor=excluded.factor,
     authors=excluded.authors, url=excluded.url, cn_fields=excluded.cn_fields,
-    products=excluded.products, raw=excluded.raw, synced_at=excluded.synced_at
+    products=excluded.products, raw=excluded.raw, synced_at=excluded.synced_at,
+    deleted_at=NULL
 `);
 
 export const upsertAggStmt = reportDb.prepare(`

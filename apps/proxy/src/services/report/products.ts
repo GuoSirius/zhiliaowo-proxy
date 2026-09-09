@@ -55,7 +55,7 @@ export function getRangeProductCounts(
   endMonth: number,
 ): Map<string, ProductCount> {
   const rows = reportDb
-    .prepare('SELECT products FROM zlw_papers WHERE brand=? AND year=? AND month BETWEEN ? AND ?')
+    .prepare('SELECT products FROM zlw_papers WHERE brand=? AND year=? AND month BETWEEN ? AND ? AND deleted_at IS NULL')
     .all(brand, year, startMonth, endMonth) as Array<{ products: string | null }>;
 
   const map = new Map<string, ProductCount>();

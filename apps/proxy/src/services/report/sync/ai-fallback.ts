@@ -59,7 +59,7 @@ export async function applyAiHotspotFallback(brand: ResolvedBrand, year: number)
   let remaining = AI_HOTSPOT_FALLBACK_CAP;
   for (let m = 1; m <= 12 && remaining > 0; m++) {
     const rows = reportDb
-      .prepare('SELECT title FROM zlw_papers WHERE brand=? AND year=? AND month=?')
+      .prepare('SELECT title FROM zlw_papers WHERE brand=? AND year=? AND month=? AND deleted_at IS NULL')
       .all(brand.brand, year, m) as Array<{ title: string | null }>;
     const unclassified = rows
       .filter((r) => r.title && !classifyHotspot(r.title, hotspots))

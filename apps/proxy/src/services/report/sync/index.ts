@@ -17,7 +17,7 @@ import {
 } from '../../../datasources/paper-fetch.js';
 import { mapWithConcurrency } from '../../../shared/utils.js';
 import { loadHotspots } from '../hotspots.js';
-import { computeMonthAgg, toRecord } from './persist.js';
+import { computeMonthAgg, toRecord, softDeleteOrphans } from './persist.js';
 import { applyAiHotspotFallback } from './ai-fallback.js';
 import { DEFAULT_CONCURRENCY } from './config.js';
 import type { SyncProgress, SyncResult, PaperRecord } from './types.js';
@@ -221,6 +221,16 @@ export async function syncYear(
     for (const r of recs) upsertPaperStmt.run(r);
   });
   insertTx(records);
+
+  // 软删除对账：仅当本次拉取完整（无缺口、无失败页）时，以「上游全量 id 集合」为基准，
+  // 将本地仍活跃但不在集合中的行置 deleted_at。缺数/抖动时不删，避免误删后统计失真。
+  if (shortfall === 0 && failedPages === 0) {
+    const fetchedIds = records.map((r) => r.id);
+    const removed = softDeleteOrphans(brand.brand, year, fetchedIds, syncedAt);
+    if (removed > 0) {
+      console.warn(`[sync] ${brand.brand} ${year} 软删除 ${removed} 条上游已失效文献（不计入统计）`);
+    }
+  }
 
   const hotspots = loadHotspots(brand.key);
   const aggTx = reportDb.transaction(() => {

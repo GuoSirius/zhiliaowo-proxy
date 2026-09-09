@@ -35,7 +35,7 @@ export function getTopJournalsByFactor(
   n = 3,
 ): TopJournal[] {
   const rows = reportDb
-    .prepare('SELECT journal, factor FROM zlw_papers WHERE brand=? AND year=? AND month BETWEEN ? AND ?')
+    .prepare('SELECT journal, factor FROM zlw_papers WHERE brand=? AND year=? AND month BETWEEN ? AND ? AND deleted_at IS NULL')
     .all(brand, year, startMonth, endMonth) as Array<{
     journal: string | null;
     factor: number | null;
