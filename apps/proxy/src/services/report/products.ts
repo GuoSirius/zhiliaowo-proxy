@@ -149,6 +149,15 @@ const productCatTable = (dbPrefix: string): string => `${dbPrefix}goodstype_web`
 const productNameCol = (locale: 'cn' | 'en'): string => (locale === 'en' ? 'title' : 'title_c');
 // 分类名按 locale 取：中文站 name_cn，英文站 name_en（goodstype_web 两列均在）
 const productCatNameCol = (locale: 'cn' | 'en'): string => (locale === 'en' ? 'name_en' : 'name_cn');
+// 分类名展示归一化（业务口径调整）："细胞资源库" → "细胞"。后续如需更多别名在此扩展。
+const PRODUCT_CATEGORY_ALIASES: Record<string, string> = {
+  细胞资源库: '细胞',
+};
+const normalizeProductCategory = (cat: string | null): string | undefined => {
+  if (cat == null) return undefined;
+  const t = cat.trim();
+  return PRODUCT_CATEGORY_ALIASES[t] ?? t;
+};
 
 export async function enrichProductsWithMeta(
   items: EnrichedProduct[],
@@ -177,7 +186,13 @@ export async function enrichProductsWithMeta(
     const meta = new Map(rows.map((r) => [r.spu, r]));
     return items.map((i) => {
       const m = meta.get(i.spu);
-      return m ? { ...i, productName: m.productName ?? undefined, productCategory: m.productCategory ?? undefined } : i;
+      return m
+        ? {
+            ...i,
+            productName: m.productName ?? undefined,
+            productCategory: normalizeProductCategory(m.productCategory),
+          }
+        : i;
     });
   } catch (e) {
     console.warn(
