@@ -37,7 +37,6 @@ export function migrateReportDb(): void {
     );
     CREATE INDEX IF NOT EXISTS idx_papers_brand_year ON zlw_papers(brand, year);
     CREATE INDEX IF NOT EXISTS idx_papers_pubtime    ON zlw_papers(brand, pub_time);
-    CREATE INDEX IF NOT EXISTS idx_papers_active     ON zlw_papers(brand, year, deleted_at);
 
     CREATE TABLE IF NOT EXISTS zlw_papers_agg (
       brand          TEXT NOT NULL,
@@ -158,7 +157,8 @@ export function getSyncState(brand: string, year: number): SyncStateRow | undefi
 
 /**
  * 软删除列迁移：zlw_papers 增加 deleted_at（NULL=活跃，非 NULL=上游已失效的文献）。
- * 幂等：仅当列不存在时 ADD COLUMN，旧行默认活跃。
+ * - 列与 idx_papers_active 索引都在此处确保存在：老库先 ALTER 加列再建索引；新库 CREATE TABLE 已带列，直接建索引。
+ * - 不能把索引建进上面的 CREATE TABLE exec：老库 CREATE TABLE 是 no-op（表已存在无该列），同段建索引会报 no such column。
  */
 function applyPapersSoftDeleteMigration(): void {
   const info = reportDb.pragma('table_info(zlw_papers)') as Array<{ name: string }>;
@@ -166,9 +166,9 @@ function applyPapersSoftDeleteMigration(): void {
   if (!cols.has('deleted_at')) {
     console.log('[db] zlw_papers 增加软删除列 deleted_at...');
     reportDb.exec('ALTER TABLE zlw_papers ADD COLUMN deleted_at TEXT');
-    reportDb.exec('CREATE INDEX IF NOT EXISTS idx_papers_active ON zlw_papers(brand, year, deleted_at)');
     console.log('[db] 软删除列迁移完成');
   }
+  reportDb.exec('CREATE INDEX IF NOT EXISTS idx_papers_active ON zlw_papers(brand, year, deleted_at)');
 }
 
 /** 活跃文献数（不含软删除），用于同步幂等校验 */
