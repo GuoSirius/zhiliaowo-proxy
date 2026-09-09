@@ -1,5 +1,21 @@
 # Changelog
 
+## v3.0.1
+
+[compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v3.0.0...v3.0.1)
+
+### 🚀 新功能 (Features)
+
+- **report:** Soft-delete upstream-removed papers and exclude from stats ([b9347f3](https://github.com/GuoSirius/zhiliaowo-proxy/commit/b9347f3))
+
+### 🐛 缺陷修复 (Bug Fixes)
+
+- **report:** Move deleted_at index out of create block so existing dbs migrate ([014870c](https://github.com/GuoSirius/zhiliaowo-proxy/commit/014870c))
+
+### ❤️ Contributors
+
+- 郭之存 ([@siriusSupreme](https://github.com/siriusSupreme))
+
 ## v3.0.0
 
 [compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v2.3.1...v3.0.0)

@@ -1,6 +1,6 @@
 {
   "name": "@zhiliaowo/core",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "共享类型层：区块协议类型 + zod 校验 + 区块注册表",
   "type": "module",
   "main": "dist/index.js",
