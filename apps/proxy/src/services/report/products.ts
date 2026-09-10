@@ -54,9 +54,14 @@ export function getRangeProductCounts(
   startMonth: number,
   endMonth: number,
 ): Map<string, ProductCount> {
-  const rows = reportDb
-    .prepare('SELECT products FROM zlw_papers WHERE brand=? AND year=? AND month BETWEEN ? AND ? AND deleted_at IS NULL')
-    .all(brand, year, startMonth, endMonth) as Array<{ products: string | null }>;
+  // 口径对齐 getRangeAgg（§6）：全年区间（startMonth<=1 && endMonth>=12）纳入 month=0 哨兵桶
+  // （pubTime 无法解析月份的文献），与热点/期刊统计一致；季度/自定义子区间不含 month=0，
+  // 避免未知月份被重复计入各月视图。
+  const includeUnknown = startMonth <= 1 && endMonth >= 12;
+  const sql = includeUnknown
+    ? 'SELECT products FROM zlw_papers WHERE brand=? AND year=? AND (month BETWEEN ? AND ? OR month = 0) AND deleted_at IS NULL'
+    : 'SELECT products FROM zlw_papers WHERE brand=? AND year=? AND month BETWEEN ? AND ? AND deleted_at IS NULL';
+  const rows = reportDb.prepare(sql).all(brand, year, startMonth, endMonth) as Array<{ products: string | null }>;
 
   const map = new Map<string, ProductCount>();
   for (const r of rows) {
