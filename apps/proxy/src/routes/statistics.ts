@@ -1,3 +1,4 @@
+// apps/proxy/src/routes/statistics.ts —— 2.1 品牌文献统计路由
 import { Hono } from 'hono';
 import { resolveBrand } from '../config/brands.js';
 import { getClient } from '../shared/client.js';

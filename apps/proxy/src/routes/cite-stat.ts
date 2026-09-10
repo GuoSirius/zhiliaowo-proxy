@@ -1,3 +1,4 @@
+// apps/proxy/src/routes/cite-stat.ts —— 2.2 品牌+SPU 文献引用概况路由
 import { Hono } from 'hono';
 import { resolveBrand } from '../config/brands.js';
 import { getClient } from '../shared/client.js';

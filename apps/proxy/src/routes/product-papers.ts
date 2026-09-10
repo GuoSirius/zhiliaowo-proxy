@@ -1,3 +1,4 @@
+// apps/proxy/src/routes/product-papers.ts —— 2.7 产品文献列表路由
 import { Hono } from 'hono';
 import { resolveBrand } from '../config/brands.js';
 import { getClient } from '../shared/client.js';

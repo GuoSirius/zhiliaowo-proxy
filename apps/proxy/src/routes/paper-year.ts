@@ -1,3 +1,4 @@
+// apps/proxy/src/routes/paper-year.ts —— 2.4 品牌年度文献统计路由
 import { Hono } from 'hono';
 import { resolveBrand } from '../config/brands.js';
 import { getClient } from '../shared/client.js';

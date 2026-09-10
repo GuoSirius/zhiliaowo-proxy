@@ -1,3 +1,4 @@
+// apps/proxy/src/routes/report/summary.ts —— 板块1 研究概述路由
 import { Hono } from 'hono';
 import { parseReportCtx } from '../../services/report/params.js';
 import { getRangeAgg } from '../../services/report/agg.js';

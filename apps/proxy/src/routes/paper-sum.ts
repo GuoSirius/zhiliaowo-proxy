@@ -1,3 +1,4 @@
+// apps/proxy/src/routes/paper-sum.ts —— 2.3 品牌历年文献累计数量路由
 import { Hono } from 'hono';
 import { resolveBrand } from '../config/brands.js';
 import { getClient } from '../shared/client.js';

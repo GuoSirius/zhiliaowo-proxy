@@ -1,3 +1,4 @@
+// apps/proxy/src/config/brands.ts —— 品牌/站点配置：BRANDS 映射、locale、resolveBrand/Flexible 解析
 import { ApiError } from '../models/types.js';
 import { env } from '../shared/env.js';
 

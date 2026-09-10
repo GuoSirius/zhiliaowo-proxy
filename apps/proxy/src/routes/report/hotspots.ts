@@ -1,3 +1,4 @@
+// apps/proxy/src/routes/report/hotspots.ts —— 板块4 研究热点 Top10 路由
 import { Hono } from 'hono';
 import { parseReportCtx, parseSortBy } from '../../services/report/params.js';
 import { getRangeAgg } from '../../services/report/agg.js';

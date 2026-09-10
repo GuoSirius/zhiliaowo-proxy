@@ -1,3 +1,4 @@
+// apps/proxy/src/routes/report/products.ts —— 板块5 产品引用 Top15 路由
 import { Hono } from 'hono';
 import { parseReportCtx, parseSortBy, parsePositiveInt } from '../../services/report/params.js';
 import { getRangeProductCounts, buildTopProducts, enrichProductsWithMeta } from '../../services/report/products.js';
