@@ -1,4 +1,3 @@
-// apps/proxy/src/services/report/sync/config.ts —— 同步并发数解析与自动推导（CPU 核数 ×2，钳制 [4,12]）
 import { cpus } from 'node:os';
 import { env } from '../../../shared/env.js';
 

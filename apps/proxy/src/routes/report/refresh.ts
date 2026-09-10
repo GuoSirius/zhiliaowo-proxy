@@ -1,4 +1,3 @@
-// apps/proxy/src/routes/report/refresh.ts —— 手动触发同步路由（admin token 鉴权 + 并发锁）
 import { Hono, type Context } from 'hono';
 import { parseReportCtx } from '../../services/report/params.js';
 import { getClient } from '../../shared/client.js';

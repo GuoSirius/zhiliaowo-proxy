@@ -1,4 +1,3 @@
-// apps/proxy/src/routes/report/core.ts —— 板块2 引用文献核心数据路由（5 同比卡片 + 累计文案）
 import { Hono } from 'hono';
 import { parseReportCtx } from '../../services/report/params.js';
 import { getRangeAgg } from '../../services/report/agg.js';

@@ -1,4 +1,3 @@
-// apps/proxy/src/datasources/zhiliaowo.ts —— 知了窝开放 API 客户端：拼 URL + fetch + 缓存 + 统一错误处理
 import { resolveBrand, type ResolvedBrand } from '../config/brands.js';
 import { ApiError } from '../models/types.js';
 import { env } from '../shared/env.js';

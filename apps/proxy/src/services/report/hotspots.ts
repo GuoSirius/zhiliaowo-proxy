@@ -1,4 +1,3 @@
-// apps/proxy/src/services/report/hotspots.ts —— 研究热点本地匹配：词边界正则 + 跨月累加重聚合，按命中词数取主热点
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { ResolvedBrand, Locale } from '../../config/brands.js';

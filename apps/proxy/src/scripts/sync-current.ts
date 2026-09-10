@@ -1,4 +1,3 @@
-// apps/proxy/src/scripts/sync-current.ts —— 定时任务入口：同步全部品牌「当前年+上一年」
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import dotenv from 'dotenv';

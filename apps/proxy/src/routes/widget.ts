@@ -1,4 +1,3 @@
-// apps/proxy/src/routes/widget.ts —— 开放组件(iframe) 302 分发路由（注入 appId/brand，不落前端源码）
 import { Hono } from 'hono';
 import { resolveBrand } from '../config/brands.js';
 import { env } from '../shared/env.js';

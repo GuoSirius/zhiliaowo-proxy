@@ -1,4 +1,3 @@
-// apps/proxy/src/services/report/journals.ts —— 重点期刊命中统计（板块1）与按影响因子 TopN（板块6）
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { reportDb } from '../../datasources/report-db.js';

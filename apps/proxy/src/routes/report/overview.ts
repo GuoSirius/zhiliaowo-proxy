@@ -1,4 +1,3 @@
-// apps/proxy/src/routes/report/overview.ts —— 板块总编排路由（一次返回 6 板块）
 import { Hono } from 'hono';
 import { parseReportCtx } from '../../services/report/params.js';
 import { buildOverview } from '../../services/report/overview.js';

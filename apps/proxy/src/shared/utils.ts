@@ -1,4 +1,3 @@
-// apps/proxy/src/shared/utils.ts —— 通用纯函数工具（sleep / 受控并发 map），与业务无关、无副作用
 
 export function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));

@@ -1,4 +1,3 @@
-// apps/proxy/src/scripts/parse-args.ts —— 统一 CLI 参数解析（--key=value / --key value / --flag）
 /** 统一 CLI 参数解析：支持 `--key=value`、`--key value`、`--flag` 三种形式 */
 export function parseArgs(argv: string[]): Record<string, string | boolean> {
   const args: Record<string, string | boolean> = {};

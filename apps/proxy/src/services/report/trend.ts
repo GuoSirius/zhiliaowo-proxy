@@ -1,4 +1,3 @@
-// apps/proxy/src/services/report/trend.ts —— 板块3 趋势：近十年分布（full/sameRange）+ 最近 4 个完整季度
 import type { ResolvedBrand } from '../../config/brands.js';
 import { getClient } from '../../shared/client.js';
 import { getRangeAgg } from './agg.js';

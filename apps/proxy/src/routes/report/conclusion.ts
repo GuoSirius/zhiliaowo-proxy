@@ -1,4 +1,3 @@
-// apps/proxy/src/routes/report/conclusion.ts —— 板块6 小结路由（AI 文案 + Top3 期刊 + 机构兜底）
 import { Hono } from 'hono';
 import { parseReportCtx } from '../../services/report/params.js';
 import { getRangeAgg } from '../../services/report/agg.js';

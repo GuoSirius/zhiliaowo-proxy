@@ -1,4 +1,3 @@
-// apps/proxy/src/index.ts —— Hono 服务入口：路由挂载、CORS 策略、启动监听
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';

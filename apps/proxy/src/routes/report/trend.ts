@@ -1,4 +1,3 @@
-// apps/proxy/src/routes/report/trend.ts —— 板块3 近十年年度分布 + 最近4季度路由
 import { Hono } from 'hono';
 import { parseReportCtx } from '../../services/report/params.js';
 import { buildTrend, type DecadeMode } from '../../services/report/trend.js';

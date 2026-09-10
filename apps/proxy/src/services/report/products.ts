@@ -1,4 +1,3 @@
-// apps/proxy/src/services/report/products.ts —— 板块5 产品引用 Top：本地计数 + 同比增长过滤 + 生产库名称/分类回查
 import { reportDb } from '../../datasources/report-db.js';
 import { prodMysqlEnabledForSite, getProdMysql } from '../../datasources/prod-mysql.js';
 import type { ResolvedSite } from '../../config/brands.js';

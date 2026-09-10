@@ -1,4 +1,3 @@
-// apps/proxy/src/routes/brand-papers.ts —— 2.6 品牌文献列表路由（pageNum/pageSize/sort/lang 透传）
 import { Hono } from 'hono';
 import { resolveBrand } from '../config/brands.js';
 import { getClient } from '../shared/client.js';

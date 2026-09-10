@@ -1,4 +1,3 @@
-// apps/proxy/src/services/report/calc.ts —— 通用数值工具：round 四舍五入 / pct 同比增长率（report 统一口径）
 
 /** 四舍五入到 d 位小数（默认 2；非有限值按 0 处理，避免 NaN 透传到响应） */
 export function round(n: number, d = 2): number {

@@ -1,4 +1,3 @@
-// apps/proxy/src/services/report/cumulative.ts —— 2.1 全历史累计扣减 year 年 endMonth 之后数据，得到截止累计
 import type { ResolvedBrand } from '../../config/brands.js';
 import { getClient } from '../../shared/client.js';
 import { reportDb } from '../../datasources/report-db.js';

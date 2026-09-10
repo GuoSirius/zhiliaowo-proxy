@@ -1,4 +1,3 @@
-// apps/proxy/src/services/report/agg.ts —— 区间/全年聚合读取与合并（期刊/热点计数跨月汇总，处理 month=0 哨兵桶）
 import { reportDb } from '../../datasources/report-db.js';
 
 /** 某品牌某年某月区间的聚合结果（多个月份相加） */

@@ -1,4 +1,3 @@
-// apps/proxy/src/routes/report/meta.ts —— 同步状态总览路由（前端轮询进度/运维查看）
 import { Hono } from 'hono';
 import { parseReportCtx } from '../../services/report/params.js';
 import { reportDb, localPaperCount } from '../../datasources/report-db.js';

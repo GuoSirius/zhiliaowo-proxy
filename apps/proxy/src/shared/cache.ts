@@ -1,4 +1,3 @@
-// apps/proxy/src/shared/cache.ts —— 缓存抽象层：memory / redis 统一接口与按 env 切换的工厂
 import type { Redis } from 'ioredis';
 import { env } from './env.js';
 

@@ -1,4 +1,3 @@
-// apps/proxy/src/services/report/sync/types.ts —— 同步流程对外契约：进度 SyncProgress / 结果 SyncResult / 表行结构
 /** 同步流程对外暴露的进度与结果契约 */
 
 export interface SyncProgress {

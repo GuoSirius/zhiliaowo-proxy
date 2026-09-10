@@ -1,4 +1,3 @@
-// apps/proxy/src/services/report/params.ts —— 海报路由公共参数解析（site / year / month / sortBy）与校验
 import type { Context } from 'hono';
 import { resolveSite, type ResolvedBrand, type ResolvedSite } from '../../config/brands.js';
 import { ApiError } from '../../models/types.js';
