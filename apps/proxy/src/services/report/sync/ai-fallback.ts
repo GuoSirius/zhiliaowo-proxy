@@ -1,3 +1,4 @@
+// apps/proxy/src/services/report/sync/ai-fallback.ts —— 板块4 AI 兜底：本地零命中文献限量送 AI 打标，合并回月度热点计数
 import type { ResolvedBrand } from '../../../config/brands.js';
 import { aiEnabled, callAi } from '../../../datasources/ai.js';
 import { reportDb } from '../../../datasources/report-db.js';

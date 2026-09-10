@@ -1,3 +1,4 @@
+// apps/proxy/src/services/report/sync/persist.ts —— 文献落库映射（toRecord）、月度聚合（computeMonthAgg）、软删除对账（softDeleteOrphans）
 import type { PaperItem } from '../../../models/types.js';
 import type { PaperRecord, AggData } from './types.js';
 import { reportDb } from '../../../datasources/report-db.js';

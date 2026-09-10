@@ -1,3 +1,4 @@
+// apps/proxy/src/services/report/schools.ts —— 板块6 机构来源：Excel 兜底清单（懒加载）+ AI 真实机构（当前数据源无该字段，恒空走兜底）
 import { readFileSync, existsSync } from 'node:fs';
 import { env } from '../../shared/env.js';
 

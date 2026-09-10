@@ -1,3 +1,4 @@
+// apps/proxy/src/services/report/overview.ts —— 编排 6 板块整页数据（复用各原语，口径与分板块接口一致）
 import type { ResolvedBrand, ResolvedSite } from '../../config/brands.js';
 import { getRangeAgg } from './agg.js';
 import { getHotspotRangeStats, buildHotspotZhToEn } from './hotspots.js';

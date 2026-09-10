@@ -1,3 +1,4 @@
+// apps/proxy/src/services/report/sync/index.ts —— 年度同步编排：分页并发拉取 → 去重落库 → 软删除对账 → 月度聚合 → AI 兜底
 import { ZhiliaowoClient } from '../../../datasources/zhiliaowo.js';
 import type { ResolvedBrand } from '../../../config/brands.js';
 import type { PaperItem } from '../../../models/types.js';
