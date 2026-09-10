@@ -11,7 +11,7 @@
     "dev:proxy": "pnpm --filter zhiliaowo-proxy dev",
     "dev:admin": "pnpm --filter @zhiliaowo/admin dev",
     "build": "pnpm -r build",
-    "typecheck": "pnpm --filter @zhiliaowo/core build && pnpm -r typecheck",
+    "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "prepare": "husky",
     "commitlint": "commitlint --edit",

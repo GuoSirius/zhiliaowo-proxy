@@ -6,9 +6,7 @@
     "lib": ["ES2022"],
     "outDir": "dist",
     "rootDir": ".",
-    "paths": {
-      "@zhiliaowo/core": ["../../packages/core/dist/index.d.ts"]
-    },
+    "paths": {},
     "strict": true,
     "noImplicitOverride": true,
     "noUnusedLocals": true,

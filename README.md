@@ -23,16 +23,12 @@ zhiliaowo-proxy/                 # 单体仓库根（同时是 pnpm workspace �
 │   │   ├── src/scripts/         # sync / sync:current / recompute（含定时任务入口）
 │   │   └── src/test/            # 单元测试
 │   ├── admin/                   # 管理后台（Vue3 + Vite + UnoCSS + Pinia）
-└── packages/
-    └── core/                    # 共享层 @zhiliaowo/core
-        ├── src/                 # types.ts / validate.ts(zod) / blocks.ts / render.ts
-        └── specs/               # 历史设计文档（H5 时期产物，仅作追溯，不指导现状）
+└── packages/                # 共享层（原 @zhiliaowo/core 已随 H5 子系统移除，当前无剩余包）
 ```
 
 ## 依赖关系
 
-`apps/proxy`、`apps/admin` 均通过 `workspace:*` 依赖 `@zhiliaowo/core`。
-共享层以 **TypeScript 源码** 形式被消费（Vite alias + tsconfig paths + pnpm 软链），改 core 即全端热更，无需预编译。
+`apps/proxy`、`apps/admin` 为 monorepo 内两个独立 workspace 包（原共享层 `@zhiliaowo/core` 已随 H5 子系统移除）。
 
 ## 常用命令
 
@@ -79,6 +75,6 @@ proxy 侧另设 **`apps/proxy/src/shared/env.ts`** 作为环境变量中心：�
 
 ## 说明 / 后续
 
-- 后端 `proxy` 当前以 `tsx` 直接跑 TS（含 core 源码）。生产 `node dist/index.js` 需先把 `packages/core` 编译为 JS，或改用 `tsx` 启动。
+- 后端 `proxy` 当前以 `tsx` 直接跑 TS；生产 `node dist/index.js` 启动。
 - **admin 待改造**：它原本是 H5 文档管理台（依赖已移除的 `/api/h5`），目前相关页面会 404；下一步改造为管理 proxy 的海报数据 / 同步 / 品牌配置（详见 `apps/admin/README.md`）。
 - 目录演进：proxy / template / core 三仓 → 合并为单 pnpm 仓库（保留 `zhiliaowo-proxy` 仓名与远程）→ 2026-09 移除 H5 生成子系统，收敛为「代理服务 + 管理后台」。

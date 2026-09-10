@@ -167,9 +167,6 @@ importers:
 
   apps/admin:
     dependencies:
-      '@zhiliaowo/core':
-        specifier: workspace:*
-        version: link:../../packages/core
       pinia:
         specifier: 'catalog:'
         version: 4.0.3(@vue/devtools-api@8.2.1)(typescript@6.0.3)(vue@3.5.42(typescript@6.0.3))
@@ -201,9 +198,6 @@ importers:
       '@hono/node-server':
         specifier: ^2.1.1
         version: 2.1.1(hono@4.13.7)
-      '@zhiliaowo/core':
-        specifier: workspace:*
-        version: link:../../packages/core
       better-sqlite3:
         specifier: ^13.0.3
         version: 13.0.3
@@ -235,16 +229,6 @@ importers:
       tsx:
         specifier: ^4.23.13
         version: 4.23.13
-      typescript:
-        specifier: ^6.0.0
-        version: 6.0.3
-
-  packages/core:
-    dependencies:
-      zod:
-        specifier: 'catalog:'
-        version: 4.5.4
-    devDependencies:
       typescript:
         specifier: ^6.0.0
         version: 6.0.3

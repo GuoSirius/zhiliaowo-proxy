@@ -13,12 +13,6 @@ export default defineConfig(({ mode }) => {
   return {
     envDir: rootEnv,
     plugins: [vue(), UnoCSS()],
-    resolve: {
-      alias: {
-        // 共享层：直接指向 workspace 内 packages/core 源码，免 pnpm install 即可热更
-        '@zhiliaowo/core': fileURLToPath(new URL('../../packages/core/src', import.meta.url)),
-      },
-    },
     server: {
       host: true,
       port: adminPort,

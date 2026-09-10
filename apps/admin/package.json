@@ -11,8 +11,7 @@
   },
   "dependencies": {
     "vue": "catalog:",
-    "pinia": "catalog:",
-    "@zhiliaowo/core": "workspace:*"
+    "pinia": "catalog:"
   },
   "devDependencies": {
     "vite": "catalog:",

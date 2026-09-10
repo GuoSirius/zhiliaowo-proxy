@@ -12,9 +12,7 @@
     "skipLibCheck": true,
     "noEmit": true,
     "types": ["node"],
-    "paths": {
-      "@zhiliaowo/core": ["../../packages/core/src/index.ts"]
-    }
+    "paths": {}
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "vite.config.ts"]
 }

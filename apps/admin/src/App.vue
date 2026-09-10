@@ -1,27 +1,10 @@
 <template>
-  <ListView v-if="view === 'list'" @edit="openEdit" @create="openCreate" />
-  <EditorView v-else @back="closeEditor" />
+  <div class="admin-placeholder">
+    <h1>知了窝管理后台</h1>
+    <p>后台重构中：将接管 proxy 海报数据 / 同步 / 品牌配置管理。</p>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useH5Store } from './stores/h5';
-import ListView from './views/ListView.vue';
-import EditorView from './views/EditorView.vue';
-
-const store = useH5Store();
-const view = ref<'list' | 'editor'>('list');
-
-async function openEdit(id: string) {
-  await store.loadDoc(id);
-  view.value = 'editor';
-}
-function openCreate() {
-  store.newDoc();
-  view.value = 'editor';
-}
-async function closeEditor() {
-  view.value = 'list';
-  await store.loadList();
-}
+// 占位页：原 H5 生成器模块（packages/core 整包 + admin 内 H5 代码）已整体移除。
 </script>

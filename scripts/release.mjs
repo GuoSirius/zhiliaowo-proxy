@@ -105,7 +105,6 @@ function bump(version, type) {
 const WORKSPACE_PKGS = [
   'apps/proxy/package.json',
   'apps/admin/package.json',
-  'packages/core/package.json',
 ];
 
 function syncVersions(version) {
@@ -227,7 +226,7 @@ async function main() {
 
   // 4. 自动发布：changelogen 按选定类型 bump 根包版本号 + 增量写中文 CHANGELOG（与 changelog.config.js 对齐）
   run(`pnpm exec changelogen --${selected} --bump`);
-  //    再把所有 workspace 包（proxy/admin/core）的 version 同步为同一新版本，保证发布一致
+  //    再把所有 workspace 包（proxy/admin）的 version 同步为同一新版本，保证发布一致
   syncVersions(newVersion);
 
   run(`git add package.json CHANGELOG.md ${WORKSPACE_PKGS.join(' ')}`);
