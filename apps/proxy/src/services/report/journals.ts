@@ -35,8 +35,14 @@ export function getTopJournalsByFactor(
   endMonth: number,
   n = 3,
 ): TopJournal[] {
+  // 口径对齐 agg.ts / products.ts：全年区间（startMonth<=1 && endMonth>=12）额外纳入 month=0 桶
+  // （pubTime 无法解析月份的兜底文献），避免板块6 与板块2/3/4/5 口径不一致。
+  const includeUnknown = startMonth <= 1 && endMonth >= 12;
+  const sql = includeUnknown
+    ? 'SELECT journal, factor FROM zlw_papers WHERE brand=? AND year=? AND (month BETWEEN ? AND ? OR month = 0) AND deleted_at IS NULL'
+    : 'SELECT journal, factor FROM zlw_papers WHERE brand=? AND year=? AND month BETWEEN ? AND ? AND deleted_at IS NULL';
   const rows = reportDb
-    .prepare('SELECT journal, factor FROM zlw_papers WHERE brand=? AND year=? AND month BETWEEN ? AND ? AND deleted_at IS NULL')
+    .prepare(sql)
     .all(brand, year, startMonth, endMonth) as Array<{
     journal: string | null;
     factor: number | null;
