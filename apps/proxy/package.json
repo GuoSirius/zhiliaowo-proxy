@@ -31,7 +31,7 @@
     "dotenv": "^17.4.2",
     "hono": "^4.13.7",
     "ioredis": "^6.0.0",
-    "mysql2": "^3.24.3",
+    "mysql2": "^3.24.4",
     "puppeteer": "^25.10.0",
     "zod": "catalog:"
   },
