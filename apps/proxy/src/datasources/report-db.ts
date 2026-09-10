@@ -179,8 +179,9 @@ export function localPaperCount(brand: string, year: number): number {
   return row.c;
 }
 
-// 模块加载即建表（幂等），确保后续 import 该模块时的 prepare 不会因表不存在而失败
-migrateReportDb();
+// 注意：迁移不再在模块加载时隐式执行（避免模块顶层副作用，利于单测与可预测初始化）。
+// 统一由各入口显式调用一次：服务入口 index.ts（initClient().then(migrateReportDb)）、
+// CLI 脚本 sync.ts / sync-current.ts / recompute-agg.ts 均在 main 起始处调用。
 
 // ---------- 预编译写入语句（供同步 / 重算使用） ----------
 // 放在本模块可确保「建表 → prepare」顺序正确，调用方无需关心初始化时机。

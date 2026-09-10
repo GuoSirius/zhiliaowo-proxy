@@ -3,12 +3,15 @@ import { dirname, resolve } from 'node:path';
 import dotenv from 'dotenv';
 import { BRANDS, resolveBrand, resolveBrandFlexible } from '../config/brands.js';
 import { recomputeYearAgg } from '../services/report/sync/index.js';
-import { reportDb, localPaperCount } from '../datasources/report-db.js';
+import { reportDb, localPaperCount, migrateReportDb } from '../datasources/report-db.js';
 import { parseArgs } from './parse-args.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // 统一从仓库根 .env 读取（与 sync.ts 一致）
 dotenv.config({ path: resolve(__dirname, '..', '..', '..', '.env') });
+
+// 显式建表（幂等）：report-db 已移除模块加载期的隐式迁移（§4），CLI 入口需自行调用一次
+migrateReportDb();
 
 // 用法（与 sync 保持一致）:
 //   pnpm --filter zhiliaowo-proxy recompute --brand=procell --year=2025
