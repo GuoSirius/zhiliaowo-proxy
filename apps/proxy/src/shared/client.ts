@@ -1,3 +1,4 @@
+// apps/proxy/src/shared/client.ts —— 知了窝客户端单例：启动时初始化、请求时获取（未初始化即抛错）
 import { createCache, type Cache } from './cache.js';
 import { ZhiliaowoClient } from '../datasources/zhiliaowo.js';
 

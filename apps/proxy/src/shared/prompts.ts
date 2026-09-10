@@ -1,3 +1,4 @@
+// apps/proxy/src/shared/prompts.ts —— 提示词模板加载（按品牌/locale 回退）与 {{变量}} 渲染
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { env } from './env.js';

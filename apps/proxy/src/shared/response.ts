@@ -1,3 +1,4 @@
+// apps/proxy/src/shared/response.ts —— 统一 API 响应信封：ok（成功）/ fail（失败，支持业务码）
 import type { Context } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 
