@@ -76,6 +76,10 @@ export const env = {
         .map((o) => o.trim())
         .filter(Boolean);
     },
+    /** 运行环境：production / development / test（默认 development） */
+    get nodeEnv(): string {
+      return str('NODE_ENV', 'development').toLowerCase();
+    },
   },
 
   /** 知了窝开放平台 */

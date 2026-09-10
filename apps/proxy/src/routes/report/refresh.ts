@@ -22,8 +22,9 @@ function extractToken(c: Context): string | undefined {
  * POST /api/v1/:site/report/refresh  body: { "year"?: number, "force"?: boolean }
  * 不传 year 则用路由上下文的默认年（当前年）。force=true 强制重拉全量并重算聚合。
  *
- * 安全：配置 ADMIN_TOKEN 后必须携带 x-admin-token（或 Authorization: Bearer）方可调用；
- * 未配置时放行（本地/dev 便利）。重复触发同一 brand:year 会复用进行中的同步，不二次打上游。
+ * 安全：必须配置 ADMIN_TOKEN 且携带 x-admin-token（或 Authorization: Bearer）方可调用；
+ * 未配置 ADMIN_TOKEN 时直接拒绝（503，fail-closed），避免未授权触发昂贵的全量上游同步 / 打爆上游 / 污染本地库。
+ * 重复触发同一 brand:year 会复用进行中的同步，不二次打上游。
  */
 reportRefreshRoute.post('/:site/report/refresh', async (c) => {
   const { brand, year } = parseReportCtx(c);
@@ -31,13 +32,14 @@ reportRefreshRoute.post('/:site/report/refresh', async (c) => {
   const syncYearValue = body.year != null ? Number(body.year) : year;
   const force = !!body.force;
 
-  // 鉴权：仅当显式配置了 ADMIN_TOKEN 才校验
+  // 鉴权：未配置 ADMIN_TOKEN 时拒绝对外暴露同步能力（fail-closed，防止未授权触发昂贵全量同步 / 打爆上游 / 污染本地库）
   const adminToken = env.admin.token;
-  if (adminToken) {
-    const token = extractToken(c);
-    if (token !== adminToken) {
-      return fail(c, 401, 'unauthorized');
-    }
+  if (!adminToken) {
+    return fail(c, 503, 'admin token not configured; sync disabled');
+  }
+  const token = extractToken(c);
+  if (token !== adminToken) {
+    return fail(c, 401, 'unauthorized');
   }
 
   if (!Number.isInteger(syncYearValue) || syncYearValue <= 0) {

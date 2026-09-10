@@ -34,17 +34,31 @@ import { env } from './shared/env.js';
 const app = new Hono();
 
 // CORS：仅对白名单内的 Origin 回显，避免任意站点跨域读取报告数据。
-// 通过 ALLOWED_ORIGINS（逗号分隔）配置允许的前端域名；未配置时回退为回显请求
-// Origin，保持本地多 dev 端口（admin 独立端口）联调兼容。
+// 通过 ALLOWED_ORIGINS（逗号分隔）配置允许的前端域名。
+// 安全收敛（§3）：production 且未配置白名单时 fail-closed（不反射任意 Origin）；
+// 非 production（本地多 dev 端口联调）若未配置则回显请求 Origin，保持便利。
 const ALLOWED_ORIGINS = env.server.allowedOrigins;
+const isProd = env.server.nodeEnv === 'production';
+if (ALLOWED_ORIGINS.length === 0) {
+  if (isProd) {
+    console.warn(
+      '[cors] ⚠️ ALLOWED_ORIGINS 未配置，生产环境将拒绝跨域请求（fail-closed）。' +
+        '如需前端跨域访问，请在环境变量中配置允许的源。',
+    );
+  } else {
+    console.warn('[cors] ALLOWED_ORIGINS 未配置，开发环境将回显请求 Origin 以便本地联调。');
+  }
+}
 
 app.use('*', async (c, next) => {
   const origin = c.req.header('Origin');
-  const allow = ALLOWED_ORIGINS.length === 0 || (origin && ALLOWED_ORIGINS.includes(origin));
+  const allow =
+    (ALLOWED_ORIGINS.length > 0 && origin != null && ALLOWED_ORIGINS.includes(origin)) ||
+    (ALLOWED_ORIGINS.length === 0 && !isProd);
   if (origin && allow) {
     c.header('Access-Control-Allow-Origin', origin);
     c.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    c.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    c.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-admin-token');
     c.header('Access-Control-Max-Age', '86400');
   }
   if (c.req.method === 'OPTIONS') return c.body(null, 204);
