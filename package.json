@@ -25,11 +25,5 @@
     "changelogen": "catalog:",
     "husky": "catalog:",
     "node-xlsx": "^0.24.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "typescript": "^6.0.0",
-      "vue-tsc": "^3.3.11"
-    }
   }
 }

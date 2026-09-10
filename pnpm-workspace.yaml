@@ -50,3 +50,10 @@ catalog:
 minimumReleaseAgeExclude:
   - puppeteer-core@25.9.0
   - puppeteer@25.9.0
+
+# pnpm 10+ 迁移：原 package.json 的 "pnpm.overrides" 已不再被读取，
+# 必须移到 pnpm-workspace.yaml 顶层 overrides 键，否则被静默忽略。
+# 作用：强制全仓 typescript / vue-tsc 锁大版本，避免子依赖拉到不兼容新主版本。
+overrides:
+  typescript: ^6.0.0
+  vue-tsc: ^3.3.11
