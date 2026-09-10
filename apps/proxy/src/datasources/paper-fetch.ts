@@ -1,3 +1,4 @@
+// apps/proxy/src/datasources/paper-fetch.ts —— 文献分页拉取：重试 + 由首页响应推导分页计划（兼容上游 pageSize 硬上限）
 import { ZhiliaowoClient } from './zhiliaowo.js';
 import type { ResolvedBrand } from '../config/brands.js';
 import type { PaperList } from '../models/types.js';
