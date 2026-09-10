@@ -27,6 +27,7 @@ import { reportConclusionRoute } from './routes/report/conclusion.js';
 import { reportOverviewRoute } from './routes/report/overview.js';
 import { reportRefreshRoute } from './routes/report/refresh.js';
 import { reportMetaRoute } from './routes/report/meta.js';
+import { configRoute } from './routes/config.js';
 import { widgetRoute } from './routes/widget.js';
 import { migrateReportDb } from './datasources/report-db.js';
 import { env } from './shared/env.js';
@@ -86,6 +87,9 @@ app.route('/api/v1', reportConclusionRoute);
 app.route('/api/v1', reportOverviewRoute);
 app.route('/api/v1', reportRefreshRoute);
 app.route('/api/v1', reportMetaRoute);
+
+// 只读配置快照（站点 / 品牌，供管理后台展示；appId 只回显是否配置）
+app.route('/api/v1', configRoute);
 
 // 开放组件（iframe）302 分发：/w/:site/* → 知了窝 v_widget，appId 不落前端
 app.route('/w', widgetRoute);
