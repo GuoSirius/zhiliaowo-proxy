@@ -25,9 +25,9 @@ export function loadPromptFile(brandKey: string, name: string, locale: Locale = 
   return null;
 }
 
-/** 将 {{key}} 占位符替换为给定值（缺失的 key 置空字符串） */
+/** 将 {{key}} 占位符替换为给定值（缺失的 key 置空字符串）。变量名支持连字符（如 {{brand-key}}） */
 export function renderTemplate(tpl: string, vars: Record<string, string | number>): string {
-  return tpl.replace(/\{\{(\w+)\}\}/g, (_m, k: string) => {
+  return tpl.replace(/\{\{([\w-]+)\}\}/g, (_m, k: string) => {
     const v = vars[k];
     return v === undefined ? '' : String(v);
   });
