@@ -72,20 +72,27 @@ export async function getProdMysql(site: ResolvedSite): Promise<ProdMysqlClient 
     const RETRYABLE = /ECONNRESET|ECONNREFUSED|PROTOCOL_CONNECTION_LOST|ETIMEDOUT|EHOSTUNREACH/i;
     return {
       query: async <T = Record<string, unknown>>(sql: string, params: unknown[]): Promise<T[]> => {
-        let lastErr: unknown;
+        // 防御：空数组参数会被 mysql2 展开为 `IN ()` 触发 SQL 语法错误。当前调用方已做空数组守卫，
+        // 这里再兜一层，明确抛错便于定位，而非把含糊的 500 回传给上层。
+        for (const p of params) {
+          if (Array.isArray(p) && p.length === 0) {
+            throw new Error('prod-mysql: empty array param would produce invalid IN () clause');
+          }
+        }
         for (let attempt = 0; attempt < 2; attempt++) {
           try {
             // mysql2 pool.query 返回 [rows, fields]，此处解包为纯行数组；timeout 防挂死（仅 SELECT）
             const [rows] = await pool.query({ sql, values: params, timeout: 15000 });
             return rows as T[];
           } catch (e) {
-            lastErr = e;
             const msg = e instanceof Error ? e.message : String(e);
-            if (!RETRYABLE.test(msg) || attempt === 1) throw e; // 非连接错误 / 已重试一次 → 抛出
-            await new Promise((r) => setTimeout(r, 50)); // 短暂退避后重试一次
+            // 非连接级错误 / 已重试一次 → 直接抛出（连接级错误退避后重试一次）
+            if (!RETRYABLE.test(msg) || attempt === 1) throw e;
+            await new Promise((r) => setTimeout(r, 50));
           }
         }
-        throw lastErr; // 兜底（循环内已 throw，正常不可达）
+        // 不可达：循环内要么 return，要么 throw
+        throw new Error('prod-mysql: query unexpectedly exhausted retries');
       },
       close: async () => {
         await pool.end();
