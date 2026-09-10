@@ -1,3 +1,4 @@
+// apps/proxy/src/scripts/recompute-agg.ts —— 从本地库重算月度聚合 CLI（不请求上游 API）
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import dotenv from 'dotenv';

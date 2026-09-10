@@ -1,3 +1,4 @@
+// apps/proxy/src/scripts/sync.ts —— 手动全量同步 CLI（指定品牌/年份区间，支持 force）
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import dotenv from 'dotenv';
