@@ -26,24 +26,33 @@ export class ZhiliaowoClient {
     private readonly defaultTtl = DEFAULT_TTL,
   ) {}
 
-  /** 通用请求：缓存命中直接返回，否则请求上游并回填缓存 */
+  /**
+   * 通用请求：缓存命中直接返回，否则请求上游并回填缓存。
+   * @param bypassCache 为 true 时强制打上游、不读不写缓存（同步全量拉取用，确保拿到最新数据而非陈旧缓存）
+   */
   private async request<T>(
     path: string,
     brand: ResolvedBrand,
     query: Record<string, string> = {},
     ttl = this.defaultTtl,
+    bypassCache = false,
   ): Promise<T> {
     const url = new URL(`${API_BASE}${path}`);
     url.searchParams.set('brand', brand.brand);
     url.searchParams.set('appId', brand.appId);
+
+    // 缓存键只由业务参数构成：不含实时 timestamp，否则每请求都 miss、缓存层形同虚设（§1 修复）
+    const cacheKey = `zlw:${brand.key}:${path}?${new URLSearchParams(query).toString()}`;
+    if (!bypassCache) {
+      const cached = await this.cache.get<T>(cacheKey);
+      if (cached !== undefined) return cached;
+    }
+
+    // timestamp 仅用于知了窝鉴权，放进 fetch URL，绝不进 cacheKey
     url.searchParams.set('timestamp', String(Date.now()));
     for (const [k, v] of Object.entries(query)) {
       if (v !== '') url.searchParams.set(k, v);
     }
-
-    const cacheKey = `zlw:${brand.key}:${path}:${url.searchParams.toString()}`;
-    const cached = await this.cache.get<T>(cacheKey);
-    if (cached !== undefined) return cached;
 
     let resp: Response;
     try {
@@ -63,7 +72,9 @@ export class ZhiliaowoClient {
       throw new ApiError(502, `zhiliaowo code=${json.code} msg=${json.msg}`);
     }
 
-    await this.cache.set(cacheKey, json.result, ttl);
+    if (!bypassCache) {
+      await this.cache.set(cacheKey, json.result, ttl);
+    }
     return json.result;
   }
 
@@ -92,14 +103,35 @@ export class ZhiliaowoClient {
     return this.request<GoodsCiteNum>('/brand/goods/cite_num', brand, query);
   }
 
-  /** 2.6 获取符合条件的品牌文献列表 */
-  brandPapers(brand: ResolvedBrand, query: Record<string, string> = {}) {
-    return this.request<PaperList>('/list/brand/paper', brand, query);
+  /** 2.6 获取符合条件的品牌文献列表；bypassCache=true 时强制拉取上游最新（同步全量用） */
+  brandPapers(
+    brand: ResolvedBrand,
+    query: Record<string, string> = {},
+    opts: { bypassCache?: boolean } = {},
+  ) {
+    return this.request<PaperList>(
+      '/list/brand/paper',
+      brand,
+      query,
+      this.defaultTtl,
+      opts.bypassCache,
+    );
   }
 
-  /** 2.7 获取符合条件的产品文献列表 */
-  productPapers(brand: ResolvedBrand, sku: string, query: Record<string, string> = {}) {
-    return this.request<PaperList>('/list/product/paper', brand, { sku, ...query });
+  /** 2.7 获取符合条件的产品文献列表；bypassCache=true 时强制拉取上游最新 */
+  productPapers(
+    brand: ResolvedBrand,
+    sku: string,
+    query: Record<string, string> = {},
+    opts: { bypassCache?: boolean } = {},
+  ) {
+    return this.request<PaperList>(
+      '/list/product/paper',
+      brand,
+      { sku, ...query },
+      this.defaultTtl,
+      opts.bypassCache,
+    );
   }
 }
 

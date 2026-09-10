@@ -28,15 +28,20 @@ export async function fetchPageWithRetry(
   year: number,
   pageNum: number,
   pageSize: number,
+  bypassCache = true,
 ): Promise<PaperList> {
   let lastErr: unknown;
   for (let attempt = 1; attempt <= MAX_RETRY; attempt++) {
     try {
-      const res = await client.brandPapers(brand, {
-        year: String(year),
-        pageNum: String(pageNum),
-        pageSize: String(pageSize),
-      });
+      const res = await client.brandPapers(
+        brand,
+        {
+          year: String(year),
+          pageNum: String(pageNum),
+          pageSize: String(pageSize),
+        },
+        { bypassCache },
+      );
       return res;
     } catch (e) {
       lastErr = e;
