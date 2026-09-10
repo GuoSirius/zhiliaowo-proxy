@@ -60,12 +60,32 @@ export async function getProdMysql(site: ResolvedSite): Promise<ProdMysqlClient 
       connectionLimit: 4,
       // 仅 SELECT：不在代码里执行任何写操作；以下为 mysql2 连接选项（无 DML 语义）
       multipleStatements: false,
+      // 连接保活：空闲 socket 发 keepalive，避免被服务端 wait_timeout 静默回收后下次查询 ECONNRESET
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 10000,
+      connectTimeout: 10000,
+      // 空闲连接回收：enrichment 低频，回收掉陈旧连接，下次取新连接更稳
+      maxIdle: 4,
+      idleTimeout: 30000,
     });
+    // 连接级瞬时错误可重试一次（pool 会重新取一条连接）；非连接级错误不重试
+    const RETRYABLE = /ECONNRESET|ECONNREFUSED|PROTOCOL_CONNECTION_LOST|ETIMEDOUT|EHOSTUNREACH/i;
     return {
       query: async <T = Record<string, unknown>>(sql: string, params: unknown[]): Promise<T[]> => {
-        // mysql2 pool.query 返回 [rows, fields]，此处解包为纯行数组
-        const [rows] = await pool.query(sql, params);
-        return rows as T[];
+        let lastErr: unknown;
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            // mysql2 pool.query 返回 [rows, fields]，此处解包为纯行数组；timeout 防挂死（仅 SELECT）
+            const [rows] = await pool.query({ sql, values: params, timeout: 15000 });
+            return rows as T[];
+          } catch (e) {
+            lastErr = e;
+            const msg = e instanceof Error ? e.message : String(e);
+            if (!RETRYABLE.test(msg) || attempt === 1) throw e; // 非连接错误 / 已重试一次 → 抛出
+            await new Promise((r) => setTimeout(r, 50)); // 短暂退避后重试一次
+          }
+        }
+        throw lastErr; // 兜底（循环内已 throw，正常不可达）
       },
       close: async () => {
         await pool.end();
