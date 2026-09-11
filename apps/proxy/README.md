@@ -54,40 +54,6 @@ npm run dev               # tsx watch，默认 :3000
 
 环境变量：`PORT` 改端口；`HOST` 改绑定地址（默认 `0.0.0.0`，同时覆盖 `127.0.0.1` / `localhost` / 本机 LAN IP）；`ZLIW_API_BASE` 改开放 API 版本（默认 `v12`）；`ZLIW_WIDGET_BASE` 改开放组件（iframe）基址（默认 `v11`）。
 
-## 接口示例（curl）
-
-下面以 `elabscience` 站点、`http://localhost:3000` 为例（`site` 换成实际站点 key）。
-
-```bash
-# 健康检查
-curl http://localhost:3000/health
-
-# 2.1 品牌文献统计
-curl http://localhost:3000/api/v1/elabscience/statistics
-
-# 2.2 品牌 + SPU 引用概况（sku 可选）
-curl "http://localhost:3000/api/v1/elabscience/cite-stat?sku=E-ABcl-0001"
-
-# 2.3 历年累计数量
-curl http://localhost:3000/api/v1/elabscience/paper-sum
-
-# 2.4 年度数量
-curl http://localhost:3000/api/v1/elabscience/paper-year
-
-# 2.5 产品文献引用数量
-curl http://localhost:3000/api/v1/elabscience/goods-cite-num
-
-# 2.6 品牌文献列表
-curl http://localhost:3000/api/v1/elabscience/papers
-
-# 2.7 产品文献列表（sku 必填）
-curl "http://localhost:3000/api/v1/elabscience/product-papers?sku=E-ABcl-0001"
-
-# 开放组件（iframe）302 分发：直接重定向到知了窝 v_widget
-# -I 看 302 Location；前端 iframe 写 /w/elabscience/brand/statistics 即可，appId 由后端注入
-curl -I "http://localhost:3000/w/elabscience/brand/statistics"
-```
-
 所有接口响应统一为信封结构 `{ "code": number, "message": string, "data": <真实数据 | null> }`：成功 `code=200` 且业务数据在 `data`；失败 `data=null`（或附加上下文），`code` 同时作为 HTTP 状态码（404 未知 site / 500 缺 env / 502 上游异常）。无论成功失败结构一致，真实数据始终在 `data` 中。
 
 ## 扩展一个新 brand（零业务改动）
@@ -143,13 +109,6 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 所有 `report` 接口挂在 `/api/v1/:site/report/*`，`path` 上 `:site` = `procell` / `elabscience`，
 通用 query：`year`（默认当前年）、`startMonth`（默认 1）、`endMonth`（默认 12）。
 
-> **板块 2 `core` 的累计文案**：5 个同比指标卡片按传入的 `[startMonth, endMonth]` 统计；
-> 底部文案「截止至 {year} 年 {endMonth} 月」额外通过 `summary` 字段返回——该值由 **2.1 全历史累计**扣减
-> 「year 年 endMonth 之后（含同年剩余月份 + 已同步未来年份）的本地聚合」得到，**并非本地 1~endMonth 聚合**；
-> 同比 prev 仍用本地聚合的去年 1~endMonth（2.1 无年份参数，无法直取去年累计）。
->
-> **`trend` 额外参数**：`decadeMode=full|sameRange`（默认 `full`），见板块 3 说明。
-
 | 方法 | 路径 | 板块 | 数据源 | 是否需要 AI |
 |---|---|---|---|---|
 | GET | `/api/v1/:site/report/overview` | 总编排（一次返回 6 块） | 本地聚合 | 结论文案依赖 AI（可空） |
@@ -161,8 +120,6 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 | GET | `/api/v1/:site/report/conclusion` | 6 小结 | 2.6 聚合 | 是（结论文案） |
 | POST | `/api/v1/:site/report/refresh` | 手动触发同步 | 知了窝 2.6 | 否 |
 | GET | `/api/v1/:site/report/meta` | 同步状态总览 | `zlw_sync_state` | 否 |
-
-响应统一信封：`{ "code": 200, "message": "success", "data": {...} }`。
 
 ### 板块要点（与讨论稿口径一致）
 
@@ -234,31 +191,4 @@ pnpm --filter zhiliaowo-proxy sync:current
 
 也可用 `POST /api/v1/:site/report/refresh`（`body: {"year":2025,"force":false}`）手动触发；
 前端轮询 `GET /api/v1/:site/report/meta` 看同步进度。
-
-### curl 示例
-
-```bash
-# 总编排（一次性拿 6 板块）
-curl "http://localhost:3000/api/v1/procell/report/overview?year=2025"
-
-# 单板块
-curl "http://localhost:3000/api/v1/procell/report/summary?year=2025"
-# 板块 2：5 个卡片按 startMonth~endMonth，summary 按 1~endMonth
-curl "http://localhost:3000/api/v1/procell/report/core?year=2025&startMonth=3&endMonth=6"
-# 板块 3：十年趋势，默认 full
-curl "http://localhost:3000/api/v1/procell/report/trend?year=2025"
-# 板块 3：各年只统计 1-8 月（消除未完年假下滑）
-curl "http://localhost:3000/api/v1/procell/report/trend?year=2026&startMonth=1&endMonth=8&decadeMode=sameRange"
-curl "http://localhost:3000/api/v1/procell/report/hotspots?year=2025"
-curl "http://localhost:3000/api/v1/procell/report/hotspots?year=2025&sortBy=growthRate"
-curl "http://localhost:3000/api/v1/procell/report/products?year=2025"
-# 板块 5：按数量取前 15（默认）；放宽候选池到 100 仍按数量排；按增长率排前 15
-curl "http://localhost:3000/api/v1/procell/report/products?year=2025&topN=100&sortBy=count"
-curl "http://localhost:3000/api/v1/procell/report/products?year=2025&sortBy=growthRate"
-curl "http://localhost:3000/api/v1/procell/report/conclusion?year=2025"
-
-# 同步状态 / 手动刷新
-curl "http://localhost:3000/api/v1/procell/report/meta"
-curl -X POST "http://localhost:3000/api/v1/procell/report/refresh" -H 'Content-Type: application/json' -d '{"year":2025,"force":false}'
-```
 
