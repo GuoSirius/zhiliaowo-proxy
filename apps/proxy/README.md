@@ -106,7 +106,7 @@ curl -I "http://localhost:3000/w/elabscience/brand/statistics"
 
 ## 安全说明
 
-- **CORS**：跨域受 `ALLOWED_ORIGINS` 白名单约束，仅白名单内 Origin 回显 `Access-Control-Allow-Origin`；未配置时回退为回显请求 Origin（仅限本地联调，生产环境务必配置）。
+- **CORS**：跨域受 `ALLOWED_ORIGINS` 白名单约束，仅白名单内 Origin 回显 `Access-Control-Allow-Origin`；未配置时回退为回显请求 Origin（仅限本地联调，生产环境务必配置）。白名单每项支持三种写法：精确串 `https://admin.example.com`、通配符 `*.example.com`（`*` 匹配任意字符，含子域）、正则 `/^https:\/\/.*\.example\.com$/`（自动整串锚定）。例如 `ALLOWED_ORIGINS=https://admin.example.com,*.elabscience.com` 即放行指定源与整个 elabscience 子域。
 - **同步接口鉴权**：`POST /api/v1/:site/report/refresh` 一旦配置 `ADMIN_TOKEN`，调用方必须携带 `x-admin-token`（或 `Authorization: Bearer`）头，否则返回 401；未配置则放行（dev 便利）。
 - **参数校验**：`report` 接口 `startMonth` / `endMonth` 越界（非 1–12）或 `endMonth < startMonth` 直接返回 400，不再静默 clamp。
 

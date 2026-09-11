@@ -31,20 +31,22 @@ import { configRoute } from './routes/config.js';
 import { widgetRoute } from './routes/widget.js';
 import { migrateReportDb } from './datasources/report-db.js';
 import { env } from './shared/env.js';
+import { compileOriginPatterns, isOriginAllowed } from './shared/cors.js';
 
 const app = new Hono();
 
 // CORS：仅对白名单内的 Origin 回显，避免任意站点跨域读取报告数据。
-// 通过 ALLOWED_ORIGINS（逗号分隔）配置允许的前端域名。
+// ALLOWED_ORIGINS（逗号分隔）支持三种写法：精确串 / 通配符(*.example.com) / 正则(/^...$/)，见 shared/cors.ts。
 // 安全收敛（§3）：production 且未配置白名单时 fail-closed（不反射任意 Origin）；
 // 非 production（本地多 dev 端口联调）若未配置则回显请求 Origin，保持便利。
 const ALLOWED_ORIGINS = env.server.allowedOrigins;
+const ORIGIN_PATTERNS = compileOriginPatterns(ALLOWED_ORIGINS);
 const isProd = env.server.nodeEnv === 'production';
 if (ALLOWED_ORIGINS.length === 0) {
   if (isProd) {
     console.warn(
       '[cors] ⚠️ ALLOWED_ORIGINS 未配置，生产环境将拒绝跨域请求（fail-closed）。' +
-        '如需前端跨域访问，请在环境变量中配置允许的源。',
+        '如需前端跨域访问，请在环境变量中配置允许的源（支持精确串 / 通配符 / 正则）。',
     );
   } else {
     console.warn('[cors] ALLOWED_ORIGINS 未配置，开发环境将回显请求 Origin 以便本地联调。');
@@ -54,8 +56,8 @@ if (ALLOWED_ORIGINS.length === 0) {
 app.use('*', async (c, next) => {
   const origin = c.req.header('Origin');
   const allow =
-    (ALLOWED_ORIGINS.length > 0 && origin != null && ALLOWED_ORIGINS.includes(origin)) ||
-    (ALLOWED_ORIGINS.length === 0 && !isProd);
+    (ORIGIN_PATTERNS.length > 0 && origin != null && isOriginAllowed(origin, ORIGIN_PATTERNS)) ||
+    (ORIGIN_PATTERNS.length === 0 && !isProd);
   if (origin && allow) {
     c.header('Access-Control-Allow-Origin', origin);
     c.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');

@@ -69,7 +69,8 @@ export const env = {
     get host(): string {
       return str('HOST', '0.0.0.0');
     },
-    /** CORS 白名单（逗号分隔）；空数组表示回显请求 Origin（本地多 dev 端口联调兼容） */
+    /** CORS 白名单（逗号分隔）；支持精确串 / 通配符(*.example.com) / 正则(/^...$/) 三种写法，见 shared/cors.ts。
+     *  空数组表示回显请求 Origin（本地多 dev 端口联调兼容） */
     get allowedOrigins(): string[] {
       return (process.env.ALLOWED_ORIGINS ?? '')
         .split(',')
