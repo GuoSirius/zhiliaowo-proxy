@@ -1,5 +1,52 @@
 # Changelog
 
+## v3.1.0
+
+[compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v3.0.1...v3.1.0)
+
+### 🚀 新功能 (Features)
+
+- **products:** Normalize category 细胞资源库 to 细胞 ([d613f53](https://github.com/GuoSirius/zhiliaowo-proxy/commit/d613f53))
+- **response:** 统一信封支持业务码，ok/fail 显式 code 参数 ([2047da0](https://github.com/GuoSirius/zhiliaowo-proxy/commit/2047da0))
+- **proxy:** 新增只读配置端点 /api/v1/config/sites ([12cffd4](https://github.com/GuoSirius/zhiliaowo-proxy/commit/12cffd4))
+- **admin:** 重建为海报数据/同步/品牌配置管理台 ([b56a11a](https://github.com/GuoSirius/zhiliaowo-proxy/commit/b56a11a))
+- **admin:** Vue-router + backend layout; consolidate deps into catalog, drop puppeteer/zod ([7c491c1](https://github.com/GuoSirius/zhiliaowo-proxy/commit/7c491c1))
+
+### 🐛 缺陷修复 (Bug Fixes)
+
+- **prod-mysql:** Add connection keepalive and single query retry to absorb econnreset ([a0ffa2c](https://github.com/GuoSirius/zhiliaowo-proxy/commit/a0ffa2c))
+- **zhiliaowo:** 缓存键排除 timestamp 并支持同步 bypassCache ([dd24c97](https://github.com/GuoSirius/zhiliaowo-proxy/commit/dd24c97))
+- **security:** Admin token 缺失时同步 fail-closed + 生产 cors fail-closed ([0b42a06](https://github.com/GuoSirius/zhiliaowo-proxy/commit/0b42a06))
+- **products:** 区间产品计数对齐聚合口径（含 month=0 桶） ([f98554a](https://github.com/GuoSirius/zhiliaowo-proxy/commit/f98554a))
+- **prod-mysql:** 空数组 in() 守卫 + 移除不可达 throw ([b65529d](https://github.com/GuoSirius/zhiliaowo-proxy/commit/b65529d))
+- **prompts:** 模板变量支持连字符（如 {{brand-key}}） ([50f5b8c](https://github.com/GuoSirius/zhiliaowo-proxy/commit/50f5b8c))
+- **journals:** 板块6 top 期刊查询对齐 month=0 桶口径 ([49be504](https://github.com/GuoSirius/zhiliaowo-proxy/commit/49be504))
+
+### ♻️ 代码重构 (Refactors)
+
+- **report-db:** 移除模块加载期迁移副作用，脚本显式调用 ([d86c14e](https://github.com/GuoSirius/zhiliaowo-proxy/commit/d86c14e))
+- **h5:** 移除 H5 生成子系统（packages/core 整包 + admin h5 模块） ([73788c9](https://github.com/GuoSirius/zhiliaowo-proxy/commit/73788c9))
+
+### 📚 文档 (Documentation)
+
+- **env:** 补充 node_env 说明（控制生产 cors fail-closed） ([e94ea2d](https://github.com/GuoSirius/zhiliaowo-proxy/commit/e94ea2d))
+- 新增 code_review 审查报告 ([3adc515](https://github.com/GuoSirius/zhiliaowo-proxy/commit/3adc515))
+- Delete codereview ([f038556](https://github.com/GuoSirius/zhiliaowo-proxy/commit/f038556))
+- **comments:** Shared/ 补充统一文件目的头，规范注释一致性 ([bf9241c](https://github.com/GuoSirius/zhiliaowo-proxy/commit/bf9241c))
+- **comments:** Datasources/ 补充 zhiliaowo 与 paper-fetch 文件目的头 ([5628f5e](https://github.com/GuoSirius/zhiliaowo-proxy/commit/5628f5e))
+- **comments:** Services/report/ 全模块补充统一文件目的头 ([a8c7ffc](https://github.com/GuoSirius/zhiliaowo-proxy/commit/a8c7ffc))
+- **comments:** Routes/ 与 config/ 补充统一文件目的头 ([6fd2544](https://github.com/GuoSirius/zhiliaowo-proxy/commit/6fd2544))
+- **comments:** Scripts/ 补充统一文件目的头 ([193b6fe](https://github.com/GuoSirius/zhiliaowo-proxy/commit/193b6fe))
+- **comments:** 移除冗余文件头注释（路径前缀+作用复读） ([b28e709](https://github.com/GuoSirius/zhiliaowo-proxy/commit/b28e709))
+
+### 🔧 构建 (Build)
+
+- **pnpm:** Migrate overrides from package.json pnpm field to pnpm-workspace.yaml ([c6742fe](https://github.com/GuoSirius/zhiliaowo-proxy/commit/c6742fe))
+
+### ❤️ Contributors
+
+- 郭之存 ([@siriusSupreme](https://github.com/siriusSupreme))
+
 ## v3.0.1
 
 [compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v3.0.0...v3.0.1)
