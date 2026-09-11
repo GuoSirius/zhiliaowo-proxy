@@ -25,19 +25,17 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@hono/node-server": "^2.1.1",
-    "better-sqlite3": "^13.0.3",
-    "dotenv": "^17.4.2",
-    "hono": "^4.13.7",
-    "ioredis": "^6.0.0",
-    "mysql2": "^3.24.4",
-    "puppeteer": "^25.10.0",
-    "zod": "catalog:"
+    "@hono/node-server": "catalog:",
+    "better-sqlite3": "catalog:",
+    "dotenv": "catalog:",
+    "hono": "catalog:",
+    "ioredis": "catalog:",
+    "mysql2": "catalog:"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^9.6.0",
+    "@types/better-sqlite3": "catalog:",
     "@types/node": "catalog:",
-    "tsx": "^4.23.13",
+    "tsx": "catalog:",
     "typescript": "catalog:"
   }
 }

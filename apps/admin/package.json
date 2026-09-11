@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "vue": "catalog:",
-    "pinia": "catalog:"
+    "pinia": "catalog:",
+    "vue-router": "catalog:"
   },
   "devDependencies": {
     "vite": "catalog:",

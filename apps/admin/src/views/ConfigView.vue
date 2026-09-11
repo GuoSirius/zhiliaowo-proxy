@@ -63,7 +63,10 @@
 </template>
 
 <script setup lang="ts">
+import { storeToRefs } from 'pinia';
+import { useAppStore } from '../stores/app';
 import type { BrandConf, SiteConf } from '../api/report';
 
-defineProps<{ sites: SiteConf[]; brands: BrandConf[] }>();
+const app = useAppStore();
+const { sites, brands } = storeToRefs(app);
 </script>

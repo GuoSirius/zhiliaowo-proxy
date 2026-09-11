@@ -58,7 +58,7 @@ pnpm release                # 交互式发版（见下方「提交 / 发布 / �
 
 ## 依赖管理（pnpm catalog）
 
-共享依赖（vue / pinia / vite / typescript / unocss / zod / commitlint / changelogen / husky 等）的版本在 **`pnpm-workspace.yaml` 的 `catalog:`** 中集中声明，各包以 `"catalog:"` 引用。升级只需改 `catalog:` 一处再 `pnpm install`；或跑 `pnpm upgrade` 全量升最新。仅 proxy 专属的运行时依赖（hono / better-sqlite3 / ioredis / puppeteer / dotenv / tsx）保留在 `apps/proxy/package.json`。
+共享依赖（vue / pinia / vue-router / vite / typescript / unocss / hono / @hono/node-server / better-sqlite3 / ioredis / dotenv / mysql2 / tsx / @types/better-sqlite3 / node-xlsx / commitlint / changelogen / husky 等）的版本在 **`pnpm-workspace.yaml` 的 `catalog:`** 中集中声明，各包以 `"catalog:"` 引用。升级只需改 `catalog:` 一处再 `pnpm install`；或跑 `pnpm upgrade` 全量升最新。
 
 ## 环境变量（单一来源）
 

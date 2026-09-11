@@ -13,14 +13,12 @@ blockExoticSubdeps: false
 allowBuilds:
   better-sqlite3: true
   esbuild: true
-  puppeteer: true
   vue-demi: true
 
 # pnpm 10.26 之前的兼容写法（pnpm 11 会忽略并提示 deprecated，无副作用）
 onlyBuiltDependencies:
   - better-sqlite3
   - esbuild
-  - puppeteer
   - vue-demi
 
 # 共享依赖版本目录（单一事实源）：各包用 "catalog:" 引用，
@@ -32,24 +30,29 @@ catalog:
   typescript: ^6.0.0
   # 钉到 ^24 匹配 Node 24 运行时（26.x 太新触发 minimumReleaseAge 策略拦截）
   "@types/node": ^26.4.1
-  # 前端共用
+  # 前端共用（admin）
   vue: ^3.5.42
   pinia: ^4.0.3
+  vue-router: ^4.5.0
   vite: ^8.2.2
   "@vitejs/plugin-vue": ^6.0.8
   vue-tsc: ^3.3.11
   unocss: ^66.10.0
-  # 提交 / 发布（根层工具）
+  # 后端 / proxy 运行时 + 构建（全收进 catalog 集中管理）
+  hono: ^4.13.7
+  "@hono/node-server": ^2.1.1
+  better-sqlite3: ^13.0.3
+  ioredis: ^6.0.0
+  dotenv: ^17.4.2
+  mysql2: ^3.24.4
+  tsx: ^4.23.13
+  "@types/better-sqlite3": ^9.6.0
+  # 根层工具 / 脚本
+  node-xlsx: ^0.24.0
   "@commitlint/cli": ^21.2.2
   "@commitlint/config-conventional": ^21.2.2
   changelogen: ^0.6.2
   husky: ^9.1.7
-  # 共享层
-  zod: ^4.5.4
-
-minimumReleaseAgeExclude:
-  - puppeteer-core@25.9.0
-  - puppeteer@25.9.0
 
 # pnpm 10+ 迁移：原 package.json 的 "pnpm.overrides" 已不再被读取，
 # 必须移到 pnpm-workspace.yaml 顶层 overrides 键，否则被静默忽略。

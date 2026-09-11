@@ -72,10 +72,14 @@
 
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue';
+import { storeToRefs } from 'pinia';
 import { getMeta, refresh, type RefreshResp, type SyncState } from '../api/report';
+import { useAppStore } from '../stores/app';
 import { fmtDuration, fmtNum, fmtTime } from '../utils';
 
-const props = defineProps<{ site: string; year: number }>();
+const app = useAppStore();
+const { site } = storeToRefs(app);
+
 const TOKEN_KEY = 'zlw_admin_token';
 
 const states = ref<SyncState[]>([]);
@@ -83,7 +87,8 @@ const brand = ref('');
 const loading = ref(false);
 const error = ref('');
 
-const year = ref(props.year);
+// 同步触发年份：默认取顶部通栏年份，独立维护（与海报筛选年解耦）
+const year = ref(app.year);
 const force = ref(false);
 const token = ref(localStorage.getItem(TOKEN_KEY) ?? '');
 const running = ref(false);
@@ -91,11 +96,11 @@ const runError = ref('');
 const result = ref<RefreshResp | null>(null);
 
 async function load() {
-  if (!props.site) return;
+  if (!site.value) return;
   loading.value = true;
   error.value = '';
   try {
-    const meta = await getMeta(props.site);
+    const meta = await getMeta(site.value);
     states.value = meta.syncStates ?? [];
     brand.value = meta.brand;
   } catch (e) {
@@ -107,13 +112,13 @@ async function load() {
 }
 
 async function run() {
-  if (!props.site) return;
+  if (!site.value) return;
   runError.value = '';
   result.value = null;
   running.value = true;
   try {
     localStorage.setItem(TOKEN_KEY, token.value);
-    result.value = await refresh(props.site, year.value, force.value, token.value);
+    result.value = await refresh(site.value, year.value, force.value, token.value);
     await load();
   } catch (e) {
     runError.value = (e as Error).message;
@@ -130,9 +135,9 @@ function statusClass(status: string | null): string {
 }
 
 onMounted(load);
-watch(() => props.site, load);
+watch(() => site.value, load);
 watch(
-  () => props.year,
+  () => app.year,
   (y) => (year.value = y),
 );
 </script>

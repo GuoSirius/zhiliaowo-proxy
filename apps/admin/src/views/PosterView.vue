@@ -157,21 +157,24 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { storeToRefs } from 'pinia';
 import { getOverview, type Overview } from '../api/report';
+import { useAppStore } from '../stores/app';
 import { fmtNum, fmtRate, rateClass } from '../utils';
 
-const props = defineProps<{ site: string; year: number; endMonth: number }>();
+const app = useAppStore();
+const { site, year, endMonth } = storeToRefs(app);
 
 const data = ref<Overview | null>(null);
 const error = ref('');
 const loading = ref(false);
 
 async function load() {
-  if (!props.site) return;
+  if (!site.value) return;
   loading.value = true;
   error.value = '';
   try {
-    data.value = await getOverview(props.site, props.year, props.endMonth);
+    data.value = await getOverview(site.value, year.value, endMonth.value);
   } catch (e) {
     error.value = (e as Error).message;
     data.value = null;
@@ -181,7 +184,7 @@ async function load() {
 }
 
 onMounted(load);
-watch(() => [props.site, props.year, props.endMonth], load);
+watch(() => [site.value, year.value, endMonth.value], load);
 
 const metrics = computed(() => {
   const c = data.value?.core;
