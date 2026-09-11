@@ -56,6 +56,29 @@ npm run dev               # tsx watch，默认 :3000
 
 所有接口响应统一为信封结构 `{ "code": number, "message": string, "data": <真实数据 | null> }`：成功 `code=200` 且业务数据在 `data`；失败 `data=null`（或附加上下文），`code` 同时作为 HTTP 状态码（404 未知 site / 500 缺 env / 502 上游异常）。无论成功失败结构一致，真实数据始终在 `data` 中。
 
+## 接口示例（curl）
+
+下面以 `elabscience` 站点、`http://localhost:3000` 为例（`site` 换成实际站点 key）。
+
+```bash
+# 2.1 品牌文献统计
+curl http://localhost:3000/api/v1/elabscience/statistics
+# 2.2 品牌 + SPU 引用概况（sku 可选）
+curl "http://localhost:3000/api/v1/elabscience/cite-stat?sku=E-ABcl-0001"
+# 2.3 历年累计数量
+curl http://localhost:3000/api/v1/elabscience/paper-sum
+# 2.4 年度数量
+curl http://localhost:3000/api/v1/elabscience/paper-year
+# 2.5 产品文献引用数量
+curl http://localhost:3000/api/v1/elabscience/goods-cite-num
+# 2.6 品牌文献列表
+curl http://localhost:3000/api/v1/elabscience/papers
+# 2.7 产品文献列表（sku 必填）
+curl "http://localhost:3000/api/v1/elabscience/product-papers?sku=E-ABcl-0001"
+# 开放组件（iframe）302 分发：前端 iframe 写 /w/elabscience/brand/statistics 即可，appId 由后端注入
+curl -I "http://localhost:3000/w/elabscience/brand/statistics"
+```
+
 ## 扩展一个新 brand（零业务改动）
 
 1. `config/brands.ts` 的 `BRANDS` 加一项（key / label / brand / appIdEnv）
@@ -121,43 +144,19 @@ docker run -p 3000:3000 --env-file .env zhiliaowo-proxy
 | POST | `/api/v1/:site/report/refresh` | 手动触发同步 | 知了窝 2.6 | 否 |
 | GET | `/api/v1/:site/report/meta` | 同步状态总览 | `zlw_sync_state` | 否 |
 
-### 板块要点（与讨论稿口径一致）
+### 板块要点（口径）
 
-- **板块 1 研究概述**：按 `config/journals/<brandKey>.json` 配置的「重点期刊」名单，对 `journal` 字段忽略大小写精确匹配统计篇数（如 Cell / Nature / STTT）。
+- **板块 1 研究概述**：按 `config/journals/<brandKey>.json` 重点期刊名单，对 `journal` 忽略大小写精确匹配统计篇数（Cell / Nature / STTT 等）。
 - **板块 2 核心数据**：
-  - 上方 5 个同比指标卡片：总篇数、总 IF、IF≥10、平均 IF、最高 IF；每个指标返回 `{ value, prevValue, rate }`（同比为去年同区间 `[startMonth, endMonth]`，`prevValue<=0` 时 `rate: null`）。
-  - 底部文案累计块 `summary`（`range` 形如 `{year, startMonth:1, endMonth}`，但数值口径**非**本地 1~endMonth 聚合）：通过 **2.1 接口**取全历史累计，扣减「year 年 endMonth 之后」的本地聚合，得到「截止至 {year} 年 {endMonth} 月」累计；返回 `totalPapers`、`totalIf`、`maxIf`、`avgIf` 及去年同期 `prevTotalPapers`、`prevTotalIf`（去年同期为本地聚合的去年 1~endMonth），对应海报文案「截止至 {year} 年 {endMonth} 月，全网共计收录引用...的 SCI 文献达 X 篇，总 IF 值达 Y」。
-- **板块 3 十年趋势**：数据源优先级为 **2.4 年度新增 → 本地聚合补全 → 缺年补 0**；窗口 = `[year-9, year]`，**以请求的 `year` 为锚点**。每个年份返回 `{ year, count, percent, hasData }`：
-  - `percent` = 该年 `count` / 十年中最大 `count`（保留 1 位小数），仅以 `hasData: true` 的年份为基准
-  - `hasData: false` 表示该年本地未同步，`count: 0` 是「无数据」而非「真实 0 篇」，前端应据此渲染而非当作 0 篇
-
-  **十年每一年按 `decadeMode` 分两种口径**：
-
-  - **`sameRange` 模式**：十年每一年（含指定 year）都按 `[startMonth, endMonth]` 区间统计本地聚合，忽略 2.4 的「年度新增」全年量——严格同区间对齐。
-  - **`full` 模式（默认）**：
-    - 倒推 9 年（year-9 ~ year-1）：2.4 全年量优先 → 本地全年 1-12 月补全 → 缺年补 0
-    - 指定 year（海报年）：固定 = 本地 1~endMonth 聚合（不再用 2.4 全年量），与海报累计文案「截止至 {year} 年 {endMonth} 月」一致——未完年按截止月截断，避免与往年全年量直接对比时出现明显假下滑
-
-  | 值 | 倒推 9 年口径 | 指定 year（海报年）口径 | 适用 |
-  |---|---|---|---|
-  | `full`（默认） | 全年 1-12 月（2.4 优先 → 本地补全 → 缺年补 0） | 本地 1~endMonth（截止月截断） | 常规海报（未完年避免与往年全年量假对比）|
-  | `sameRange` | 本地 `[startMonth, endMonth]`（忽略 2.4） | 本地 `[startMonth, endMonth]`（与倒推 9 年同区间） | 年初/年中生成时希望所有年份同区间对比 |
-
-  > 例：2026 年 8 月生成海报，`full` 下 2026（截止 8 月 = 5538）vs 2025（全年 = 7855）看似下滑 29.5%；
-  > `sameRange`（1-8 月）下 2026=5538 vs 2025(1-8)=5193，实为增长 6.6%——十年每一年都用同一区间对比。
-
-  季度以 `endMonth` 所在季度为锚点，但**起点是否包含该季度由两道闸门判断**——① `endMonth` 必须是该季度的末月（3/6/9/12）；② 该季度须已完整过完（按真实日期）。两道闸门都通过才把该季度作为起点往前推 4 个；任一不满足则起点退到上一季度（往前推 4 个、不包含 `endMonth` 所在的季度），避免 `endMonth=11/4` 等中间月份被误归入 Q4/Q2 这种尚未走完的季度。每条含 `year`。
-- **板块 4 研究热点**：`title` 本地词边界正则匹配 `config/hotspots/<brandKey>.json` 关键词表 → Top10（计数 + 最高 IF + 同比）。
-  口径（依据需求文档「研究热点」小节 + 用户口径修正）：**排序键 = 关键词频率次数**（即 `count` = 该关键词在指定年区间命中的去重文献篇数，见 `getHotspotRangeStats` 读取 `zlw_papers_agg.hotspot_counts`）。
-  **先过滤负增长**（保留增长率 ≥ 0，含无基线新品 null），**再按关键词频率次数（出现次数）降序取前 10，尽可能满足 10 条**；上一年用同样方式（getHotspotRangeStats）统计给当年热点算同比。
-  AI 兜底开关 `AI_HOTSPOT_FALLBACK=1` 且已配 `AI_API_KEY` 时，对本地零命中文献限量（默认 200 篇）送 AI 打标，结果合并进聚合；失败仅告警、不影响主流程。
-  支持 `sortBy`：`count`（默认，按关键词频率次数降序）/ `growthRate`（按同比增长率降序二次排序）。
-- **板块 5 产品引用**：解析 `products[].goodsSpu` 聚合，当前区间按引用篇数取前 `topN`(默认 30，可放宽 50/100) 货号 → 取上一年同区间同批货号算同比增长率 → **先过滤负增长及无基线新品，再按 `sortBy`(默认 count) 降序取前 `outN`(默认 15)**。
-  过滤后合格数不足 `outN` 时，自动翻倍候选池重试（≤ `maxPool`=300）尽量凑够 15 条；仍不足则返回实际能凑到的条数（`poolUsed` 反映是否触顶）。
-  **仅返回货号（goodsSpu）+ 英文商品名（goodsLabel）**，中文名/分类由前端调网站接口获取。无去年同期基线时（单年部署）跳过增长率过滤、退化为按引用量降序取 Top15，`hasYoY=false`。
-- **板块 6 小结**：响应返回 `topJournals`（Top3 期刊 by IF）+ `institutions`（机构展示，每次 6 所）+ `conclusion`（AI 文案，需 `AI_API_KEY`，否则 `null`）。统计与 Top10 热点仅在服务端本地计算、作为 AI 提示词输入，不随响应返回（避免与板块 2/4 重复）。
-  - **机构（`institutions`，每次 6 所）**：采用「AI 真实优先、Excel 兜底」。实测知了窝 API 的 `zlw_papers` 表**根本没有 `corOrg`/`org` 等机构字段**（作者字段也只有姓名、不含单位），故真实路径恒为空，实际由 `config/schools.json`（由 `docs/学校.xlsx` 经 `scripts/gen-schools.py` 预生成）**每次随机抽取 6 所**展示，`source: "excel-fallback"` 即兜底标记。若上游未来开放机构字段，在 `lib/report/schools.ts` 的 `getRealInstitutions()` 接入 AI 提取即可自动切换为真实数据。
-  - 重新生成清单：`python scripts/gen-schools.py`（Excel 更新后执行）。可用 `SCHOOLS_FILE` 环境变量覆盖清单路径。
+  - 5 个同比卡片（总篇数 / 总 IF / IF≥10 / 平均 IF / 最高 IF），各返回 `{ value, prevValue, rate }`（同比取去年同区间 `[startMonth, endMonth]`，`prevValue<=0` 时 `rate: null`）。
+  - 底部累计块 `summary`：由 **2.1 全历史累计**扣减「year 年 endMonth 之后」本地聚合得到「截止至 {year} 年 {endMonth} 月」累计；返回 `totalPapers`/`totalIf`/`maxIf`/`avgIf` 及去年同期。
+- **板块 3 十年趋势**：优先级 **2.4 年度新增 → 本地聚合补全 → 缺年补 0**；窗口 `[year-9, year]`，以请求 `year` 为锚点。每年返回 `{ year, count, percent, hasData }`（`hasData:false` = 未同步非真实 0 篇；`percent` = 该年 `count`/十年最大 `count`）。
+  - `decadeMode`：**`full`**（默认）倒推 9 年取 2.4 全年量（本地补全/缺年补 0），指定 year 取本地 1~endMonth（截止月截断，避免未完年假下滑）；**`sameRange`** 十年每年（含指定 year）均按 `[startMonth, endMonth]` 同区间，忽略 2.4 全年量。
+  - 季度：以 `endMonth` 所在季度为锚点，起点是否含该季度由两道闸门判断——① `endMonth` 须为该季末月（3/6/9/12）；② 该季度须已完整过完（按真实日期）。任一道不满足则退到上一季度，避免 `endMonth=11/4` 等中间月误归入未走完的季度（每条含 `year`）。
+- **板块 4 研究热点**：`title` 词边界正则匹配 `config/hotspots/<brandKey>.json` 关键词表 → Top10（计数 + 最高 IF + 同比）。**排序键 = 关键词频率次数**（去重命中篇数）；先过滤负增长（保留 ≥0，含无基线新品 null）再按次数降序取前 10。`AI_HOTSPOT_FALLBACK=1` 且配 `AI_API_KEY` 时对零命中文献（默认 200 篇）送 AI 兜底，失败仅告警。支持 `sortBy=count`(默认)/`growthRate`。
+- **板块 5 产品引用**：解析 `products[].goodsSpu` 聚合，按引用篇数取前 `topN`(默认 30) 货号 → 取上年同区间同批算同比 → **先过滤负增长及无基线新品，再按 `sortBy`(默认 count) 降序取前 `outN`(默认 15)**；不足时翻倍候选池重试（≤`maxPool`=300）。仅返回 `goodsSpu` + `goodsLabel`（中文名/分类前端自取）。无去年同期时退化为按引用量取 Top15，`hasYoY=false`。
+- **板块 6 小结**：返回 `topJournals`(Top3 by IF) + `institutions`(每次 6 所) + `conclusion`(AI 文案，需 `AI_API_KEY`)。统计与 Top10 热点仅服务端算作 AI 提示词、不随响应返回。
+  - 机构：`corOrg`/`org` 上游恒空，实际由 `config/schools.json`（由 `docs/学校.xlsx` 经 `scripts/gen-schools.py` 预生成）**每次随机抽 6 所**展示（`source:"excel-fallback"`）；上游开放机构字段后在 `lib/report/schools.ts` 接入即可切换真实数据。重新生成：`python scripts/gen-schools.py`（可用 `SCHOOLS_FILE` 覆盖路径）。
 
 ### 同步工作流
 
