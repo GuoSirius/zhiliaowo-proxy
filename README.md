@@ -5,40 +5,19 @@
 > **2026-09 精简**：原「H5 生成器」子系统已整体移除（`apps/h5/`、`apps/proxy/src/h5/`、`apps/proxy/data/h5.db`）。
 > 仓库现在只保留**一个后端服务（proxy）**与**一个管理后台（admin）**，聚焦「知了窝接口代理 + 海报数据接口 + 管理台」。
 
-## 目录结构
-
-```
-zhiliaowo-proxy/                 # 单体仓库根（同时是 pnpm workspace 根）
-├── pnpm-workspace.yaml          # packages: ['apps/*','packages/*']
-├── package.json                 # 根：仅编排脚本（dev:proxy / dev:admin / build）
-├── .npmrc                       # 走 npmmirror 镜像，适配国内网络
-├── apps/
-│   ├── proxy/                   # 后端：Hono BFF（代理 + 海报 6 板块数据接口）
-│   │   ├── src/config/          # 品牌 / 热点关键词 / 期刊 / 提示词 / 学校清单
-│   │   ├── src/datasources/     # 数据访问层：知了窝 API / AI / SQLite 读写 / 分页拉取
-│   │   ├── src/models/          # 类型契约层：知了窝响应结构 + 领域模型
-│   │   ├── src/services/        # 业务逻辑层：report 6 板块聚合、同步编排（sync/）
-│   │   ├── src/shared/          # 基础设施层：env 中心 / 缓存 / HTTP 客户端 / 响应封装 / 通用工具
-│   │   ├── src/routes/          # 代理接口 + widget 302 分发 + report 6 板块接口
-│   │   ├── src/scripts/         # sync / sync:current / recompute（含定时任务入口）
-│   │   └── src/test/            # 单元测试
-│   ├── admin/                   # 管理后台（Vue3 + Vite + UnoCSS + Pinia）
-└── packages/                # 共享层（原 @zhiliaowo/core 已随 H5 子系统移除，当前无剩余包）
-```
-
 ## 依赖关系
 
-`apps/proxy`、`apps/admin` 为 monorepo 内两个独立 workspace 包（原共享层 `@zhiliaowo/core` 已随 H5 子系统移除）。
+`apps/proxy`、`apps/admin` 为 monorepo 内两个独立 workspace 包；原共享层 `@zhiliaowo/core` 已随 H5 子系统一并移除，当前无共享包。
 
 ## 常用命令
 
 ```bash
-pnpm install                 # 安装全部 workspace 依赖并软链 core（首次必跑，会触发原生构建脚本）
+pnpm install                 # 安装全部 workspace 依赖（首次必跑，会触发 better-sqlite3 等原生构建脚本）
 
 pnpm dev                     # 一条命令并行启动全部开发环境（proxy + admin）
 # 也可单独启动：
 pnpm dev:proxy              # 启动后端（tsx watch，默认 :3000）
-pnpm dev:admin              # 启动管理后台（:5173，/api 代理到 :3000）
+pnpm dev:admin              # 启动管理后台（Vite，默认 :5173）
 
 pnpm -r build               # 全部构建
 pnpm -r typecheck           # 全部类型检查
@@ -50,11 +29,12 @@ pnpm release                # 交互式发版（见下方「提交 / 发布 / �
 
 | 服务 | 变量 | 默认 | 说明 |
 | --- | --- | --- | --- |
-| 后端 proxy (Hono) | `PORT` | `3000` | 根 `.env` 中配置，admin 的 `/api` 代理指向它 |
+| 后端 proxy (Hono) | `PORT` | `3000` | 根 `.env` 中配置 |
 | 管理后台 admin (Vite) | `DEV_PORT_ADMIN` | `5173` | 根 `.env` 中配置 |
 | admin 反向代理目标 | `DEV_PORT_PROXY` | `3000` | 与 `PORT` 保持一致 |
 
-> 两个服务端口**互不冲突**（proxy 3000 / admin 5173），无需修改代码即可换端口——改根 `.env` 对应变量后重启即可。
+> 两个服务端口**互不冲突**（proxy 3000 / admin 5173），无需改代码即可换端口——改根 `.env` 对应变量后重启即可。
+> admin 通过 `VITE_PROXY_BASE`（默认 `http://localhost:3000`）**直连** proxy，不走 Vite 代理；dev 态 proxy 未配 `ALLOWED_ORIGINS` 时回显请求 Origin，跨域天然可用，**生产必须把 admin 源加进 proxy 的 `ALLOWED_ORIGINS`**。
 
 ## 依赖管理（pnpm catalog）
 
@@ -63,18 +43,29 @@ pnpm release                # 交互式发版（见下方「提交 / 发布 / �
 ## 环境变量（单一来源）
 
 所有 app 共用仓库根目录的 **`.env`**（示例见 `.env.example`，已被 `.gitignore` 忽略）。
-proxy 通过 `dotenv` 显式加载根 `.env`；admin 的 Vite 经 `envDir` 指向根 `.env`，因此 `VITE_API_BASE` 等前端变量也统一在此配置。
+proxy 通过 `dotenv` 显式加载根 `.env`；admin 的 Vite 经 `envDir` 指向根 `.env`，因此 `VITE_PROXY_BASE` 等前端变量也统一在此配置。
 
 proxy 侧另设 **`apps/proxy/src/shared/env.ts`** 作为环境变量中心：业务代码一律读 `env.server.port`、`env.ai.apiKey` 这类字段，不再散落 `process.env`。配置改名、换默认值、加新项都只改这一处（详见 `apps/proxy/README.md`）。
 
 ## 提交 / 发布 / 版本同步
 
 - **提交**：约定式提交（commitlint 门禁），husky 在 `prepare` 时安装。
-- **发布**：`pnpm release` 交互式选择 patch / minor / major → 门禁跑 `typecheck` + `test` → changelogen 写中文 CHANGELOG 并 bump **根包**版本 → **自动把 `apps/proxy`、`apps/admin`、`packages/core` 的 version 同步为同一新版本**（保证发布一致）→ 提交 + 打 `vX.Y.Z` tag + 推送。
-- **版本一致性**：三个包的版本号在每次发布时强制对齐，避免各包版本漂移。
+- **发布**：`pnpm release` 交互式选择 patch / minor / major → 门禁跑 `typecheck` + `test` → changelogen 写中文 CHANGELOG 并 bump **根包**版本 → **自动把 `apps/proxy`、`apps/admin` 的 version 同步为同一新版本**（保证发布一致）→ 提交 + 打 `vX.Y.Z` tag + 推送。
+- **版本一致性**：两个包的版本号在每次发布时强制对齐，避免各包版本漂移。
 
-## 说明 / 后续
+## 管理后台（admin）
 
-- 后端 `proxy` 当前以 `tsx` 直接跑 TS；生产 `node dist/index.js` 启动。
-- **admin 待改造**：它原本是 H5 文档管理台（依赖已移除的 `/api/h5`），目前相关页面会 404；下一步改造为管理 proxy 的海报数据 / 同步 / 品牌配置（详见 `apps/admin/README.md`）。
-- 目录演进：proxy / template / core 三仓 → 合并为单 pnpm 仓库（保留 `zhiliaowo-proxy` 仓名与远程）→ 2026-09 移除 H5 生成子系统，收敛为「代理服务 + 管理后台」。
+Vue 3 + Vite + UnoCSS + Pinia + **vue-router** 的后台，管理 proxy 的海报数据服务。
+
+- **布局**：顶部通栏（标题 + 站点 / 年份 / 截止月筛选）→ 左侧菜单（海报数据 / 同步 / 品牌配置）→ 右侧 `<RouterView>` 内容区。
+- **状态**：`stores/app.ts`（Pinia）持有全局筛选（站点 / 年份 / 截止月）与只读站点-品牌配置；顶部通栏与各页面统一读取，避免逐层透传。
+- **直连 proxy**：`api/client.ts` 以 `VITE_PROXY_BASE`（默认 `http://localhost:3000`）直连，统一信封解包 + `ApiError`；同步类接口走 `x-admin-token` 头。
+- **三个页面**：
+  - 海报数据 — 调 `/api/v1/:site/report/overview`（或分板块）展示 6 板块数据；
+  - 同步 — `GET /api/v1/:site/report/meta` 看进度，`POST /report/refresh` 手动触发（需 `ADMIN_TOKEN`）；
+  - 品牌配置 — `GET /api/v1/config/sites` 只读展示 SITES/BRANDS 快照（appId 只回显 `appIdConfigured`，不返回明文）。
+- 详见 `apps/admin/README.md`。
+
+## 演进
+
+proxy / template / core 三仓 → 合并为单 pnpm 仓库（保留 `zhiliaowo-proxy` 仓名与远程）→ 2026-09 移除 H5 生成子系统（含 `@zhiliaowo/core` 整包），收敛为「代理服务 + 管理后台」。

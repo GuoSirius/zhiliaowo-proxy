@@ -1,42 +1,48 @@
 # @zhiliaowo/admin — 管理后台
 
-管理后台前端（Vue 3 + Vite + UnoCSS + Pinia），位于 monorepo 的 `apps/admin`。
+管理 proxy 海报数据服务的后台前端（Vue 3 + Vite + UnoCSS + Pinia + vue-router），位于 monorepo 的 `apps/admin`。
 
-## 当前状态（重要）
+> 2026-09 起原 H5 生成子系统（含 `@zhiliaowo/core` 共享层）已整体移除，本后台改造为管理 proxy 的海报数据 / 同步 / 品牌配置，不再依赖已删除的 `/api/h5`。
 
-> ⚠️ 2026-09 起，**H5 生成器子系统已整体移除**（`apps/h5/`、`apps/proxy/src/h5/`、`apps/proxy/data/h5.db`）。
->
-> 本后台原本是 **H5 文档的管理台**（调用 proxy 的 `/api/h5` 做 CRUD + 渲染海报文档）。
-> 现在后端 `/api/h5` 已不存在，**列表 / 编辑器等页面会 404**。
->
-> 按约定该目录**暂时保留**，下一步改造为管理 **proxy 海报数据服务**的后台。
+## 布局
 
-## 现状职责（改造前）
+后台管理标准三段式：
 
-> 上述 H5 模块（`src/api/h5.ts`、`src/stores/h5.ts`、`src/views/ListView.vue`、`src/views/EditorView.vue`、
-> `src/components/BlockEditor.vue`、`src/components/JsonField.vue`）已于本次清理中**整体删除**，
-> 仅保留 `App.vue` 占位页；后续改造直接在 `apps/admin/src` 下新建海报数据管理页面。
+- **顶部通栏**（`layouts/AdminLayout.vue`）：项目标题 + 全局筛选（站点 / 年份 / 截止月）。筛选状态存于 Pinia，各页面共享。
+- **左侧菜单**：`RouterLink` 三项 — 海报数据 / 同步 / 品牌配置。
+- **右侧内容区**：`<RouterView />` 渲染当前路由组件。
 
-## 依赖
+## 状态管理
 
-- `@zhiliaowo/core` — 共享类型（`H5Doc` / `BrandTheme` / `BlockType`）与区块注册表
-- 后端 API 通过 vite `proxy` 转发到 `zhiliaowo-proxy`（默认 `:3000`）
+`stores/app.ts` 持有：
+
+- `sites` / `brands` — 启动时 `GET /api/v1/config/sites` 拉取的只读配置；
+- `site` / `year` / `endMonth` — 顶部通栏筛选条件（默认当前年、截止月 12）；
+- `loadConfig()` — 幂等加载，加载失败写 `loadError`。
+
+各页面用 `storeToRefs(useAppStore())` 直接读，无需逐层透传 props。
+
+## 与 proxy 的连接
+
+`api/client.ts` 以 `import.meta.env.VITE_PROXY_BASE`（默认 `http://localhost:3000`）**直连** proxy，**不走 Vite 代理**：
+
+- 统一信封 `{ code, message, data }`：HTTP 非 2xx 或 `body.code >= 400` 抛 `ApiError`；
+- 同步类接口（`POST /report/refresh`）走 `x-admin-token` 头，值来自 proxy 的 `ADMIN_TOKEN`。
+
+> dev 态 proxy 未配 `ALLOWED_ORIGINS` 时回显请求 Origin，跨域天然可用；**生产必须把 admin 源加进 proxy 的 `ALLOWED_ORIGINS`**（支持精确串 / 通配符 / 正则三种写法，见 `apps/proxy/README.md` 安全说明）。
+
+## 页面与接口
+
+| 页面 | 路由 | 调用接口 | 说明 |
+| --- | --- | --- | --- |
+| 海报数据 | `/poster` | `GET /api/v1/:site/report/overview?year&startMonth=1&endMonth` | 一次性返回 6 板块；按通栏筛选的站点/年份/截止月 |
+| 同步 | `/sync` | `GET /api/v1/:site/report/meta`；`POST /api/v1/:site/report/refresh` | 进度总览；手动触发（带 `x-admin-token`） |
+| 品牌配置 | `/config` | `GET /api/v1/config/sites` | 只读快照；appId 仅回显 `appIdConfigured`，不返回明文 |
 
 ## 开发
 
 ```bash
-npm run dev:admin   # 或 npm -w @zhiliaowo/admin dev
+pnpm dev:admin              # Vite dev，默认 :5173（端口由根 .env 的 DEV_PORT_ADMIN 控制）
 ```
 
-## 后续改造方向
-
-改为管理 proxy 的海报数据服务，候选页面：
-
-| 页面 | 依赖接口 | 说明 |
-|---|---|---|
-| 同步状态总览 | `GET /api/v1/:site/report/meta` | 各品牌 / 各年份同步进度与数据量 |
-| 手动触发同步 | `POST /api/v1/:site/report/refresh` | 需 `x-admin-token`（`ADMIN_TOKEN`） |
-| 关键词 / 期刊配置 | `src/config/hotspots/*.json`、`journals/*.json` | 热点与重点期刊名单维护 |
-| 品牌配置 | `src/config/brands.ts` | 多品牌 appId 映射 |
-
-改造时直接在 `apps/admin/src` 新建页面即可；原 `@zhiliaowo/core` 共享层已随 H5 子系统一并删除。
+环境变量：根 `.env` 的 `VITE_PROXY_BASE` 指定 proxy 基址（默认 `http://localhost:3000`）。
