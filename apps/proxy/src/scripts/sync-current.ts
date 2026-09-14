@@ -6,6 +6,7 @@ import { ZhiliaowoClient } from '../datasources/zhiliaowo.js';
 import { MemoryCache } from '../shared/cache.js';
 import { migrateReportDb } from '../datasources/report-db.js';
 import { syncYear, CONCURRENCY_INFO } from '../services/report/sync/index.js';
+import { currentYear } from '../shared/time.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: resolve(__dirname, '..', '..', '..', '.env') });
@@ -20,8 +21,8 @@ async function main() {
   console.log(`[sync-current] 并发=${CONCURRENCY_INFO}`);
   migrateReportDb();
   const client = new ZhiliaowoClient(new MemoryCache());
-  const now = new Date();
-  const years = [now.getFullYear(), now.getFullYear() - 1];
+  const nowYear = currentYear();
+  const years = [nowYear, nowYear - 1];
   const brandKeys = Object.keys(BRANDS);
 
   for (const key of brandKeys) {

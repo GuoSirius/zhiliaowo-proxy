@@ -24,6 +24,8 @@ onlyBuiltDependencies:
 # 共享依赖版本目录（单一事实源）：各包用 "catalog:" 引用，
 # 升级只需在此统一改一处，再跑 `pnpm up -r --latest` 即可全量更新。
 catalog:
+  # 时间处理统一库：服务端 / 前端一律用 dayjs，锁定 Asia/Shanghai 根治 8 小时时差
+  dayjs: ^1.11.13
   # 类型 / 构建（全包共用）
   # 锁 ^6.0.0：vue-tsc@3.3.11 内部 require('typescript/lib/tsc')，
   # 该子路径在 TS 7.0.2 的 exports 中被移除（ERR_PACKAGE_PATH_NOT_EXPORTED），TS 6 仍保留。
@@ -60,3 +62,6 @@ catalog:
 overrides:
   typescript: ^6.0.0
   vue-tsc: ^3.3.11
+
+patchedDependencies:
+  dayjs@1.11.23: patches/dayjs@1.11.23.patch

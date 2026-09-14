@@ -10,6 +10,7 @@
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
+    "dayjs": "catalog:",
     "vue": "catalog:",
     "pinia": "catalog:",
     "vue-router": "catalog:"

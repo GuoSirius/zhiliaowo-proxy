@@ -16,6 +16,7 @@ import {
   DEFAULT_PAGE_SIZE,
 } from '../../../datasources/paper-fetch.js';
 import { mapWithConcurrency } from '../../../shared/utils.js';
+import { nowBeijing } from '../../../shared/time.js';
 import { loadHotspots } from '../hotspots.js';
 import { computeMonthAgg, toRecord, softDeleteOrphans } from './persist.js';
 import { applyAiHotspotFallback } from './ai-fallback.js';
@@ -42,7 +43,7 @@ export async function syncYear(
 ): Promise<SyncResult> {
   const pageSize = opts.pageSize ?? DEFAULT_PAGE_SIZE;
   const concurrency = opts.concurrency ?? DEFAULT_CONCURRENCY;
-  const syncedAt = new Date().toISOString();
+  const syncedAt = nowBeijing();
   const start = Date.now();
 
   const state = getSyncState(brand.brand, year);
@@ -299,7 +300,7 @@ export function recomputeYearAgg(
   year: number,
 ): { months: number; localPapers: number } {
   const hotspots = loadHotspots(brand.key);
-  const syncedAt = new Date().toISOString();
+  const syncedAt = nowBeijing();
   const state = getSyncState(brand.brand, year);
   const aggTx = reportDb.transaction(() => {
     // 含 month=0 哨兵桶：pubTime 异常无法解析月份的文献（仍计入年总量，避免静默丢数）

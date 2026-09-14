@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import type { ResolvedBrand } from '../../config/brands.js';
 import { getClient } from '../../shared/client.js';
 import { getRangeAgg } from './agg.js';
@@ -35,8 +36,8 @@ interface QuarterDef extends QuarterPoint {
 /** 判断 (year, quarter) 是否已经完整过完（基于当前真实日期）。 */
 function isQuarterPassed(year: number, quarter: number): boolean {
   const endMonthOfQuarter = quarter * 3;
-  const lastDay = new Date(year, endMonthOfQuarter, 0);
-  return new Date() > lastDay;
+  const lastDay = dayjs().year(year).month(endMonthOfQuarter - 1).endOf('month');
+  return dayjs().isAfter(lastDay);
 }
 
 /** 根据 endMonth 确定「最近 4 个完整季度」的起点：

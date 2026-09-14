@@ -2,6 +2,7 @@ import type { Context } from 'hono';
 import { resolveSite, type ResolvedBrand, type ResolvedSite } from '../../config/brands.js';
 import { ApiError } from '../../models/types.js';
 import { reportDb } from '../../datasources/report-db.js';
+import { currentYear } from '../../shared/time.js';
 
 export interface ReportCtx {
   /** 品牌级（文献/统计/聚合等 brand 共享，与语言无关） */
@@ -45,7 +46,7 @@ export function parseReportCtx(c: Context, opts: ParseReportOpts = {}): ReportCt
   };
   const yearParam = c.req.query('year');
   const year =
-    yearParam != null ? Number(yearParam) : (latestSyncedYear(brand.brand) ?? new Date().getFullYear());
+    yearParam != null ? Number(yearParam) : (latestSyncedYear(brand.brand) ?? currentYear());
   if (!Number.isInteger(year)) throw new ApiError(400, 'year 参数无效');
 
   if (opts.forceStartFrom1) {

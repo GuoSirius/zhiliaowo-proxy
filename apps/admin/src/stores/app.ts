@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
+import dayjs from 'dayjs';
 import { getSitesConfig, type BrandConf, type SiteConf } from '../api/report';
 
 // 全局共享状态：站点/品牌只读配置 + 顶部通栏筛选条件（站点/年份/截止月）。
@@ -12,7 +13,7 @@ export const useAppStore = defineStore('app', () => {
 
   // 顶部通栏筛选
   const site = ref('');
-  const year = ref(new Date().getFullYear());
+  const year = ref(dayjs().year());
   const endMonth = ref(12);
 
   async function loadConfig() {

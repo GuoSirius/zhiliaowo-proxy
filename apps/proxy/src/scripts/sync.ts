@@ -6,6 +6,7 @@ import { ZhiliaowoClient } from '../datasources/zhiliaowo.js';
 import { MemoryCache } from '../shared/cache.js';
 import { migrateReportDb } from '../datasources/report-db.js';
 import { syncYear, CONCURRENCY_INFO } from '../services/report/sync/index.js';
+import { currentYear } from '../shared/time.js';
 import { parseArgs } from './parse-args.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -32,7 +33,7 @@ function parseYear(raw: string | boolean | undefined, label: string): number | n
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const brandKey = String(args.brand ?? '');
-  const nowYear = new Date().getFullYear();
+  const nowYear = currentYear();
   const singleYear = parseYear(args.year, 'year');
   // 与 recompute 保持一致：--year 单年 / --fromYear~--toYear 区间；
   // 缺省时 toYear 默认「当前真实年份」，fromYear 再缺省则取 toYear（即单年 = 当前年）。

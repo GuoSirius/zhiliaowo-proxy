@@ -27,6 +27,7 @@
   "dependencies": {
     "@hono/node-server": "catalog:",
     "better-sqlite3": "catalog:",
+    "dayjs": "catalog:",
     "dotenv": "catalog:",
     "hono": "catalog:",
     "ioredis": "catalog:",

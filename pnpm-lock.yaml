@@ -131,6 +131,9 @@ catalogs:
     changelogen:
       specifier: ^0.6.2
       version: 0.6.2
+    dayjs:
+      specifier: ^1.11.13
+      version: 1.11.23
     dotenv:
       specifier: ^17.4.2
       version: 17.4.2
@@ -172,6 +175,9 @@ overrides:
   typescript: ^6.0.0
   vue-tsc: ^3.3.11
 
+patchedDependencies:
+  dayjs@1.11.23: 6f8945e41d8257844aad97043c39a9ac957bb67e3a697f0b59a29883daee4784
+
 importers:
 
   .:
@@ -194,6 +200,9 @@ importers:
 
   apps/admin:
     dependencies:
+      dayjs:
+        specifier: 'catalog:'
+        version: 1.11.23(patch_hash=6f8945e41d8257844aad97043c39a9ac957bb67e3a697f0b59a29883daee4784)
       pinia:
         specifier: 'catalog:'
         version: 4.0.3(@vue/devtools-api@8.2.1)(typescript@6.0.3)(vue@3.5.42(typescript@6.0.3))
@@ -215,7 +224,7 @@ importers:
         version: 6.0.3
       unocss:
         specifier: 'catalog:'
-        version: 66.10.1(@devframes/hub@0.9.17(crossws@0.4.12)(devframe@0.9.17(cac@7.0.0)))(cac@7.0.0)(crossws@0.4.12)(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13))
+        version: 66.10.1(@devframes/hub@0.9.17(crossws@0.4.12(srvx@1.0.4))(devframe@0.9.17(cac@7.0.0)(srvx@1.0.4)))(cac@7.0.0)(crossws@0.4.12(srvx@1.0.4))(rolldown@1.2.8)(srvx@1.0.4)(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13))
       vite:
         specifier: 'catalog:'
         version: 8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)
@@ -231,6 +240,9 @@ importers:
       better-sqlite3:
         specifier: 'catalog:'
         version: 13.0.3
+      dayjs:
+        specifier: 'catalog:'
+        version: 1.11.23(patch_hash=6f8945e41d8257844aad97043c39a9ac957bb67e3a697f0b59a29883daee4784)
       dotenv:
         specifier: 'catalog:'
         version: 17.4.2
@@ -1219,6 +1231,9 @@ packages:
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
 
+  dayjs@1.11.23:
+    resolution: {integrity: sha512-QDTCU0M0MxR3hQfnlDJfwekQiaanm1ubOD231u73WBckQ/fsamwRLiE2GBz6D3a/xF1NgfiDLJjXBa1hYOYTtQ==}
+
   debug@4.4.3:
     resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
     engines: {node: '>=6.0'}
@@ -2130,12 +2145,12 @@ snapshots:
 
   '@conventional-changelog/template@1.4.0': {}
 
-  '@devframes/hub@0.9.17(crossws@0.4.12)(devframe@0.9.17(cac@7.0.0))':
+  '@devframes/hub@0.9.17(crossws@0.4.12(srvx@1.0.4))(devframe@0.9.17(cac@7.0.0)(srvx@1.0.4))':
     dependencies:
       '@standard-schema/spec': 1.1.0
       destr: 2.0.5
-      devframe: 0.9.17(cac@7.0.0)
-      h3: 2.0.1-rc.31(crossws@0.4.12)
+      devframe: 0.9.17(cac@7.0.0)(srvx@1.0.4)
+      h3: 2.0.1-rc.31(crossws@0.4.12(srvx@1.0.4))
       pathe: 2.0.3
       perfect-debounce: 2.1.0
       tinyexec: 1.3.1
@@ -2145,26 +2160,26 @@ snapshots:
       - crossws
       - ocache
 
-  '@devframes/json-render@0.9.17(@devframes/hub@0.9.17(crossws@0.4.12)(devframe@0.9.17(cac@7.0.0)))(devframe@0.9.17(cac@7.0.0))':
+  '@devframes/json-render@0.9.17(@devframes/hub@0.9.17(crossws@0.4.12(srvx@1.0.4))(devframe@0.9.17(cac@7.0.0)(srvx@1.0.4)))(devframe@0.9.17(cac@7.0.0)(srvx@1.0.4))':
     dependencies:
       '@json-render/core': 0.20.0(zod@4.6.1)
       '@standard-schema/spec': 1.1.0
-      devframe: 0.9.17(cac@7.0.0)
+      devframe: 0.9.17(cac@7.0.0)(srvx@1.0.4)
       zod: 4.6.1
     optionalDependencies:
-      '@devframes/hub': 0.9.17(crossws@0.4.12)(devframe@0.9.17(cac@7.0.0))
+      '@devframes/hub': 0.9.17(crossws@0.4.12(srvx@1.0.4))(devframe@0.9.17(cac@7.0.0)(srvx@1.0.4))
 
-  '@devframes/service-shiki@0.9.17(devframe@0.9.17(cac@7.0.0))':
+  '@devframes/service-shiki@0.9.17(devframe@0.9.17(cac@7.0.0)(srvx@1.0.4))':
     dependencies:
-      devframe: 0.9.17(cac@7.0.0)
+      devframe: 0.9.17(cac@7.0.0)(srvx@1.0.4)
       shiki: 4.4.3
 
-  '@devframes/vite@0.9.17(@devframes/hub@0.9.17(crossws@0.4.12)(devframe@0.9.17(cac@7.0.0)))(devframe@0.9.17(cac@7.0.0))(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13))':
+  '@devframes/vite@0.9.17(@devframes/hub@0.9.17(crossws@0.4.12(srvx@1.0.4))(devframe@0.9.17(cac@7.0.0)(srvx@1.0.4)))(devframe@0.9.17(cac@7.0.0)(srvx@1.0.4))(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13))':
     dependencies:
-      devframe: 0.9.17(cac@7.0.0)
+      devframe: 0.9.17(cac@7.0.0)(srvx@1.0.4)
       pathe: 2.0.3
     optionalDependencies:
-      '@devframes/hub': 0.9.17(crossws@0.4.12)(devframe@0.9.17(cac@7.0.0))
+      '@devframes/hub': 0.9.17(crossws@0.4.12(srvx@1.0.4))(devframe@0.9.17(cac@7.0.0)(srvx@1.0.4))
       vite: 8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)
 
   '@emnapi/core@1.10.0':
@@ -2539,16 +2554,16 @@ snapshots:
     dependencies:
       '@unocss/core': 66.10.1
 
-  '@unocss/inspector@66.10.1(@devframes/hub@0.9.17(crossws@0.4.12)(devframe@0.9.17(cac@7.0.0)))(cac@7.0.0)(crossws@0.4.12)(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13))':
+  '@unocss/inspector@66.10.1(@devframes/hub@0.9.17(crossws@0.4.12(srvx@1.0.4))(devframe@0.9.17(cac@7.0.0)(srvx@1.0.4)))(cac@7.0.0)(crossws@0.4.12(srvx@1.0.4))(srvx@1.0.4)(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13))':
     dependencies:
-      '@devframes/service-shiki': 0.9.17(devframe@0.9.17(cac@7.0.0))
-      '@devframes/vite': 0.9.17(@devframes/hub@0.9.17(crossws@0.4.12)(devframe@0.9.17(cac@7.0.0)))(devframe@0.9.17(cac@7.0.0))(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13))
+      '@devframes/service-shiki': 0.9.17(devframe@0.9.17(cac@7.0.0)(srvx@1.0.4))
+      '@devframes/vite': 0.9.17(@devframes/hub@0.9.17(crossws@0.4.12(srvx@1.0.4))(devframe@0.9.17(cac@7.0.0)(srvx@1.0.4)))(devframe@0.9.17(cac@7.0.0)(srvx@1.0.4))(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13))
       '@unocss/config': 66.10.1
       '@unocss/core': 66.10.1
       '@unocss/rule-utils': 66.10.1
-      '@vitejs/devtools-kit': 0.7.3(cac@7.0.0)(crossws@0.4.12)(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13))
+      '@vitejs/devtools-kit': 0.7.3(cac@7.0.0)(crossws@0.4.12(srvx@1.0.4))(srvx@1.0.4)(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13))
       colorette: 2.0.20
-      devframe: 0.9.17(cac@7.0.0)
+      devframe: 0.9.17(cac@7.0.0)(srvx@1.0.4)
       tinyglobby: 0.2.17
       unplugin-utils: 0.3.2
     transitivePeerDependencies:
@@ -2613,7 +2628,7 @@ snapshots:
       '@unocss/core': 66.10.1
       '@unocss/preset-wind3': 66.10.1
 
-  '@unocss/rollup@66.10.1':
+  '@unocss/rollup@66.10.1(rolldown@1.2.8)':
     dependencies:
       '@jridgewell/remapping': 2.3.5
       '@unocss/config': 66.10.1
@@ -2623,6 +2638,8 @@ snapshots:
       pathe: 2.0.3
       tinyglobby: 0.2.17
       unplugin-utils: 0.3.2
+    optionalDependencies:
+      rolldown: 1.2.8
 
   '@unocss/rule-utils@66.10.1':
     dependencies:
@@ -2649,12 +2666,12 @@ snapshots:
     dependencies:
       '@unocss/core': 66.10.1
 
-  '@unocss/vite@66.10.1(@devframes/hub@0.9.17(crossws@0.4.12)(devframe@0.9.17(cac@7.0.0)))(cac@7.0.0)(crossws@0.4.12)(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13))':
+  '@unocss/vite@66.10.1(@devframes/hub@0.9.17(crossws@0.4.12(srvx@1.0.4))(devframe@0.9.17(cac@7.0.0)(srvx@1.0.4)))(cac@7.0.0)(crossws@0.4.12(srvx@1.0.4))(srvx@1.0.4)(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13))':
     dependencies:
       '@jridgewell/remapping': 2.3.5
       '@unocss/config': 66.10.1
       '@unocss/core': 66.10.1
-      '@unocss/inspector': 66.10.1(@devframes/hub@0.9.17(crossws@0.4.12)(devframe@0.9.17(cac@7.0.0)))(cac@7.0.0)(crossws@0.4.12)(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13))
+      '@unocss/inspector': 66.10.1(@devframes/hub@0.9.17(crossws@0.4.12(srvx@1.0.4))(devframe@0.9.17(cac@7.0.0)(srvx@1.0.4)))(cac@7.0.0)(crossws@0.4.12(srvx@1.0.4))(srvx@1.0.4)(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13))
       chokidar: 5.0.0
       magic-string: 1.2.3
       pathe: 2.0.3
@@ -2670,11 +2687,11 @@ snapshots:
       - ocache
       - srvx
 
-  '@vitejs/devtools-kit@0.7.3(cac@7.0.0)(crossws@0.4.12)(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13))':
+  '@vitejs/devtools-kit@0.7.3(cac@7.0.0)(crossws@0.4.12(srvx@1.0.4))(srvx@1.0.4)(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13))':
     dependencies:
-      '@devframes/hub': 0.9.17(crossws@0.4.12)(devframe@0.9.17(cac@7.0.0))
-      '@devframes/json-render': 0.9.17(@devframes/hub@0.9.17(crossws@0.4.12)(devframe@0.9.17(cac@7.0.0)))(devframe@0.9.17(cac@7.0.0))
-      devframe: 0.9.17(cac@7.0.0)
+      '@devframes/hub': 0.9.17(crossws@0.4.12(srvx@1.0.4))(devframe@0.9.17(cac@7.0.0)(srvx@1.0.4))
+      '@devframes/json-render': 0.9.17(@devframes/hub@0.9.17(crossws@0.4.12(srvx@1.0.4))(devframe@0.9.17(cac@7.0.0)(srvx@1.0.4)))(devframe@0.9.17(cac@7.0.0)(srvx@1.0.4))
+      devframe: 0.9.17(cac@7.0.0)(srvx@1.0.4)
       local-pkg: 1.2.1
       mlly: 1.8.2
       nostics: 1.2.0
@@ -2919,7 +2936,9 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.3
 
-  crossws@0.4.12: {}
+  crossws@0.4.12(srvx@1.0.4):
+    optionalDependencies:
+      srvx: 1.0.4
 
   css-tree@3.2.1:
     dependencies:
@@ -2927,6 +2946,8 @@ snapshots:
       source-map-js: 1.2.1
 
   csstype@3.2.3: {}
+
+  dayjs@1.11.23(patch_hash=6f8945e41d8257844aad97043c39a9ac957bb67e3a697f0b59a29883daee4784): {}
 
   debug@4.4.3:
     dependencies:
@@ -2951,13 +2972,13 @@ snapshots:
 
   detect-libc@2.1.2: {}
 
-  devframe@0.9.17(cac@7.0.0):
+  devframe@0.9.17(cac@7.0.0)(srvx@1.0.4):
     dependencies:
       '@modelcontextprotocol/server': 2.0.0
       '@standard-schema/spec': 1.1.0
       birpc: 4.2.0
-      crossws: 0.4.12
-      h3: 2.0.1-rc.31(crossws@0.4.12)
+      crossws: 0.4.12(srvx@1.0.4)
+      h3: 2.0.1-rc.31(crossws@0.4.12(srvx@1.0.4))
       mrmime: 2.0.1
       nostics: 1.2.0
       pathe: 2.0.3
@@ -3050,12 +3071,12 @@ snapshots:
     dependencies:
       ini: 6.0.0
 
-  h3@2.0.1-rc.31(crossws@0.4.12):
+  h3@2.0.1-rc.31(crossws@0.4.12(srvx@1.0.4)):
     dependencies:
       rou3: 0.9.2
       srvx: 1.0.4
     optionalDependencies:
-      crossws: 0.4.12
+      crossws: 0.4.12(srvx@1.0.4)
 
   hast-util-to-html@9.0.5:
     dependencies:
@@ -3566,7 +3587,7 @@ snapshots:
       unist-util-is: 6.0.1
       unist-util-visit-parents: 6.0.2
 
-  unocss@66.10.1(@devframes/hub@0.9.17(crossws@0.4.12)(devframe@0.9.17(cac@7.0.0)))(cac@7.0.0)(crossws@0.4.12)(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)):
+  unocss@66.10.1(@devframes/hub@0.9.17(crossws@0.4.12(srvx@1.0.4))(devframe@0.9.17(cac@7.0.0)(srvx@1.0.4)))(cac@7.0.0)(crossws@0.4.12(srvx@1.0.4))(rolldown@1.2.8)(srvx@1.0.4)(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)):
     dependencies:
       '@unocss/cli': 66.10.1
       '@unocss/core': 66.10.1
@@ -3580,12 +3601,12 @@ snapshots:
       '@unocss/preset-wind': 66.10.1
       '@unocss/preset-wind3': 66.10.1
       '@unocss/preset-wind4': 66.10.1
-      '@unocss/rollup': 66.10.1
+      '@unocss/rollup': 66.10.1(rolldown@1.2.8)
       '@unocss/transformer-attributify-jsx': 66.10.1
       '@unocss/transformer-compile-class': 66.10.1
       '@unocss/transformer-directives': 66.10.1
       '@unocss/transformer-variant-group': 66.10.1
-      '@unocss/vite': 66.10.1(@devframes/hub@0.9.17(crossws@0.4.12)(devframe@0.9.17(cac@7.0.0)))(cac@7.0.0)(crossws@0.4.12)(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13))
+      '@unocss/vite': 66.10.1(@devframes/hub@0.9.17(crossws@0.4.12(srvx@1.0.4))(devframe@0.9.17(cac@7.0.0)(srvx@1.0.4)))(cac@7.0.0)(crossws@0.4.12(srvx@1.0.4))(srvx@1.0.4)(vite@8.2.2(@types/node@26.5.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13))
     transitivePeerDependencies:
       - '@devframes/hub'
       - '@devframes/hub-ui'

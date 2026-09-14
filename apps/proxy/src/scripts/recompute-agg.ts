@@ -5,6 +5,7 @@ import { BRANDS, resolveBrand, resolveBrandFlexible } from '../config/brands.js'
 import { recomputeYearAgg } from '../services/report/sync/index.js';
 import { reportDb, localPaperCount, migrateReportDb } from '../datasources/report-db.js';
 import { parseArgs } from './parse-args.js';
+import { currentYear } from '../shared/time.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // 统一从仓库根 .env 读取（与 sync.ts 一致）
@@ -22,7 +23,7 @@ migrateReportDb();
 // --toYear 缺省时默认「当前真实年份」；--year 与 --fromYear/--toYear 二选一。
 const args = parseArgs(process.argv.slice(2));
 const positional = process.argv.slice(2).filter((a) => !a.startsWith('--'));
-const nowYear = new Date().getFullYear();
+const nowYear = currentYear();
 
 const brandInput = String(args.brand ?? positional[0] ?? 'procell');
 
