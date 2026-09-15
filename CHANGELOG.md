@@ -1,5 +1,28 @@
 # Changelog
 
+## v3.2.0
+
+[compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v3.1.0...v3.2.0)
+
+### 🚀 新功能 (Features)
+
+- **proxy:** Support wildcard and regex in allowed-origins ([a65cebd](https://github.com/GuoSirius/zhiliaowo-proxy/commit/a65cebd))
+
+### 🐛 缺陷修复 (Bug Fixes)
+
+- 统一时区处理为 dayjs(Asia/Shanghai) 根治 8 小时时差 ([8fd9c8a](https://github.com/GuoSirius/zhiliaowo-proxy/commit/8fd9c8a))
+
+### 📚 文档 (Documentation)
+
+- Refresh readme for admin vue-router layout and drop core refs ([682b665](https://github.com/GuoSirius/zhiliaowo-proxy/commit/682b665))
+- **proxy:** Trim readme drop duplicate curl and redundant notes ([2a8a7ce](https://github.com/GuoSirius/zhiliaowo-proxy/commit/2a8a7ce))
+- **proxy:** Restore 2.1-2.7 curl, compress report section ([03346d4](https://github.com/GuoSirius/zhiliaowo-proxy/commit/03346d4))
+- **proxy:** Report section table-driven, drop prose ([408778c](https://github.com/GuoSirius/zhiliaowo-proxy/commit/408778c))
+
+### ❤️ Contributors
+
+- 郭之存 ([@siriusSupreme](https://github.com/siriusSupreme))
+
 ## v3.1.0
 
 [compare changes](https://github.com/GuoSirius/zhiliaowo-proxy/compare/v3.0.1...v3.1.0)
