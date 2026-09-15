@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * dev 启动前清理占用 dev 端口（3000/5173/5174）的残留进程。
+ * dev 启动前清理占用 dev 端口（3000/5173）的残留进程。
  * 解决：tsx watch / vite 在 Ctrl-C 时偶尔残留子进程占端口，
  * 导致新一轮 `pnpm dev` 里 proxy 因 EADDRINUSE 静默崩溃（前端照常起、proxy 起不来）。
  * 跨平台：Windows 用 netstat+taskkill，POSIX 用 lsof+kill。
  */
 const { execSync } = require('child_process');
 
-const PORTS = [3000, 5173, 5174];
+const PORTS = [3000, 5173];
 const isWin = process.platform === 'win32';
 
 function killPid(pid) {
@@ -52,5 +52,5 @@ for (const port of PORTS) {
   }
 }
 
-if (freed === 0) console.log('[clean-ports] 端口 3000/5173/5174 均无残留占用，无需清理');
+if (freed === 0) console.log('[clean-ports] 端口 3000/5173 均无残留占用，无需清理');
 else console.log(`[clean-ports] 共清理 ${freed} 个残留进程`);
